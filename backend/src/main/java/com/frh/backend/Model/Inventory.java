@@ -19,7 +19,7 @@ public class Inventory {
     // --- Relationship ---
     // Assuming 1 Listing has 1 Inventory record.
     // If your logic allows multiple inventory batches per listing, change this to @ManyToOne.
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "listing_id", nullable = false)
     private Listing listing;
 

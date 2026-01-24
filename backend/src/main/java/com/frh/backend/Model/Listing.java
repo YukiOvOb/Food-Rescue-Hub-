@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import jakarta.persistence.CascadeType;
 
 @Entity
 @Table(name = "listings")
@@ -24,7 +25,7 @@ public class Listing {
     @JoinColumn(name = "store_id", nullable = false)
     private Store store;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "listing")
+    @OneToOne(fetch = FetchType.LAZY, mappedBy = "listing", cascade = CascadeType.ALL)
     private Inventory inventory;
 
     @ManyToMany(fetch = FetchType.LAZY) 
