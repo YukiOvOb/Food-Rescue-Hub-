@@ -9,6 +9,8 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       TZ: Asia/Singapore
+    ports:
+      - "33306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
