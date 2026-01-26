@@ -2,7 +2,7 @@ name: Food Rescue Hub CI/CD
 
 on:
   push:
-    branches: ["*"]
+    branches: ["main"]
 
 jobs:
   build-and-push:
@@ -14,6 +14,7 @@ jobs:
 
       - name: Run JUnit Tests
         run: |
+          chmod +x ./mvnw
           cd backend
           ./mvnw test
 
