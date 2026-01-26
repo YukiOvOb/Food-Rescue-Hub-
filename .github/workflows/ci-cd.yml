@@ -14,8 +14,8 @@ jobs:
 
       - name: Run JUnit Tests
         run: |
-          chmod +x ./mvnw
           cd backend
+          chmod +x ./mvnw
           ./mvnw test
 
       - name: Set up Docker Buildx
