@@ -1,4 +1,4 @@
-package com.frh.backend.model;
+package com.frh.backend.Model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

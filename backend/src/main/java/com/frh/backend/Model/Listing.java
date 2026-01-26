@@ -6,7 +6,6 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import jakarta.persistence.CascadeType;
 
 @Entity
 @Table(name = "listings")
@@ -19,8 +18,6 @@ public class Listing {
     private Long listingId;
 
     // --- Relationship ---
-    // Many listings belong to one Store.
-    // referencing the 'store_id' column in this table.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id", nullable = false)
     private Store store;
@@ -33,6 +30,9 @@ public class Listing {
     joinColumns = @JoinColumn(name = "listing_id"),
     inverseJoinColumns = @JoinColumn(name = "tag_id")) 
     private java.util.List<DietaryTag> dietaryTags;
+
+    @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<ListingPhoto> photos = new java.util.ArrayList<>();
 
     // --- Basic Details ---
 

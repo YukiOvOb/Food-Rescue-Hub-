@@ -1,6 +1,6 @@
-package com.frh.backend.repository;
+package com.frh.backend.Repository;
 
-import com.frh.backend.model.TestPerson;
+import com.frh.backend.Model.TestPerson;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

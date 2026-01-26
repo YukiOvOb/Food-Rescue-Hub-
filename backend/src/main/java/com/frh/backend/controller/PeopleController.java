@@ -1,4 +1,4 @@
-package com.frh.backend.controller;
+package com.frh.backend.Controller;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;

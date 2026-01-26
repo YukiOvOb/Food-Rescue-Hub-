@@ -23,6 +23,10 @@ public class Store {
     @JoinColumn(name = "supplier_id", nullable = false)
     private SupplierProfile supplierProfile;
 
+    @OneToMany(mappedBy = "store", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "order_id", nullable = false)
+    private Order order;
+
     // --- Data Fields ---
 
     @Column(name = "store_name", nullable = false, length = 200)

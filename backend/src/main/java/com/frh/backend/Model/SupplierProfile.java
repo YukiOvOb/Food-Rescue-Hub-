@@ -33,9 +33,8 @@ public class SupplierProfile {
     @Column(name = "business_type", length = 80)
     private String businessType;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "verification_status", nullable = false, length = 20)
-    private VerificationStatus verificationStatus = VerificationStatus.PENDING; // Set default
+    private String verificationStatus = "PENDING"; // Set default
 
     @Column(name = "payout_account_ref", length = 120)
     private String payoutAccountRef;
@@ -43,12 +42,4 @@ public class SupplierProfile {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    // Enum for the verification status
-    public enum VerificationStatus {
-        PENDING,
-        VERIFIED,
-        REJECTED,
-        SUSPENDED
-    }
 }

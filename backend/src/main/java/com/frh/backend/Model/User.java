@@ -20,9 +20,8 @@ public class User {
     @Column(name = "user_id")
     private Long userId;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private Role role;
+    private String role;
 
     @Column(unique = true, length = 255)
     private String email;
@@ -38,29 +37,20 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private Status status = Status.ACTIVE; // Default value handling
+    private String status = "ACTIVE"; // Default value handling
 
     @CreationTimestamp // Automatically sets timestamp when saving
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    // --- Relationship ---
+    
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY) 
     private ConsumerProfile consumerProfile;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private SupplierProfile supplierProfile;
 
-    // --- Enums based on your schema comments ---
-
-    public enum Role {
-        CONSUMER,
-        SUPPLIER,
-        ADMIN
-    }
-
-    public enum Status {
-        ACTIVE,
-        INACTIVE,
-        SUSPENDED
-    }
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY) 
+    private AdminProfile adminProfile;
 }
