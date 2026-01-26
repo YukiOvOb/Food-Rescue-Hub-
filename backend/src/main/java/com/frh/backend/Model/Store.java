@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "stores")
@@ -24,8 +25,7 @@ public class Store {
     private SupplierProfile supplierProfile;
 
     @OneToMany(mappedBy = "store", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "order_id", nullable = false)
-    private Order order;
+    private List<Order> order;
 
     // --- Data Fields ---
 
