@@ -2,7 +2,7 @@ name: Food Rescue Hub CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: ["*"]
 
 jobs:
   build-and-push:
@@ -11,6 +11,11 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+
+      - name: Run JUnit Tests
+        run: |
+          cd backend
+          ./mvnw test
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
