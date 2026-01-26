@@ -2,9 +2,7 @@ name: Food Rescue Hub CI/CD
 
 on:
   push:
-    branches:
-      - main
-      - 'feature/*'   # also run on feature branches
+    branches: [ main ]
 
 jobs:
   build-and-push:
@@ -36,17 +34,16 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'   # only deploy when pushing to main
 
     steps:
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@v0.1.10
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ~/FoodRescueHub   # path to your repo on EC2
-            git pull origin main
-            docker-compose down
-            docker-compose up -d --build
+            cd ~/Food-Rescue-Hub-
+            docker compose pull
+            docker compose down
+            docker-compose up -d
