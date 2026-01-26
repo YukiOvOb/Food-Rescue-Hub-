@@ -1,4 +1,4 @@
-package com.frh.backend.Controller;
+package com.frh.backend.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,6 +11,6 @@ public class HelloController {
 
     @GetMapping("/hello")
     public Map<String, String> hello() {
-        return Map.of("message", "Hello from Team08 Food rescue hub!");
+        return Map.of("message", "Hello from Spring Boot!");
     }
 }
