@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: ["main"]
   schedule:
-    # 每周一 UTC 时间 00:00 运行（定期扫描）
+    # Run every Monday at 00:00 UTC (periodic scanning)
     - cron: '0 0 * * 1'
 
 jobs:
@@ -22,21 +22,21 @@ jobs:
       fail-fast: false
       matrix:
         language: ['java', 'javascript']
-        # CodeQL 支持的语言: 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby', 'swift'
+        # CodeQL supported languages: 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby', 'swift'
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # 初始化 CodeQL 工具
+    # Initialize CodeQL
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
-        # 可选：自定义查询配置
+        # Optional: custom query configuration
         # queries: security-extended,security-and-quality
 
-    # 对于 Java，需要编译构建
+    # For Java, compilation and build are required
     - name: Set up JDK 17
       if: matrix.language == 'java'
       uses: actions/setup-java@v4
@@ -44,7 +44,7 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # 自动构建 Java 项目
+    # Build Java project automatically
     - name: Build Java project
       if: matrix.language == 'java'
       run: |
@@ -52,9 +52,9 @@ jobs:
         chmod +x ./mvnw
         ./mvnw clean install -DskipTests
 
-    # JavaScript/TypeScript 不需要编译，CodeQL 会自动分析
+    # JavaScript/TypeScript does not require compilation, CodeQL analyzes automatically
 
-    # 执行 CodeQL 分析
+    # Perform CodeQL Analysis
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
       with:
