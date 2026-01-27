@@ -11,6 +11,10 @@ public class HelloController {
 
     @GetMapping("/hello")
     public Map<String, String> hello() {
+<<<<<<< HEAD
         return Map.of("message", "Hello from Spring Boot!");
+=======
+        return Map.of("message", "Hello from Team08 Food rescue hub test on 27/1/26!");
+>>>>>>> 51411f0 (First test)
     }
 }
