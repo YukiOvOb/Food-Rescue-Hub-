@@ -12,11 +12,17 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Run JUnit Tests
+      - name: Run tests with coverage
         run: |
           cd backend
           chmod +x ./mvnw
-          ./mvnw test
+          ./mvnw -B verify
+
+      - name: Upload JaCoCo report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: backend/target/site/jacoco/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
