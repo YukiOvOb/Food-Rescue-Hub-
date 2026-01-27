@@ -3,9 +3,12 @@ package com.frh.backend.Model;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Entity
 @Table(name = "consumer_profiles")
@@ -32,6 +35,9 @@ public class ConsumerProfile {
     @Column(name = "status", nullable = false, length = 20)
     private String status = "ACTIVE";
 
+    @Column(name = "role", nullable = false, length = 20)
+    private String role = "CONSUMER";
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -41,6 +47,10 @@ public class ConsumerProfile {
 
     @Column(name = "default_lng", precision = 10, scale = 7)
     private BigDecimal default_lng;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "preferences_json", columnDefinition = "json")
+    private Map<String, Object> preferences;
 
     // --- Relationships ---
     @OneToOne(mappedBy = "consumer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
