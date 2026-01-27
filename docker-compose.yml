@@ -17,7 +17,7 @@ services:
       - frh-net
 
   backend:
-    image: yourdockerhub/frh-backend:latest
+    image: bhava0807/frh-backend:latest
     container_name: frh-backend
     restart: unless-stopped
     environment:
@@ -31,7 +31,7 @@ services:
       - frh-net
 
   frontend-build:
-    image: yourdockerhub/frh-frontend:latest
+    image: bhava0807/frh-frontend:latest
     container_name: frh-frontend-build
     command: ["sh", "-c", "rm -rf /out/* && cp -r /app/dist/* /out/"]
     volumes:
