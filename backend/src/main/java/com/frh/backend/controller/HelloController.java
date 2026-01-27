@@ -29,4 +29,30 @@ public class HelloController {
         }
         return "ok";
     }
+
+    // HelloController.java (Fixed: PreparedStatement, safe)
+    @GetMapping("/hello-safe")
+    public String helloSafe(@RequestParam String username) throws Exception {
+        // Parameterized query using placeholders instead of string concatenation
+        String sql = "SELECT * FROM users WHERE username = ?";
+        try (Connection connection = DriverManager.getConnection("jdbc:h2:mem:testdb");
+            PreparedStatement ps = connection.prepareStatement(sql)) {
+            // Bind user input as a parameter, treating it as data rather than executable SQL
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String u = rs.getString("username");
+                }
+            }
+        }
+        return "ok";
+    }
+
+    //But more safely way is 
+    // using Spring Data JPA repository methods that automatically parameterize queries:
+
+    // public interface UserRepository extends JpaRepository<User, Long> {
+    //     Optional<User> findByUsername(String username); 
+    // }
+
 }
