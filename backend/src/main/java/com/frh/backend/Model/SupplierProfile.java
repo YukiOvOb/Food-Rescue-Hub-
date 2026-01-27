@@ -2,50 +2,35 @@ package com.frh.backend.Model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "supplier_profiles")
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class SupplierProfile {
 
     @Id
-    @Column(name = "supplier_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "supplier_id", nullable = false)
     private Long supplierId;
 
-    /**
-     * Shared Primary Key with User.
-     * The @MapsId annotation links 'supplierId' to the 'userId' of the User entity.
-     */
-    @OneToOne(fetch = FetchType.LAZY)
-    @MapsId
-    @JoinColumn(name = "supplier_id")
-    private User user;
+    @Column(name = "email", nullable = false, unique = true, length = 255)
+    private String email;
 
-    @Column(name = "business_name", nullable = false, length = 200)
-    private String businessName;
+    @Column(name = "password", nullable = false, length = 255)
+    private String password;
 
-    @Column(name = "business_type", length = 80)
-    private String businessType;
+    @Column(name = "phone", unique = true, length = 30)
+    private String phone;
 
-    @Column(name = "verification_status", nullable = false, length = 20)
-    private String verificationStatus = "PENDING"; // Set default
+    @Column(name = "display_name", length = 120)
+    private String displayName;
 
-    @Column(name = "payout_account_ref", length = 120)
-    private String payoutAccountRef;
+    @Column(name = "status", nullable = false, length = 20)
+    private String status = "ACTIVE";
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false, updatable = true)
-    private LocalDateTime updatedAt;
 }

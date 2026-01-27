@@ -2,43 +2,47 @@ package com.frh.backend.Model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "consumer_profiles")
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class ConsumerProfile {
 
     @Id
-    @Column(name = "consumer_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "consumer_id", nullable = false)
     private Long consumerId;
 
-    /**
-     * Shared Primary Key:
-     * This links to the User entity. @MapsId tells Hibernate that the 
-     * 'consumerId' of this class is derived from the 'userId' of the User.
-     */
-    @OneToOne(fetch = FetchType.LAZY)
-    @MapsId
-    @JoinColumn(name = "consumer_id")
-    private User user;
+    @Column(name = "email", nullable = false, unique = true, length = 255)
+    private String email;
 
-    /**
-     * JSON columns are typically stored as Strings in standard JPA.
-     * To map this to a specific Java Object or Map automatically, 
-     * you would need a custom AttributeConverter or a library like 'hypersistence-utils'.
-     */
-    @Column(name = "preferences_json", columnDefinition = "json")
-    private String preferencesJson;
+    @Column(name = "password", nullable = false, length = 255)
+    private String password;
 
-    // DECIMAL(10,7) maps best to BigDecimal in Java for precision
+    @Column(name = "phone", unique = true, length = 30)
+    private String phone;
+
+    @Column(name = "display_name", length = 120)
+    private String displayName;
+
+    @Column(name = "status", nullable = false, length = 20)
+    private String status = "ACTIVE";
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
     @Column(name = "default_lat", precision = 10, scale = 7)
-    private BigDecimal defaultLat;
+    private BigDecimal default_lat;
 
     @Column(name = "default_lng", precision = 10, scale = 7)
-    private BigDecimal defaultLng;
+    private BigDecimal default_lng;
+
+    // --- Relationships ---
+    @OneToOne(mappedBy = "consumer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Wallet wallet;
 }

@@ -1,29 +1,25 @@
-package com.frh.backend.Controller;
+package com.frh.backend.controller;
 
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import com.frh.backend.Model.TestPerson;
+import com.frh.backend.repository.TestPersonRepository;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
 public class PeopleController {
 
-    private final JdbcTemplate jdbc;
-
-    public PeopleController(JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
-    }
+    @Autowired
+    private TestPersonRepository testPersonRepository;
 
     @GetMapping("/people")
-    public List<Map<String, Object>> people() {
-        return jdbc.queryForList("SELECT id, name, age, gender FROM test ORDER BY id");
+    public List<TestPerson> findAllPeople() {
+        return testPersonRepository.findAll();
     }
 }
 

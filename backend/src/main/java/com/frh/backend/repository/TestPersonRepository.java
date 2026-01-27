@@ -1,4 +1,4 @@
-package com.frh.backend.Repository;
+package com.frh.backend.repository;
 
 import com.frh.backend.Model.TestPerson;
 import org.springframework.data.jpa.repository.JpaRepository;

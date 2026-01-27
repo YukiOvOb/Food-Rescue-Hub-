@@ -25,7 +25,10 @@ public class Store {
     private SupplierProfile supplierProfile;
 
     @OneToMany(mappedBy = "store", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Order> order;
+    private List<Order> orders;
+
+    @OneToOne(mappedBy = "store", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Listing listing;
 
     // --- Data Fields ---
 
