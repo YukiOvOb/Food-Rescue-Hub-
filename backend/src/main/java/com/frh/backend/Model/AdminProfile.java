@@ -19,8 +19,8 @@ public class AdminProfile {
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash;
+    @Column(name = "password", nullable = false, length = 255)
+    private String password;
 
     @Column(name = "phone", unique = true, length = 30)
     private String phone;
@@ -29,7 +29,7 @@ public class AdminProfile {
     private String displayName;
 
     @Column(name = "role", nullable = false, length = 20)
-    private String role = "ADMIN"; // Default to ADMIN
+    private String role = "ADMIN";
 
     @Column(name = "status", nullable = false, length = 20)
     private  String status = "ACTIVE";
