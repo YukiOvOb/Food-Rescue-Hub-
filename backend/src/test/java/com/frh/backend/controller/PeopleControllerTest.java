@@ -19,7 +19,7 @@ class PeopleControllerTest {
 
     @Test
     void peopleReturnsAllTestPersons() {
-        // Add a test person to the repository
+        // Add a test person to the repository to check person is existing
         TestPerson person = new TestPerson("John Doe", 30, "Male");
         testPersonRepository.save(person); //jpa persistance (cr)
 
