@@ -35,7 +35,6 @@ public class User {
     @Column(name = "display_name", length = 120)
     private String displayName;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private String status = "ACTIVE"; // Default value handling
 
