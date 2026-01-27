@@ -1,0 +1,21 @@
+# CodeQL 自定义配置
+# 文档: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning
+
+# 指定要包含/排除的路径
+paths-ignore:
+  - '**/test/**'
+  - '**/tests/**'
+  - '**/*.test.js'
+  - '**/*.test.jsx'
+  - '**/node_modules/**'
+  - '**/target/**'
+  - '**/build/**'
+  - '**/dist/**'
+
+# 指定要运行的查询套件
+queries:
+  - uses: security-extended
+  - uses: security-and-quality
+
+# 禁用自动语言检测（可选）
+# disable-default-queries: false
