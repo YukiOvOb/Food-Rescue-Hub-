@@ -18,8 +18,8 @@ public class Listing {
     private Long listingId;
 
     // --- Relationship ---
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "store_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_id", nullable = false, unique = true)
     private Store store;
 
     @OneToOne(fetch = FetchType.LAZY, mappedBy = "listing", cascade = CascadeType.ALL)

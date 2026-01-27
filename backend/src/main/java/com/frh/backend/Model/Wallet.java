@@ -21,7 +21,6 @@ public class Wallet {
 
     // --- Relationship: Owner ---
     // Assuming 1 Consumer = 1 Wallet.
-    // If a consumer can have multiple wallets, change this to @ManyToOne
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "consumer_id", nullable = false, unique = true)
     private ConsumerProfile consumer;
@@ -40,7 +39,6 @@ public class Wallet {
     private String currency = "SGD"; // Default to SGD
 
     // --- Timestamp ---
-    // @UpdateTimestamp is perfect here: it updates every time the balance changes.
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
