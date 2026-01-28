@@ -89,6 +89,11 @@ class ListingAdapter(
                 // Time remaining
                 tvTimeRemaining.text = "⏰ ${listing.timeRemaining}"
 
+                // Card click - navigate to detail page
+                itemView.setOnClickListener {
+                    onBuyClick(listing)
+                }
+
                 // Buy button click
                 btnBuy.setOnClickListener {
                     onBuyClick(listing)
