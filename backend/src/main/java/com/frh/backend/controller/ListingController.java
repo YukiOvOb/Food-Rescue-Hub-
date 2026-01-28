@@ -1,7 +1,9 @@
 package com.frh.backend.controller;
 // 1. 修正了这里的包路径，指向你的真实路径
 import com.frh.backend.Model.Listing;
+import com.frh.backend.Model.Store;
 import com.frh.backend.repository.ListingRepository;
+import com.frh.backend.repository.StoreRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,9 @@ public class ListingController {
 
     @Autowired
     private ListingRepository listingRepository;
+
+    @Autowired
+    private StoreRepository storeRepository;
 
     // ==========================================
     // 1. CREATE (新增)

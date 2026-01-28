@@ -435,9 +435,20 @@ export default function App(){
                   </div>
                 )}
               </div>
-              <p style={{fontSize: '12px', color: '#666', marginTop: '10px'}}>
-                Pickup: {new Date(listing.pickupStart).toLocaleDateString()} - {new Date(listing.pickupEnd).toLocaleDateString()}
-              </p>
+              <div style={{marginTop: '15px', borderTop: '1px solid #eee', paddingTop: '10px'}}>
+                <p style={{fontSize: '13px', marginBottom: '8px'}}>
+                  <strong>Pickup Window:</strong>
+                </p>
+                <p style={{fontSize: '12px', color: '#555', marginBottom: '4px'}}>
+                  📅 {new Date(listing.pickupStart).toLocaleDateString()}
+                </p>
+                <p style={{fontSize: '12px', color: '#555', marginBottom: '8px'}}>
+                  🕐 {new Date(listing.pickupStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(listing.pickupEnd).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
+                <p style={{fontSize: '12px', color: '#d32f2f', marginBottom: '0'}}>
+                  ⏰ Expires: {new Date(listing.expiryAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
             </div>
           ))}
         </div>
