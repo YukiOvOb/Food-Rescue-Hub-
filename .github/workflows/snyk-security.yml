@@ -17,7 +17,6 @@ jobs:
       security-events: write
       actions: read
 
-    # ✅ Make token available to ALL steps
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
@@ -25,7 +24,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ✅ Debug step (safe): confirms secret is available
       - name: Check Snyk token exists
         run: |
           if [ -z "$SNYK_TOKEN" ]; then
@@ -36,14 +34,14 @@ jobs:
           fi
 
       - name: Set up Snyk CLI
-        uses: snyk/actions/setup@v4
+        uses: snyk/actions/setup@master
         with:
-          version: latest
+          snyk-version: latest
 
       - name: Snyk Code test (SAST)
         run: snyk code test --sarif > snyk-code.sarif
 
-      - name: Upload Snyk Code SARIF
-        uses: github/codeql-action/upload-sarif@v4
+      - name: Upload Snyk SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: snyk-code.sarif
