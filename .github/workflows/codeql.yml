@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false #safety it ensures all languages runs though any fail
       matrix:
-        language: ['java', 'javascript']
+        language: ['java', 'javascript']  #language: ['java', 'javascript', 'csharp', 'python']
         # CodeQL supported languages: 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby', 'swift'
 
     steps:
