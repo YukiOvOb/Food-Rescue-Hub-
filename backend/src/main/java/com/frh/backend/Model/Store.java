@@ -1,7 +1,8 @@
 package com.frh.backend.Model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
@@ -10,7 +11,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "stores")
-@Data
+@Getter
+@Setter
 public class Store {
 
     // --- Primary Key ---
@@ -27,7 +29,7 @@ public class Store {
     @OneToMany(mappedBy = "store", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Order> orders;
 
-    @OneToOne(mappedBy = "store", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "store", cascade = CascadeType.ALL)
     private Listing listing;
 
     // --- Data Fields ---
@@ -38,7 +40,7 @@ public class Store {
     @Column(name = "description", length = 500)
     private String description;
 
-    @Column(name = "address_line", nullable = false, length = 255)
+    @Column(name = "address_line", nullable = false)
     private String addressLine;
 
     @Column(name = "postal_code", length = 20)

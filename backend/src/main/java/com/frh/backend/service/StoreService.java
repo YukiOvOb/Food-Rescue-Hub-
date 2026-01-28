@@ -3,16 +3,17 @@ package com.frh.backend.service;
 import com.frh.backend.DTO.StoreRequestDTO;
 import com.frh.backend.Model.Store;
 import com.frh.backend.Model.SupplierProfile;
-import com.frh.backend.interfaces.StoreInterface;
 import com.frh.backend.repository.StoreRepository;
 import com.frh.backend.repository.SupplierProfileRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @Transactional
-public class StoreService implements StoreInterface {
+public class StoreService {
 
     @Autowired
     private StoreRepository storeRepository;
@@ -20,7 +21,6 @@ public class StoreService implements StoreInterface {
     @Autowired
     private SupplierProfileRepository supplierProfileRepository;
 
-    @Override
     public Store createStore(StoreRequestDTO dto) {
         // find supplier using Id
         SupplierProfile supplier = supplierProfileRepository.findById(dto.getSupplierId())
@@ -41,4 +41,7 @@ public class StoreService implements StoreInterface {
         return storeRepository.save(store);
     }
 
+    public List<Store> getAllStores() {
+        return storeRepository.findAll();
+    }
 }
