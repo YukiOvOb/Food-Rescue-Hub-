@@ -205,6 +205,7 @@
                 android:id="@+id/rvListings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:minHeight="500dp"
                 android:nestedScrollingEnabled="false"
                 tools:listitem="@layout/item_listing_card" />
 

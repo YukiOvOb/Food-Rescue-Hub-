@@ -158,11 +158,10 @@ class HomeViewModel : ViewModel() {
         }
 
         // Filter by tab (Mystery Boxes vs Regular Items)
-        // For now, we'll consider all items as Mystery Boxes
-        // This can be enhanced based on a flag in the listing model
+        // For now, show all items in both tabs since we don't have a type flag yet
         filtered = when (tabIndex) {
-            0 -> filtered // Mystery Boxes
-            1 -> emptyList() // Regular Items (placeholder)
+            0 -> filtered // Mystery Boxes - show all items
+            1 -> filtered // Regular Items - show all items for now
             else -> filtered
         }
 

@@ -146,7 +146,7 @@ class HomeActivity : AppCompatActivity() {
     private fun setupCategoryChips() {
         val chipMap = mapOf(
             R.id.chipBakery to "Bakery",
-            R.id.chipDessert to "Dessert",
+            R.id.chipDessert to "Coffee Shop",  // Map Dessert chip to Coffee Shop
             R.id.chipCafe to "Cafe",
             R.id.chipLightMeal to "Restaurant",
             R.id.chipAll to "All"
@@ -211,7 +211,9 @@ class HomeActivity : AppCompatActivity() {
                 } else {
                     tvEmptyState.visibility = View.GONE
                     rvListings.visibility = View.VISIBLE
-                    android.util.Log.d("HomeActivity", "Showing listings")
+                    // Force RecyclerView to request layout
+                    rvListings.requestLayout()
+                    android.util.Log.d("HomeActivity", "Showing listings - RecyclerView visibility: ${rvListings.visibility}, height: ${rvListings.height}")
                 }
             } catch (e: Exception) {
                 android.util.Log.e("HomeActivity", "Error displaying listings", e)

@@ -24,12 +24,14 @@ class ListingAdapter(
 ) : ListAdapter<Listing, ListingAdapter.ListingViewHolder>(ListingDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ListingViewHolder {
+        android.util.Log.d("ListingAdapter", "onCreateViewHolder called")
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_listing_card, parent, false)
         return ListingViewHolder(view, onBuyClick)
     }
 
     override fun onBindViewHolder(holder: ListingViewHolder, position: Int) {
+        android.util.Log.d("ListingAdapter", "onBindViewHolder called for position: $position")
         holder.bind(getItem(position))
     }
 
