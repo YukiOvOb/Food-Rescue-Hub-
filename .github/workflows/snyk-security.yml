@@ -26,12 +26,14 @@ jobs:
       - name: Backend - Maven Checkstyle
         run: |
           cd backend
+          chmod +x mvnw
           ./mvnw checkstyle:check || true
         continue-on-error: true
 
       - name: Android - Lint Check
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew lint || true
         continue-on-error: true
 
