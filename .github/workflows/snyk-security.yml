@@ -23,28 +23,10 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package.json
-
       - name: Backend - Maven Checkstyle
         run: |
           cd backend
           ./mvnw checkstyle:check || true
-        continue-on-error: true
-
-      - name: Frontend - Install dependencies
-        run: |
-          cd frontend
-          npm ci
-
-      - name: Frontend - ESLint
-        run: |
-          cd frontend
-          npx eslint src/ --ext .js,.jsx --max-warnings 0 || true
         continue-on-error: true
 
       - name: Android - Lint Check
