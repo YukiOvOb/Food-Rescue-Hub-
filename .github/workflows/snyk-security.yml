@@ -18,7 +18,7 @@ jobs:
       actions: read
 
     env:
-      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }} # added in to github secrets
 
     steps:
       - name: Checkout code
