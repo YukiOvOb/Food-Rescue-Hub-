@@ -1,4 +1,4 @@
-name: Snyk Security
+name: Snyk Security & Lint
 
 on:
   push:
@@ -10,6 +10,49 @@ permissions:
   contents: read
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package.json
+
+      - name: Backend - Maven Checkstyle
+        run: |
+          cd backend
+          ./mvnw checkstyle:check || true
+        continue-on-error: true
+
+      - name: Frontend - Install dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Frontend - ESLint
+        run: |
+          cd frontend
+          npx eslint src/ --ext .js,.jsx --max-warnings 0 || true
+        continue-on-error: true
+
+      - name: Android - Lint Check
+        run: |
+          cd android
+          ./gradlew lint || true
+        continue-on-error: true
+
   snyk:
     runs-on: ubuntu-latest
     permissions:
