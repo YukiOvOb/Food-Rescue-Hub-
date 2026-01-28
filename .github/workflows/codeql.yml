@@ -19,7 +19,7 @@ jobs:
       security-events: write
 
     strategy:
-      fail-fast: false
+      fail-fast: false #safety it ensures all languages runs though any fail
       matrix:
         language: ['java', 'javascript']
         # CodeQL supported languages: 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby', 'swift'
