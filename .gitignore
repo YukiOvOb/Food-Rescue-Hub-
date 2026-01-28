@@ -50,4 +50,14 @@ Desktop.ini
 .env.test.local
 .env.production.local
 
+# Android Studio / Gradle
+**/android/.gradle/
+**/android/build/
+**/android/local.properties
+**/android/.idea/
+**/android/*.iml
+**/android/.externalNativeBuild/
+**/android/.cxx/
+**/android/captures/
+
 application-local.properties
