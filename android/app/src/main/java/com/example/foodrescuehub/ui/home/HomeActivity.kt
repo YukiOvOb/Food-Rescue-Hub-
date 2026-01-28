@@ -3,6 +3,7 @@ package com.example.foodrescuehub.ui.home
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageButton
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
@@ -39,6 +40,7 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var tvEmptyState: TextView
     private lateinit var bottomNavigation: BottomNavigationView
+    private lateinit var btnSortFilter: ImageButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,6 +56,7 @@ class HomeActivity : AppCompatActivity() {
         setupSearchView()
         setupTabLayout()
         setupCategoryChips()
+        setupSortFilterButton()
         setupBottomNavigation()
 
         // Observe ViewModel LiveData
@@ -72,6 +75,7 @@ class HomeActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progressBar)
         tvEmptyState = findViewById(R.id.tvEmptyState)
         bottomNavigation = findViewById(R.id.bottomNavigation)
+        btnSortFilter = findViewById(R.id.btnSortFilter)
     }
 
     /**
@@ -159,6 +163,41 @@ class HomeActivity : AppCompatActivity() {
                 val category = chipMap[selectedChipId] ?: "All"
                 viewModel.filterByCategory(category)
             }
+        }
+    }
+
+    /**
+     * Setup sort and filter button
+     */
+    private fun setupSortFilterButton() {
+        btnSortFilter.setOnClickListener {
+            val currentSort = viewModel.sortOption.value ?: SortOption.NAME_ASC
+            val bottomSheet = SortFilterBottomSheet(currentSort) { sortOption, minPrice, maxPrice ->
+                // Apply sort and filter
+                viewModel.sortBy(sortOption)
+                viewModel.filterByPriceRange(minPrice.toDouble(), maxPrice.toDouble())
+
+                Toast.makeText(
+                    this,
+                    "Applied: ${getSortLabel(sortOption)}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            bottomSheet.show(supportFragmentManager, SortFilterBottomSheet.TAG)
+        }
+    }
+
+    /**
+     * Get display label for sort option
+     */
+    private fun getSortLabel(option: SortOption): String {
+        return when (option) {
+            SortOption.NAME_ASC -> "Name (A-Z)"
+            SortOption.NAME_DESC -> "Name (Z-A)"
+            SortOption.PRICE_LOW_HIGH -> "Price (Low to High)"
+            SortOption.PRICE_HIGH_LOW -> "Price (High to Low)"
+            SortOption.POPULARITY -> "Most Popular"
+            SortOption.DISTANCE -> "Nearest First"
         }
     }
 
