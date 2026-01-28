@@ -16,6 +16,17 @@ public class SupplierProfile {
     @Column(name = "supplier_id", nullable = false)
     private Long supplierId;
 
+    // --- Relationships ---
+
+    /**
+     * One-to-One relationship with StoreType
+     * The StoreType entity owns this relationship (has the foreign key)
+     */
+    @OneToOne(mappedBy = "supplierProfile", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private StoreType storeType;
+
+    // --- Authentication Fields ---
+
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
