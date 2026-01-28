@@ -14,6 +14,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.foodrescuehub.R
 import com.example.foodrescuehub.data.model.Listing
+import com.example.foodrescuehub.data.repository.CartManager
+import com.example.foodrescuehub.ui.cart.CartActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -41,6 +43,8 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var tvEmptyState: TextView
     private lateinit var bottomNavigation: BottomNavigationView
     private lateinit var btnSortFilter: ImageButton
+    private lateinit var btnCart: ImageButton
+    private lateinit var tvCartBadge: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,9 +62,11 @@ class HomeActivity : AppCompatActivity() {
         setupCategoryChips()
         setupSortFilterButton()
         setupBottomNavigation()
+        setupCartButton()
 
         // Observe ViewModel LiveData
         observeViewModel()
+        observeCart()
     }
 
     /**
@@ -76,6 +82,8 @@ class HomeActivity : AppCompatActivity() {
         tvEmptyState = findViewById(R.id.tvEmptyState)
         bottomNavigation = findViewById(R.id.bottomNavigation)
         btnSortFilter = findViewById(R.id.btnSortFilter)
+        btnCart = findViewById(R.id.btnCart)
+        tvCartBadge = findViewById(R.id.tvCartBadge)
     }
 
     /**
@@ -303,5 +311,29 @@ class HomeActivity : AppCompatActivity() {
             }
         }
         startActivity(intent)
+    }
+
+    /**
+     * Setup cart button
+     */
+    private fun setupCartButton() {
+        btnCart.setOnClickListener {
+            val intent = Intent(this, CartActivity::class.java)
+            startActivity(intent)
+        }
+    }
+
+    /**
+     * Observe cart changes
+     */
+    private fun observeCart() {
+        CartManager.itemCount.observe(this) { count ->
+            if (count > 0) {
+                tvCartBadge.visibility = View.VISIBLE
+                tvCartBadge.text = count.toString()
+            } else {
+                tvCartBadge.visibility = View.GONE
+            }
+        }
     }
 }

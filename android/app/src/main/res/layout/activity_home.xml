@@ -20,7 +20,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Header with greeting and notification -->
+            <!-- Header with greeting and cart/notification -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -36,14 +36,36 @@
                     android:textSize="24sp"
                     android:textStyle="bold" />
 
-                <ImageView
-                    android:id="@+id/ivNotification"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                <FrameLayout
+                    android:id="@+id/flCartIcon"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
                     android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:contentDescription="Notifications"
-                    android:src="@android:drawable/ic_popup_reminder" />
+                    android:layout_centerVertical="true">
+
+                    <ImageButton
+                        android:id="@+id/btnCart"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_gravity="center"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Shopping Cart"
+                        android:src="@android:drawable/ic_menu_add"
+                        android:tint="#8BC34A" />
+
+                    <TextView
+                        android:id="@+id/tvCartBadge"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="end|top"
+                        android:background="@android:color/holo_red_light"
+                        android:gravity="center"
+                        android:text="0"
+                        android:textColor="#FFFFFF"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+                </FrameLayout>
             </RelativeLayout>
 
             <!-- Search bar -->

@@ -1,5 +1,6 @@
 package com.example.foodrescuehub.ui.detail
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageButton
@@ -9,7 +10,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.example.foodrescuehub.R
-import com.example.foodrescuehub.data.model.Listing
+import com.example.foodrescuehub.data.model.CartItem
+import com.example.foodrescuehub.data.repository.CartManager
+import com.example.foodrescuehub.ui.cart.CartActivity
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -172,14 +175,40 @@ class ProductDetailActivity : AppCompatActivity() {
         }
 
         btnShare.setOnClickListener {
-            // TODO: Implement share functionality
             Toast.makeText(this, "Share feature coming soon", Toast.LENGTH_SHORT).show()
         }
 
         btnBuyNow.setOnClickListener {
-            // TODO: Navigate to checkout
-            val title = intent.getStringExtra(EXTRA_LISTING_TITLE) ?: "Mystery Box"
-            Toast.makeText(this, "Proceeding to checkout for $title", Toast.LENGTH_SHORT).show()
+            addToCart()
         }
+    }
+
+    private fun addToCart() {
+        val listingId = intent.getLongExtra(EXTRA_LISTING_ID, 0L)
+        val title = intent.getStringExtra(EXTRA_LISTING_TITLE) ?: "Mystery Box"
+        val storeName = intent.getStringExtra(EXTRA_LISTING_STORE_NAME) ?: ""
+        val price = intent.getDoubleExtra(EXTRA_LISTING_PRICE, 0.0)
+        val originalPrice = intent.getDoubleExtra(EXTRA_LISTING_ORIGINAL_PRICE, 0.0)
+        val photoUrl = intent.getStringExtra(EXTRA_LISTING_PHOTO_URL)
+        val qtyAvailable = intent.getIntExtra(EXTRA_LISTING_QTY_AVAILABLE, 10)
+
+        val cartItem = CartItem(
+            listingId = listingId,
+            title = title,
+            storeName = storeName,
+            price = price,
+            originalPrice = originalPrice,
+            photoUrl = photoUrl,
+            quantity = 1,
+            maxQuantity = qtyAvailable.coerceAtMost(10)
+        )
+
+        CartManager.addItem(cartItem)
+
+        Toast.makeText(this, "Added to cart", Toast.LENGTH_SHORT).show()
+
+        // Navigate to cart
+        val intent = Intent(this, CartActivity::class.java)
+        startActivity(intent)
     }
 }
