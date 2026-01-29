@@ -13,7 +13,7 @@ jobs:
   zap_dast:
     runs-on: ubuntu-latest
 
-    steps:
+    steps: #need o downloaded docker compose file
       - name: Checkout
         uses: actions/checkout@v4
 
