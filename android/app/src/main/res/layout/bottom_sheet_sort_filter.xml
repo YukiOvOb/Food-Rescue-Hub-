@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <!-- Header -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="Sort &amp; Filter"
+        android:textColor="#000000"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <!-- Sort Section -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:text="Sort By"
+        android:textColor="#000000"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <RadioGroup
+        android:id="@+id/rgSortOptions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp">
+
+        <RadioButton
+            android:id="@+id/rbNameAsc"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Name (A-Z)"
+            android:textSize="14sp" />
+
+        <RadioButton
+            android:id="@+id/rbNameDesc"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Name (Z-A)"
+            android:textSize="14sp" />
+
+        <RadioButton
+            android:id="@+id/rbPriceLowHigh"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Price (Low to High)"
+            android:textSize="14sp" />
+
+        <RadioButton
+            android:id="@+id/rbPriceHighLow"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Price (High to Low)"
+            android:textSize="14sp" />
+
+        <RadioButton
+            android:id="@+id/rbPopularity"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Most Popular"
+            android:textSize="14sp" />
+
+        <RadioButton
+            android:id="@+id/rbDistance"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Nearest First"
+            android:textSize="14sp" />
+    </RadioGroup>
+
+    <!-- Price Filter Section -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="Price Range"
+        android:textColor="#000000"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="Filter by price range ($0 - $50)"
+        android:textColor="#666666"
+        android:textSize="14sp" />
+
+    <com.google.android.material.slider.RangeSlider
+        android:id="@+id/priceRangeSlider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:valueFrom="0"
+        android:valueTo="50"
+        app:labelBehavior="gone"
+        app:values="@array/initial_price_range" />
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnReset"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:text="Reset"
+            android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/btnApply"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:backgroundTint="#8BC34A"
+            android:text="Apply"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+</LinearLayout>
