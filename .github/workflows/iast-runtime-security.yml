@@ -32,8 +32,9 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: zap-report
-          path: |
-            report_html.html
-            report_md.md
-            report_json.json
+         name: zap-scan
+         path: |
+          report_html.html
+          report_md.md
+          report_json.json
+
