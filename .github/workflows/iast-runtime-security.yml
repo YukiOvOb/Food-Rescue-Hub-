@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
 
 jobs:
   zap:
@@ -21,14 +20,16 @@ jobs:
           curl -I http://47.129.223.141:8080 || true
           curl -I http://47.129.223.141:8080/api/hello || true
 
-      - name: ZAP Baseline Scan (EC2)
-        uses: zaproxy/action-baseline@v0.12.0
-        with:
-          target: "http://47.129.223.141:8080/api/hello"
-          cmd_options: "-a"
-          fail_action: false
-          artifact_name: "zap-scan"          # ✅ prevents invalid zap_scan
-          allow_issue_writing: false         # optional (avoid auto issues)
+      - name: ZAP Baseline Scan (EC2) - manual docker
+        run: |
+          docker pull ghcr.io/zaproxy/zaproxy:stable
+          docker run --rm \
+            -v "${{ github.workspace }}:/zap/wrk/:rw" \
+            --network=host \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py \
+              -t http://47.129.223.141:8080/api/hello \
+              -J report_json.json -w report_md.md -r report_html.html -a
 
       - name: Upload ZAP report
         if: always()
