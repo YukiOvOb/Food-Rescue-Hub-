@@ -24,17 +24,18 @@ jobs:
       - name: ZAP Baseline Scan (EC2)
         uses: zaproxy/action-baseline@v0.12.0
         with:
-          target: "http://47.129.223.141:8080/api/hello"   # CHANGE to your 200 OK endpoint
+          target: "http://47.129.223.141:8080/api/hello"
           cmd_options: "-a"
           fail_action: false
+          artifact_name: "zap-scan"          # ✅ prevents invalid zap_scan
+          allow_issue_writing: false         # optional (avoid auto issues)
 
       - name: Upload ZAP report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-         name: zap-scan
-         path: |
-          report_html.html
-          report_md.md
-          report_json.json
-
+          name: zap-scan
+          path: |
+            report_html.html
+            report_md.md
+            report_json.json
