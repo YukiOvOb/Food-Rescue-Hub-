@@ -31,14 +31,11 @@ public class AdminProfile {
     @Column(name = "role", nullable = false, length = 20)
     private String role = "ADMIN";
 
-@Column(name = "status", nullable = false, length = 20)
-private  String status = "ACTIVE";
+    @Column(name = "status", nullable = false, length = 20)
+    private  String status = "ACTIVE";
 
-@CreationTimestamp
-@Column(name = "created_at", nullable = false, updatable = false)
-private LocalDateTime createdAt;
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", unique = true)
-    private User user;
 }
