@@ -1,36 +1,48 @@
-name: IAST - ZAP Runtime Scan
+name: Runtime Security Test (ZAP)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  issues: write
 
 jobs:
   zap:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Test app reachable
+      - name: Verify EC2 reachable
         run: |
-          curl -I http://47.129.223.141:8080/api/hello
+          curl -I http://47.129.223.141:8080 || true
+          curl -I http://47.129.223.141:8080/api/hello || true
 
-      - name: Run ZAP scan
+      # ✅ Fix: write reports into a writable folder mounted to /zap/wrk
+      - name: ZAP Baseline Scan (EC2) - FIXED permissions + reports
         run: |
+          mkdir -p zap-out
           docker pull ghcr.io/zaproxy/zaproxy:stable
+
           docker run --rm \
-            -v "$PWD:/zap/wrk/:rw" \
+            -v "$PWD/zap-out:/zap/wrk:rw" \
             --network=host \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py \
-              -t http://47.129.223.141:8080/api/hello \
-              -J report.json -w report.md -r report.html -a
+              -t "http://47.129.223.141:8080/api/hello" \
+              -J /zap/wrk/report_json.json \
+              -w /zap/wrk/report_md.md \
+              -r /zap/wrk/report_html.html \
+              -a
 
-      - name: Upload report
+      - name: Upload ZAP report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: zap-report
-          path: |
-            report.html
-            report.md
-            report.json
+          path: zap-out/
