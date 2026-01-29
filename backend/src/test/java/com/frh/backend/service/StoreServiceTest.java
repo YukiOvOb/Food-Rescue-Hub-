@@ -1,6 +1,6 @@
 package com.frh.backend.service;
 
-import com.frh.backend.DTO.StoreRequestDTO;
+import com.frh.backend.dto.StoreRequest;
 import com.frh.backend.Model.Store;
 import com.frh.backend.Model.SupplierProfile;
 import com.frh.backend.repository.StoreRepository;
@@ -36,7 +36,7 @@ public class StoreServiceTest {
         Long supplierId = 1L;
 
         // The DTO we send in
-        StoreRequestDTO dto = new StoreRequestDTO();
+        StoreRequest dto = new StoreRequest();
         dto.setSupplierId(supplierId);
         dto.setStoreName("Test Bakery");
         dto.setLat(new BigDecimal("1.29"));

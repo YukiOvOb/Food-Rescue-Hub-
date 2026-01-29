@@ -1,6 +1,6 @@
 package com.frh.backend.controller;
 
-import com.frh.backend.DTO.StoreRequestDTO;
+import com.frh.backend.dto.StoreRequest;
 import com.frh.backend.Model.Store;
 import com.frh.backend.service.StoreService;
 import jakarta.validation.Valid;
@@ -20,7 +20,7 @@ public class StoreController {
     private StoreService storeService;
 
     @PostMapping("/create")
-    public ResponseEntity<Store> createNewStore(@Valid @RequestBody StoreRequestDTO request){
+    public ResponseEntity<Store> createNewStore(@Valid @RequestBody StoreRequest request){
         Store newStore = storeService.createStore(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(newStore);
     }

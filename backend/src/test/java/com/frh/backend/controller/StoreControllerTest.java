@@ -1,6 +1,6 @@
 package com.frh.backend.controller;
 
-import com.frh.backend.DTO.StoreRequestDTO;
+import com.frh.backend.dto.StoreRequest;
 import com.frh.backend.Model.Store;
 import com.frh.backend.service.StoreService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +34,7 @@ public class StoreControllerTest {
     private final ObjectMapper objectMapper = new ObjectMapper(); // 4. Tool to convert Objects <-> JSON string
 
     private Store sampleStore;
-    private StoreRequestDTO sampleRequest;
+    private StoreRequest sampleRequest;
 
     @BeforeEach
     void setUp() {
@@ -46,7 +46,7 @@ public class StoreControllerTest {
         sampleStore.setLat(new BigDecimal("1.3521"));
         sampleStore.setLng(new BigDecimal("103.8198"));
 
-        sampleRequest = new StoreRequestDTO();
+        sampleRequest = new StoreRequest();
         sampleRequest.setStoreName("Bakery");
         sampleRequest.setAddressLine("123 NUS Road");
         sampleRequest.setLat(new BigDecimal("1.3521"));
@@ -60,7 +60,7 @@ public class StoreControllerTest {
     void shouldCreateNewStore() throws Exception {
         // A. Given (Mock the service behavior)
         // When service.createStore is called, return the sampleStore
-        given(storeService.createStore(any(StoreRequestDTO.class))).willReturn(sampleStore);
+        given(storeService.createStore(any(StoreRequest.class))).willReturn(sampleStore);
 
         // B. When & Then (Perform the Fake Request)
         mockMvc.perform(post("/api/stores/create")
@@ -91,7 +91,7 @@ public class StoreControllerTest {
     @Test
     void shouldReturn400_WhenStoreNameIsEmpty() throws Exception {
         // Create an invalid request (missing name)
-        StoreRequestDTO invalidRequest = new StoreRequestDTO();
+        StoreRequest invalidRequest = new StoreRequest();
         invalidRequest.setAddressLine("Somewhere");
         // Name is null!
 

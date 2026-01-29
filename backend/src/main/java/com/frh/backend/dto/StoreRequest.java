@@ -1,4 +1,4 @@
-package com.frh.backend.DTO;
+package com.frh.backend.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class StoreRequestDTO {
+public class StoreRequest {
 
     @NotNull(message = "Supplier ID cannot be null")
     @Schema(description = "ID of the user/supplier creating the store", example = "5")
