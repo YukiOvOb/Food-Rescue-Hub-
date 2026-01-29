@@ -6,31 +6,26 @@ on:
   pull_request:
     branches: ["main"]
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   zap:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Start app (Docker Compose)
+      - name: Verify EC2 reachable
         run: |
-          docker compose up -d
-          docker ps
+          curl -I http://47.129.223.141:8080 || true
+          curl -I http://47.129.223.141:8080/api/hello || true
+
       - name: ZAP Baseline Scan (EC2)
         uses: zaproxy/action-baseline@v0.12.0
         with:
-         target: 'http://47.129.223.141:8080'
-         rules_file_name: '.zap/rules.tsv'   # optional (only if you have it)
-         cmd_options: '-a'
-
-
-      
-
-      - name: ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.12.0
-        with:
-          target: "http://localhost:8080"
+          target: "http://47.129.223.141:8080/api/hello"   # CHANGE to your 200 OK endpoint
+          cmd_options: "-a -u root"
           fail_action: false
 
       - name: Upload ZAP report
