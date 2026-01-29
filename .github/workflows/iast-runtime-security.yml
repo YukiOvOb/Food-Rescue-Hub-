@@ -25,7 +25,7 @@ jobs:
         uses: zaproxy/action-baseline@v0.12.0
         with:
           target: "http://47.129.223.141:8080/api/hello"   # CHANGE to your 200 OK endpoint
-          cmd_options: "-a -u root"
+          cmd_options: "-a"
           fail_action: false
 
       - name: Upload ZAP report
