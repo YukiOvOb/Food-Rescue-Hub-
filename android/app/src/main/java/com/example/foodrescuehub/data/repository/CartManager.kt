@@ -109,6 +109,14 @@ object CartManager {
         updateTotals()
     }
 
+    /**
+     * Called by AuthManager when user logs out
+     * Internal method to clear cart
+     */
+    internal fun clearCartForLogout() {
+        clearCart()
+    }
+
     fun getItemCount(): Int {
         return _cartItems.value?.sumOf { it.quantity } ?: 0
     }

@@ -14,8 +14,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.foodrescuehub.R
 import com.example.foodrescuehub.data.model.Listing
+import com.example.foodrescuehub.data.repository.AuthManager
 import com.example.foodrescuehub.data.repository.CartManager
 import com.example.foodrescuehub.ui.cart.CartActivity
+import com.example.foodrescuehub.ui.profile.ProfileActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -49,6 +51,9 @@ class HomeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
+
+        // Initialize AuthManager
+        AuthManager.initialize(applicationContext)
 
         // Initialize ViewModel
         viewModel = ViewModelProvider(this)[HomeViewModel::class.java]
@@ -230,7 +235,9 @@ class HomeActivity : AppCompatActivity() {
                     false
                 }
                 R.id.nav_profile -> {
-                    Toast.makeText(this, "Profile feature coming soon", Toast.LENGTH_SHORT).show()
+                    // Navigate to ProfileActivity
+                    val intent = Intent(this, ProfileActivity::class.java)
+                    startActivity(intent)
                     false
                 }
                 else -> false

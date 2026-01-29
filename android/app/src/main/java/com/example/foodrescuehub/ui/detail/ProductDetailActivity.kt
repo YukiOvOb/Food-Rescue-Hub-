@@ -11,8 +11,11 @@ import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.example.foodrescuehub.R
 import com.example.foodrescuehub.data.model.CartItem
+import com.example.foodrescuehub.data.repository.AuthManager
 import com.example.foodrescuehub.data.repository.CartManager
+import com.example.foodrescuehub.ui.auth.LoginActivity
 import com.example.foodrescuehub.ui.cart.CartActivity
+import com.example.foodrescuehub.ui.dialog.LoginPromptDialog
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -184,6 +187,15 @@ class ProductDetailActivity : AppCompatActivity() {
     }
 
     private fun addToCart() {
+        // Check if user is logged in
+        if (!AuthManager.isUserLoggedIn()) {
+            LoginPromptDialog.show(this) {
+                val intent = Intent(this, LoginActivity::class.java)
+                startActivity(intent)
+            }
+            return
+        }
+
         val listingId = intent.getLongExtra(EXTRA_LISTING_ID, 0L)
         val title = intent.getStringExtra(EXTRA_LISTING_TITLE) ?: "Mystery Box"
         val storeName = intent.getStringExtra(EXTRA_LISTING_STORE_NAME) ?: ""

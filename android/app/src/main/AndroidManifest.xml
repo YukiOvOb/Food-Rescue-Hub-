@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
+        android:name=".FoodRescueHubApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -33,6 +34,16 @@
             android:name=".ui.cart.CartActivity"
             android:exported="false"
             android:label="Shopping Cart" />
+        <activity
+            android:name=".ui.auth.LoginActivity"
+            android:exported="false"
+            android:theme="@style/Theme.FoodRescueHub"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.profile.ProfileActivity"
+            android:exported="false"
+            android:theme="@style/Theme.FoodRescueHub"
+            android:parentActivityName=".ui.home.HomeActivity" />
         <activity
             android:name=".MainActivity"
             android:exported="false" />
