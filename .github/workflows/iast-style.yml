@@ -21,11 +21,13 @@ jobs:
       - name: Start app (docker compose)
         run: |
           docker compose up -d --build
+          docker compose ps
           docker ps
 
       # 2) Wait until backend is up (change URL if needed)
       - name: Wait for backend
         run: |
+          set -e
           for i in {1..60}; do
             code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/hello || true)
             if [ "$code" = "200" ]; then
@@ -36,65 +38,105 @@ jobs:
             sleep 2
           done
           echo "Backend did not become ready"
+          docker compose logs --no-color || true
           exit 1
 
       # 3) Run basic attack payloads (customize endpoints)
       - name: Run security payloads (basic)
         run: |
           set +e
-          mkdir -p security-out
+          mkdir -p security-out/responses
 
-          # SQLi-like payload examples (change endpoints to your real ones)
-          curl -s -i "http://localhost:8080/api/hello?x=' OR '1'='1" | tee security-out/sqli1.txt
-          curl -s -i "http://localhost:8080/api/hello?x=1;DROP TABLE users" | tee security-out/sqli2.txt
-
-          # XSS-like payload
-          curl -s -i "http://localhost:8080/api/hello?name=<script>alert(1)</script>" | tee security-out/xss1.txt
-
-          # Path traversal-like payload
-          curl -s -i "http://localhost:8080/api/hello?file=../../etc/passwd" | tee security-out/traversal1.txt
+          # NOTE: Change endpoints to REAL endpoints which accept params.
+          # If /api/hello ignores params, these tests won't trigger anything.
+          curl -s -i "http://localhost:8080/api/hello?x=' OR '1'='1" | tee security-out/responses/sqli1.txt
+          curl -s -i "http://localhost:8080/api/hello?x=1;DROP TABLE users" | tee security-out/responses/sqli2.txt
+          curl -s -i "http://localhost:8080/api/hello?name=<script>alert(1)</script>" | tee security-out/responses/xss1.txt
+          curl -s -i "http://localhost:8080/api/hello?file=../../etc/passwd" | tee security-out/responses/traversal1.txt
 
           exit 0
 
-      # 4) Capture runtime logs (this is the "IAST-style" visibility)
-      - name: Collect backend logs
+      # 4) Collect runtime logs (auto-detect compose containers)
+      - name: Collect service logs
         if: always()
         run: |
-          mkdir -p security-out
-          # replace container name if different
-          docker logs frh-backend > security-out/backend.log 2>&1 || true
-          docker logs frh-mysql   > security-out/mysql.log 2>&1 || true
+          set +e
+          mkdir -p security-out/logs
 
-      # 5) Fail build if runtime shows dangerous patterns
-      - name: Evaluate runtime findings
+          # Save compose logs (best overall view)
+          docker compose logs --no-color > security-out/logs/compose.log 2>&1 || true
+
+          # Also save per-container logs (if possible)
+          docker ps --format '{{.Names}}' > security-out/logs/containers.txt || true
+          while read -r c; do
+            [ -z "$c" ] && continue
+            docker logs "$c" > "security-out/logs/${c}.log" 2>&1 || true
+          done < security-out/logs/containers.txt
+
+      # 5) Evaluate findings (HIGH-SIGNAL only)
+      - name: Evaluate runtime findings (high-signal)
         run: |
           set -e
-          echo "Scanning logs for risky patterns..."
+          echo "Evaluating runtime findings (high-signal only)..."
 
-          patterns=(
-            "Exception"
-            "Stacktrace"
-            "SQLException"
+          # ---- High-signal patterns in LOGS (not generic 'Exception') ----
+          # These indicate possible injection, stacktrace leakage, or security failures.
+          log_patterns=(
             "SQLSyntaxErrorException"
-            "HibernateException"
-            "NullPointerException"
-            "org.springframework.web"
+            "syntax error.*SQL"
+            "You have an error in your SQL syntax"
+            "ORA-[0-9]{5}"
+            "org\\.hibernate\\.exception\\.SQLGrammarException"
+            "could not extract ResultSet"
+            "PreparedStatement"
+            "JDBCException"
+            "AccessDeniedException"
+            "Invalid CSRF token"
+            "Forbidden.*CSRF"
+            "path traversal"
+            "Directory traversal"
+            "java\\.io\\.FileNotFoundException: .*\\.(env|properties|yml|yaml)"
+          )
+
+          # ---- High-signal patterns in HTTP RESPONSES ----
+          # This catches stack traces or error leakage back to the client.
+          resp_patterns=(
+            "Exception in thread"
+            "Whitelabel Error Page"
+            "org\\.springframework\\."
+            "java\\.lang\\."
+            "at .*\\(.*\\.java:[0-9]+\\)"
+            "SQLSyntaxErrorException"
+            "You have an error in your SQL syntax"
+            "root:x:0:0:"   # /etc/passwd content leak indicator
           )
 
           found=0
-          for p in "${patterns[@]}"; do
-            if grep -Rni "$p" security-out/backend.log >/dev/null 2>&1; then
-              echo "FOUND pattern: $p"
+
+          echo "Scanning LOGS..."
+          for p in "${log_patterns[@]}"; do
+            if grep -RniE "$p" security-out/logs >/dev/null 2>&1; then
+              echo "FOUND in logs: $p"
+              grep -RniE "$p" security-out/logs | head -n 20 || true
+              found=1
+            fi
+          done
+
+          echo "Scanning HTTP RESPONSES..."
+          for p in "${resp_patterns[@]}"; do
+            if grep -RniE "$p" security-out/responses >/dev/null 2>&1; then
+              echo "FOUND in responses: $p"
+              grep -RniE "$p" security-out/responses | head -n 20 || true
               found=1
             fi
           done
 
           if [ "$found" -eq 1 ]; then
-            echo "Runtime security signals detected (IAST-style). Failing build."
+            echo "High-signal runtime security indicators detected. Failing build."
             exit 1
           fi
 
-          echo "No high-risk runtime patterns detected."
+          echo "No high-signal runtime indicators detected."
 
       # 6) Upload evidence
       - name: Upload IAST-style artifacts
