@@ -1,5 +1,30 @@
 import React, { useEffect, useState } from 'react';
 
+const cardStyle = {
+  backgroundColor: '#fff',
+  borderRadius: '14px',
+  boxShadow: '0 10px 30px rgba(31, 41, 55, 0.08)',
+  padding: '20px',
+  border: '1px solid #e5e7eb'
+};
+
+const pillPrimary = {
+  padding: '10px 16px',
+  backgroundColor: '#6366f1',
+  color: '#fff',
+  border: 'none',
+  borderRadius: '10px',
+  cursor: 'pointer',
+  fontWeight: 600,
+  fontSize: '14px'
+};
+
+const pillSubtle = {
+  ...pillPrimary,
+  backgroundColor: '#e5e7eb',
+  color: '#111827'
+};
+
 export default function ListingsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [listings, setListings] = useState([]);
@@ -16,7 +41,13 @@ export default function ListingsPage() {
   const [errors, setErrors] = useState([]);
 
   // ----- helpers for datetime formatting -----
-  const todayStr = () => new Date().toISOString().split('T')[0]; // "yyyy-MM-dd"
+  // Local date string (avoids UTC shift from toISOString)
+  const todayStr = () => {
+    const d = new Date();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${mm}-${dd}`; // yyyy-MM-dd in local time
+  };
 
   const withSeconds = (timeStr) =>
     timeStr && timeStr.length === 5 ? `${timeStr}:00` : timeStr; // "HH:MM" -> "HH:MM:00"
@@ -24,12 +55,15 @@ export default function ListingsPage() {
   const normalizeDateTimeLocal = (dt) =>
     dt && dt.length === 16 ? `${dt}:00` : dt; // "yyyy-MM-ddTHH:MM" -> "yyyy-MM-ddTHH:MM:00"
 
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8081/api';
+  const supplierBase = `${apiBase}/supplier`;
+
   useEffect(() => {
     fetchListings();
   }, []);
 
   const fetchListings = () => {
-    fetch('/api/listings')
+    fetch(`${supplierBase}/listings`)
       .then((r) => {
         if (!r.ok) throw new Error('network');
         return r.json();
@@ -132,7 +166,7 @@ export default function ListingsPage() {
     };
 
     // Backend expects storeId as query param, not inside the JSON body.
-    const url = `/api/listings?storeId=${encodeURIComponent(formData.storeId)}`;
+    const url = `${supplierBase}/listings?storeId=${encodeURIComponent(formData.storeId)}`;
 
     fetch(url, {
       method: 'POST',
@@ -182,35 +216,25 @@ export default function ListingsPage() {
   const timeErrors = getTimeErrors();
 
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif', padding: 24, maxWidth: 1200, margin: '0 auto' }}>
-      <h1>Food Rescue Hub - Listings</h1>
+    <div style={{ fontFamily: 'Inter, "Segoe UI", sans-serif', padding: 24, maxWidth: 1200, margin: '0 auto', background: '#f5f7fb', minHeight: '100vh' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <div>
+          <p style={{ margin: 0, color: '#6b7280', fontSize: 12 }}>Supplier</p>
+          <h1 style={{ margin: 0, color: '#0f172a' }}>Listings</h1>
+        </div>
+        {!showCreateForm && (
+          <button style={pillPrimary} onClick={() => setShowCreateForm(true)}>
+            + Create Listing
+          </button>
+        )}
+      </div>
 
-      {!showCreateForm ? (
-        <button
-          onClick={() => setShowCreateForm(true)}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '16px',
-            marginBottom: '20px'
-          }}
-        >
-          Create Listing
-        </button>
-      ) : (
-        <div
-          style={{
-            backgroundColor: '#f5f5f5',
-            padding: '20px',
-            borderRadius: '4px',
-            marginBottom: '20px'
-          }}
-        >
-          <h2>Create New Listing</h2>
+      {showCreateForm && (
+        <div style={{ ...cardStyle, marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h2 style={{ margin: 0 }}>Create New Listing</h2>
+            <button type="button" style={pillSubtle} onClick={() => setShowCreateForm(false)}>Cancel</button>
+          </div>
           <form onSubmit={handleSubmit}>
             {errors.length > 0 && (
               <div
@@ -238,9 +262,9 @@ export default function ListingsPage() {
                 required
                 style={{
                   width: '100%',
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid #ccc',
+                  padding: '10px',
+                  borderRadius: '10px',
+                  border: '1px solid #d1d5db',
                   boxSizing: 'border-box'
                 }}
               />
@@ -256,9 +280,9 @@ export default function ListingsPage() {
                 required
                 style={{
                   width: '100%',
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid #ccc',
+                  padding: '10px',
+                  borderRadius: '10px',
+                  border: '1px solid #d1d5db',
                   boxSizing: 'border-box'
                 }}
               />
@@ -272,9 +296,9 @@ export default function ListingsPage() {
                 onChange={handleChange}
                 style={{
                   width: '100%',
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid #ccc',
+                  padding: '10px',
+                  borderRadius: '10px',
+                  border: '1px solid #d1d5db',
                   boxSizing: 'border-box',
                   minHeight: '80px'
                 }}
@@ -296,13 +320,13 @@ export default function ListingsPage() {
                     required
                     style={{
                       width: '100%',
-                      padding: '8px 8px 8px 25px',
-                      borderRadius: '4px',
-                      border: priceErrors.length > 0 ? '2px solid red' : '1px solid #ccc',
+                      padding: '10px 10px 10px 26px',
+                      borderRadius: '10px',
+                      border: priceErrors.length > 0 ? '2px solid red' : '1px solid #d1d5db',
                       boxSizing: 'border-box'
                     }}
                   />
-                  <span style={{ position: 'absolute', left: '8px', top: '8px' }}>$</span>
+                  <span style={{ position: 'absolute', left: '10px', top: '10px', color: '#9ca3af' }}>$</span>
                 </div>
               </div>
 
@@ -320,13 +344,13 @@ export default function ListingsPage() {
                     required
                     style={{
                       width: '100%',
-                      padding: '8px 8px 8px 25px',
-                      borderRadius: '4px',
-                      border: priceErrors.length > 0 ? '2px solid red' : '1px solid #ccc',
+                      padding: '10px 10px 10px 26px',
+                      borderRadius: '10px',
+                      border: priceErrors.length > 0 ? '2px solid red' : '1px solid #d1d5db',
                       boxSizing: 'border-box'
                     }}
                   />
-                  <span style={{ position: 'absolute', left: '8px', top: '8px' }}>$</span>
+                  <span style={{ position: 'absolute', left: '10px', top: '10px', color: '#9ca3af' }}>$</span>
                 </div>
               </div>
             </div>
@@ -388,9 +412,9 @@ export default function ListingsPage() {
                   required
                   style={{
                     width: '100%',
-                    padding: '8px',
-                    borderRadius: '4px',
-                    border: '1px solid #ccc',
+                    padding: '10px',
+                    borderRadius: '10px',
+                    border: '1px solid #d1d5db',
                     boxSizing: 'border-box'
                   }}
                 />
@@ -406,9 +430,9 @@ export default function ListingsPage() {
                   required
                   style={{
                     width: '100%',
-                    padding: '8px',
-                    borderRadius: '4px',
-                    border: '1px solid #ccc',
+                    padding: '10px',
+                    borderRadius: '10px',
+                    border: '1px solid #d1d5db',
                     boxSizing: 'border-box'
                   }}
                 />
@@ -424,9 +448,9 @@ export default function ListingsPage() {
                   required
                   style={{
                     width: '100%',
-                    padding: '8px',
-                    borderRadius: '4px',
-                    border: '1px solid #ccc',
+                    padding: '10px',
+                    borderRadius: '10px',
+                    border: '1px solid #d1d5db',
                     boxSizing: 'border-box'
                   }}
                 />
@@ -434,33 +458,10 @@ export default function ListingsPage() {
             </div>
 
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                type="submit"
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '16px'
-                }}
-              >
+              <button type="submit" style={pillPrimary}>
                 Create
               </button>
-              <button
-                type="button"
-                onClick={() => setShowCreateForm(false)}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#f44336',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '16px'
-                }}
-              >
+              <button type="button" onClick={() => setShowCreateForm(false)} style={pillSubtle}>
                 Cancel
               </button>
             </div>
@@ -468,52 +469,35 @@ export default function ListingsPage() {
         </div>
       )}
 
-      <h2>All Listings</h2>
+      <h2 style={{ marginTop: 10, marginBottom: 10, color: '#0f172a' }}>All Listings</h2>
       {listings.length === 0 ? (
-        <p>No listings found.</p>
+        <div style={{ ...cardStyle, textAlign: 'center', color: '#6b7280' }}>
+          No listings found.
+        </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
           {listings.map((listing) => (
-            <div
-              key={listing.listingId || listing.id}
-              style={{
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                padding: '15px',
-                backgroundColor: '#fff'
-              }}
-            >
-              <h3>{listing.title}</h3>
-              {listing.description && <p>{listing.description}</p>}
-              <div style={{ marginTop: '10px' }}>
-                <p>
-                  <strong>Original Price:</strong> ${listing.originalPrice}
-                </p>
-                <p>
-                  <strong>Rescue Price:</strong> ${listing.rescuePrice}
-                </p>
+            <div key={listing.listingId || listing.id} style={{ ...cardStyle, padding: 18 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0 }}>{listing.title}</h3>
+                <span style={{ background: '#ecfdf3', color: '#166534', padding: '4px 10px', borderRadius: '999px', fontSize: 12 }}>
+                  {listing.status || 'ACTIVE'}
+                </span>
               </div>
-              <div style={{ marginTop: '15px', borderTop: '1px solid #eee', paddingTop: '10px' }}>
-                <p style={{ fontSize: '13px', marginBottom: '8px' }}>
-                  <strong>Pickup Window:</strong>
-                </p>
-                <p style={{ fontSize: '12px', color: '#555', marginBottom: '4px' }}>
-                  📅 {new Date(listing.pickupStart).toLocaleDateString()}
-                </p>
-                <p style={{ fontSize: '12px', color: '#555', marginBottom: '8px' }}>
-                  🕐{' '}
-                  {new Date(listing.pickupStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -{' '}
-                  {new Date(listing.pickupEnd).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </p>
-                <p style={{ fontSize: '12px', color: '#d32f2f', marginBottom: '0' }}>
-                  ⏰ Expires:{' '}
-                  {new Date(listing.expiryAt).toLocaleString([], {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
+              {listing.description && <p style={{ color: '#4b5563' }}>{listing.description}</p>}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
+                <div>
+                  <div style={{ color: '#6b7280', fontSize: 12 }}>Original</div>
+                  <div style={{ fontWeight: 700 }}>${listing.originalPrice}</div>
+                </div>
+                <div>
+                  <div style={{ color: '#6b7280', fontSize: 12 }}>Rescue</div>
+                  <div style={{ fontWeight: 700, color: '#16a34a' }}>${listing.rescuePrice}</div>
+                </div>
+              </div>
+              <div style={{ marginTop: 12, borderTop: '1px solid #e5e7eb', paddingTop: 10, color: '#4b5563', fontSize: 13 }}>
+                <div>Pickup: {new Date(listing.pickupStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(listing.pickupEnd).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                <div>Expires: {new Date(listing.expiryAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
               </div>
             </div>
           ))}

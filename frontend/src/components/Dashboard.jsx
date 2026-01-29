@@ -40,6 +40,8 @@ const Dashboard = () => {
     }
   };
 
+  const goToListings = () => navigate('/listings');
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -119,6 +121,12 @@ const Dashboard = () => {
             <h3>Customers</h3>
             <p>Manage customer relationships</p>
             <button className="btn-card">View Customers</button>
+          </div>
+          <div className="card">
+            <div className="card-icon">🧺</div>
+            <h3>Listings</h3>
+            <p>Create and manage rescue listings</p>
+            <button className="btn-card" onClick={goToListings}>Create Listing</button>
           </div>
         </div>
 
