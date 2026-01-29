@@ -24,6 +24,8 @@ jobs:
           if [ -z "$SNYK_TOKEN" ]; then
             echo "SNYK_TOKEN is NOT set"
             exit 1
+          else
+            echo "SNYK_TOKEN is set"
           fi
 
       - name: Set up Java 17
@@ -42,21 +44,48 @@ jobs:
         with:
           snyk-version: latest
 
-      - name: Snyk SCA - Backend (Maven)
+      # -------------------------
+      # Backend SCA (Maven)
+      # -------------------------
+      - name: Backend Maven sanity check (dependency tree)
+        working-directory: backend
         run: |
-          cd backend
-          snyk test --file=pom.xml --severity-threshold=high
+          # Ensure wrapper is executable
+          chmod +x ./mvnw
+
+          # This is what Snyk needs internally
+          ./mvnw dependency:tree -DoutputType=dot --batch-mode --non-recursive --file pom.xml
+
+      - name: Snyk SCA - Backend (Maven)
+        working-directory: backend
+        run: |
+          snyk test --file=pom.xml --package-manager=maven --severity-threshold=high
+
+      # -------------------------
+      # Frontend SCA (npm)
+      # -------------------------
+      - name: Install frontend dependencies (recommended)
+        working-directory: frontend
+        run: npm ci
 
       - name: Snyk SCA - Frontend (npm)
+        working-directory: frontend
         run: |
-          cd frontend
           snyk test --severity-threshold=high
 
+      # -------------------------
+      # Save reports (JSON)
+      # -------------------------
       - name: Save JSON reports
         if: always()
         run: |
+          # Backend JSON
           cd backend
-          snyk test --file=pom.xml --json > ../snyk-backend-sca.json || true
+          chmod +x ./mvnw
+          ./mvnw dependency:tree -DoutputType=dot --batch-mode --non-recursive --file pom.xml
+          snyk test --file=pom.xml --package-manager=maven --json > ../snyk-backend-sca.json || true
+
+          # Frontend JSON
           cd ../frontend
           snyk test --json > ../snyk-frontend-sca.json || true
 
