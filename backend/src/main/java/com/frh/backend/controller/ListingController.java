@@ -5,7 +5,6 @@ import com.frh.backend.Model.Store;
 import com.frh.backend.repository.ListingRepository;
 import com.frh.backend.repository.StoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -16,7 +15,8 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/listings")
+// changed to this route to avoid conflict with ConsumerListingController 
+@RequestMapping("/api/supplier/listings")
 public class ListingController {
 
     @Autowired
@@ -27,7 +27,7 @@ public class ListingController {
 
     // ==========================================
     // CREATE
-    // expects: POST /api/listings?storeId=1
+    // expects: POST /api/supplier/listings?storeId=1
     // body: Listing JSON (title, prices, pickupStart, pickupEnd, expiryAt, ...)
     // ==========================================
 @PostMapping
