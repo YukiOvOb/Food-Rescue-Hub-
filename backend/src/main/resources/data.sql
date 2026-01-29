@@ -5,28 +5,28 @@
 -- note that it will be populated inside ec2 server upon running
 -- Note: Fields with @CreationTimestamp and @UpdateTimestamp are auto-generated
 
--- Reset tables for deterministic seeding
-SET FOREIGN_KEY_CHECKS=0;
-TRUNCATE TABLE pickup_feedback;
-TRUNCATE TABLE pickup_tokens;
-TRUNCATE TABLE payments;
-TRUNCATE TABLE commission_ledger;
-TRUNCATE TABLE order_items;
-TRUNCATE TABLE orders;
-TRUNCATE TABLE listing_dietary_tags;
-TRUNCATE TABLE listing_photos;
-TRUNCATE TABLE inventory;
-TRUNCATE TABLE listings;
-TRUNCATE TABLE store_types;
-TRUNCATE TABLE stores;
-TRUNCATE TABLE payouts;
-TRUNCATE TABLE wallet_transactions;
-TRUNCATE TABLE wallets;
-TRUNCATE TABLE admin_profiles;
-TRUNCATE TABLE supplier_profiles;
-TRUNCATE TABLE consumer_profiles;
-TRUNCATE TABLE dietary_tags;
-SET FOREIGN_KEY_CHECKS=1;
+-- Reset tables for deterministic seeding (commented out - using ddl-auto=create instead)
+-- SET FOREIGN_KEY_CHECKS=0;
+-- TRUNCATE TABLE pickup_feedback;
+-- TRUNCATE TABLE pickup_tokens;
+-- TRUNCATE TABLE payments;
+-- TRUNCATE TABLE commission_ledger;
+-- TRUNCATE TABLE order_items;
+-- TRUNCATE TABLE orders;
+-- TRUNCATE TABLE listing_dietary_tags;
+-- TRUNCATE TABLE listing_photos;
+-- TRUNCATE TABLE inventory;
+-- TRUNCATE TABLE listings;
+-- TRUNCATE TABLE store_types;
+-- TRUNCATE TABLE stores;
+-- TRUNCATE TABLE payouts;
+-- TRUNCATE TABLE wallet_transactions;
+-- TRUNCATE TABLE wallets;
+-- TRUNCATE TABLE admin_profiles;
+-- TRUNCATE TABLE supplier_profiles;
+-- TRUNCATE TABLE consumer_profiles;
+-- TRUNCATE TABLE dietary_tags;
+-- SET FOREIGN_KEY_CHECKS=1;
 
 INSERT INTO dietary_tags (tag_name) VALUES
 ('Vegetarian'),
@@ -55,12 +55,12 @@ INSERT INTO consumer_profiles (email, password, phone, display_name, status, rol
 -- ============================================
 -- 3. SUPPLIER_PROFILES
 -- ============================================
-INSERT INTO supplier_profiles (email, password, phone, display_name, status, role, company_name, uen_number, created_at) VALUES
-('bakery@breadtalk.sg', 'password123', '+6562345678', 'BreadTalk Manager', 'ACTIVE', 'SUPPLIER', 'BreadTalk Singapore Pte Ltd', '199906055C', NOW()),
-('cafe@toastbox.sg', 'password123', '+6562345679', 'Toast Box Manager', 'ACTIVE', 'SUPPLIER', 'Toast Box Pte Ltd', '200312345A', NOW()),
-('restaurant@paradise.sg', 'password123', '+6562345680', 'Paradise Dynasty Manager', 'ACTIVE', 'SUPPLIER', 'Paradise Group (Singapore) Pte Ltd', '200312345B', NOW()),
-('market@fairprice.sg', 'password123', '+6562345681', 'FairPrice Manager', 'ACTIVE', 'SUPPLIER', 'FairPrice Singapore', '196400121H', NOW()),
-('cafe@starbucks.sg', 'password123', '+6562345682', 'Starbucks Manager', 'ACTIVE', 'SUPPLIER', 'Starbucks Coffee Singapore', '201212345C', NOW());
+INSERT INTO supplier_profiles (email, password, phone, display_name, status, role, business_name, created_at) VALUES
+('bakery@breadtalk.sg', 'password123', '+6562345678', 'BreadTalk Manager', 'ACTIVE', 'SUPPLIER', 'BreadTalk Singapore Pte Ltd', NOW()),
+('cafe@toastbox.sg', 'password123', '+6562345679', 'Toast Box Manager', 'ACTIVE', 'SUPPLIER', 'Toast Box Pte Ltd', NOW()),
+('restaurant@paradise.sg', 'password123', '+6562345680', 'Paradise Dynasty Manager', 'ACTIVE', 'SUPPLIER', 'Paradise Group (Singapore) Pte Ltd', NOW()),
+('market@fairprice.sg', 'password123', '+6562345681', 'FairPrice Manager', 'ACTIVE', 'SUPPLIER', 'FairPrice Singapore', NOW()),
+('cafe@starbucks.sg', 'password123', '+6562345682', 'Starbucks Manager', 'ACTIVE', 'SUPPLIER', 'Starbucks Coffee Singapore', NOW());
 
 -- ============================================
 -- 4. ADMIN_PROFILES
