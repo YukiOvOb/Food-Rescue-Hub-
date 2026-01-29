@@ -1,0 +1,110 @@
+name: IAST-style Runtime Security (CI)
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  iast_style:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 1) Start the app locally in CI
+      - name: Start app (docker compose)
+        run: |
+          docker compose up -d --build
+          docker ps
+
+      # 2) Wait until backend is up (change URL if needed)
+      - name: Wait for backend
+        run: |
+          for i in {1..60}; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/hello || true)
+            if [ "$code" = "200" ]; then
+              echo "Backend is up!"
+              exit 0
+            fi
+            echo "Waiting... ($i) http_code=$code"
+            sleep 2
+          done
+          echo "Backend did not become ready"
+          exit 1
+
+      # 3) Run basic attack payloads (customize endpoints)
+      - name: Run security payloads (basic)
+        run: |
+          set +e
+          mkdir -p security-out
+
+          # SQLi-like payload examples (change endpoints to your real ones)
+          curl -s -i "http://localhost:8080/api/hello?x=' OR '1'='1" | tee security-out/sqli1.txt
+          curl -s -i "http://localhost:8080/api/hello?x=1;DROP TABLE users" | tee security-out/sqli2.txt
+
+          # XSS-like payload
+          curl -s -i "http://localhost:8080/api/hello?name=<script>alert(1)</script>" | tee security-out/xss1.txt
+
+          # Path traversal-like payload
+          curl -s -i "http://localhost:8080/api/hello?file=../../etc/passwd" | tee security-out/traversal1.txt
+
+          exit 0
+
+      # 4) Capture runtime logs (this is the "IAST-style" visibility)
+      - name: Collect backend logs
+        if: always()
+        run: |
+          mkdir -p security-out
+          # replace container name if different
+          docker logs frh-backend > security-out/backend.log 2>&1 || true
+          docker logs frh-mysql   > security-out/mysql.log 2>&1 || true
+
+      # 5) Fail build if runtime shows dangerous patterns
+      - name: Evaluate runtime findings
+        run: |
+          set -e
+          echo "Scanning logs for risky patterns..."
+
+          patterns=(
+            "Exception"
+            "Stacktrace"
+            "SQLException"
+            "SQLSyntaxErrorException"
+            "HibernateException"
+            "NullPointerException"
+            "org.springframework.web"
+          )
+
+          found=0
+          for p in "${patterns[@]}"; do
+            if grep -Rni "$p" security-out/backend.log >/dev/null 2>&1; then
+              echo "FOUND pattern: $p"
+              found=1
+            fi
+          done
+
+          if [ "$found" -eq 1 ]; then
+            echo "Runtime security signals detected (IAST-style). Failing build."
+            exit 1
+          fi
+
+          echo "No high-risk runtime patterns detected."
+
+      # 6) Upload evidence
+      - name: Upload IAST-style artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iast-style-runtime-evidence
+          path: security-out
+
+      # Cleanup
+      - name: Stop containers
+        if: always()
+        run: docker compose down -v
