@@ -1,0 +1,55 @@
+name: SCA - Container Image (Snyk)
+
+on:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+
+jobs:
+  snyk-container:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify SNYK_TOKEN exists
+        run: |
+          if [ -z "$SNYK_TOKEN" ]; then
+            echo "SNYK_TOKEN is NOT set"
+            exit 1
+          fi
+
+      - name: Install Snyk CLI
+        uses: snyk/actions/setup@master
+        with:
+          snyk-version: latest
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image (local)
+        run: |
+          docker build -t frh-backend:ci ./backend
+
+      - name: Snyk Container scan (backend)
+        run: |
+          snyk container test frh-backend:ci --severity-threshold=high
+
+      - name: Export container scan JSON (optional)
+        if: always()
+        run: |
+          snyk container test frh-backend:ci --json > snyk-container-backend.json || true
+
+      - name: Upload container scan report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-container-sca
+          path: snyk-container-backend.json

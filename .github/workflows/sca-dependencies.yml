@@ -1,0 +1,70 @@
+name: SCA - Dependencies (Snyk)
+
+on:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+
+jobs:
+  snyk-deps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify SNYK_TOKEN exists
+        run: |
+          if [ -z "$SNYK_TOKEN" ]; then
+            echo "SNYK_TOKEN is NOT set"
+            exit 1
+          fi
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: temurin
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Snyk CLI
+        uses: snyk/actions/setup@master
+        with:
+          snyk-version: latest
+
+      - name: Snyk SCA - Backend (Maven)
+        run: |
+          cd backend
+          snyk test --file=pom.xml --severity-threshold=high
+
+      - name: Snyk SCA - Frontend (npm)
+        run: |
+          cd frontend
+          snyk test --severity-threshold=high
+
+      - name: Save JSON reports
+        if: always()
+        run: |
+          cd backend
+          snyk test --file=pom.xml --json > ../snyk-backend-sca.json || true
+          cd ../frontend
+          snyk test --json > ../snyk-frontend-sca.json || true
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-dependency-sca
+          path: |
+            snyk-backend-sca.json
+            snyk-frontend-sca.json
