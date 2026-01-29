@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -25,10 +26,10 @@ public class Store {
     private SupplierProfile supplierProfile;
 
     @OneToMany(mappedBy = "store", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Order> orders;
+    private List<Order> orders = new ArrayList<>();
 
-    @OneToOne(mappedBy = "store", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Listing listing;
+    @OneToMany(mappedBy = "store", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Listing> listings = new ArrayList<>();
 
     // --- Data Fields ---
 
