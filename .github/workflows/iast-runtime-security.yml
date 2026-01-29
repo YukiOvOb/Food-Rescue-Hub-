@@ -17,20 +17,15 @@ jobs:
         run: |
           docker compose up -d
           docker ps
+      - name: ZAP Baseline Scan (EC2)
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+         target: 'http://47.129.223.141:8080'
+         rules_file_name: '.zap/rules.tsv'   # optional (only if you have it)
+         cmd_options: '-a'
 
-      - name: Wait for backend
-        run: |
-          for i in {1..60}; do
-            if curl -sSf http://localhost:8080/api/hello > /dev/null; then
-              echo "Backend is up"
-              exit 0
-            fi
-            echo "Waiting..."
-            sleep 2
-          done
-          echo "Backend did not start"
-          docker compose logs
-          exit 1
+
+      
 
       - name: ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.12.0
