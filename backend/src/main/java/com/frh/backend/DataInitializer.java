@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+//@Component
 public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
@@ -38,7 +38,8 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        if (userRepository.count() > 0) return;
+        // Disable auto-seeding against the live populated DB.
+        if (true) return;
 
         // 1. Create User
         User user = new User();

@@ -1,13 +1,14 @@
 package com.frh.backend.controller;
-// 1. 修正了这里的包路径，指向你的真实路径
+
 import com.frh.backend.Model.Listing;
 import com.frh.backend.Model.Store;
 import com.frh.backend.repository.ListingRepository;
 import com.frh.backend.repository.StoreRepository;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,27 +26,57 @@ public class ListingController {
     private StoreRepository storeRepository;
 
     // ==========================================
-    // 1. CREATE (新增)
+    // CREATE
+    // expects: POST /api/listings?storeId=1
+    // body: Listing JSON (title, prices, pickupStart, pickupEnd, expiryAt, ...)
     // ==========================================
-    @PostMapping
-    public ResponseEntity<?> createListing(@RequestBody Listing listing) {
-        // 1. 调用验证方法
-        List<String> errors = validateListing(listing);
-        if (!errors.isEmpty()) {
-            return ResponseEntity.badRequest().body(errors);
+@PostMapping
+public ResponseEntity<?> createListing(
+        @RequestParam(name = "storeId", required = false) Long storeId,
+        @RequestBody Listing listing) {
+
+    List<String> errors = new ArrayList<>();
+
+    // 1) Validate / resolve store
+    if (storeId == null) {
+        errors.add("Store is required");
+    } else {
+        Optional<Store> storeOpt = storeRepository.findById(storeId);
+        if (storeOpt.isEmpty()) {
+            errors.add("Store not found with id: " + storeId);
+        } else {
+            // attach store to listing so it can be persisted
+            listing.setStore(storeOpt.get());
         }
-
-        // 2. 补全系统字段
-        // 【注意】我已经把 setCreatedAt 和 setStatus 删掉了
-        // 因为你的 Entity 中 @CreationTimestamp 和 default value 会自动处理它们。
-
-        // 3. 保存
-        Listing savedListing = listingRepository.save(listing);
-        return ResponseEntity.ok(savedListing);
     }
 
+    // 2) Validate listing fields (title, prices, pickup window, expiry)
+    errors.addAll(validateListing(listing));
+
+    if (!errors.isEmpty()) {
+        // 400 with validation messages
+        return ResponseEntity.badRequest().body(errors);
+    }
+
+    // 3) Save – catch DB errors so they become readable 400s instead of generic 500
+    try {
+        Listing savedListing = listingRepository.save(listing);
+        return ResponseEntity.ok(savedListing);
+
+    } catch (DataIntegrityViolationException ex) {
+        ex.printStackTrace(); // will show exact column / constraint in your terminal
+
+        String msg = "Database error: " + ex.getMostSpecificCause().getMessage();
+        return ResponseEntity.badRequest().body(msg);
+
+    } catch (Exception ex) {
+        ex.printStackTrace();
+        String msg = "Unexpected server error: " + ex.getMessage();
+        return ResponseEntity.status(500).body(msg);
+    }
+}
     // ==========================================
-    // 2. READ ALL (查询所有)
+    // READ ALL
     // ==========================================
     @GetMapping
     public ResponseEntity<List<Listing>> getAllListings() {
@@ -54,7 +85,7 @@ public class ListingController {
     }
 
     // ==========================================
-    // 3. READ ONE (查询单个详情)
+    // READ ONE
     // ==========================================
     @GetMapping("/{id}")
     public ResponseEntity<?> getListingById(@PathVariable Long id) {
@@ -68,10 +99,12 @@ public class ListingController {
     }
 
     // ==========================================
-    // 4. UPDATE (修改)
+    // UPDATE
     // ==========================================
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateListing(@PathVariable Long id, @RequestBody Listing listingDetails) {
+    public ResponseEntity<?> updateListing(@PathVariable Long id,
+                                           @RequestBody Listing listingDetails) {
+
         Optional<Listing> existingListingOpt = listingRepository.findById(id);
         if (existingListingOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Listing not found with id: " + id);
@@ -79,28 +112,25 @@ public class ListingController {
 
         Listing existingListing = existingListingOpt.get();
 
-        // 验证数据
         List<String> errors = validateListing(listingDetails);
         if (!errors.isEmpty()) {
             return ResponseEntity.badRequest().body(errors);
         }
 
-        // 更新字段
         existingListing.setTitle(listingDetails.getTitle());
         existingListing.setDescription(listingDetails.getDescription());
         existingListing.setOriginalPrice(listingDetails.getOriginalPrice());
         existingListing.setRescuePrice(listingDetails.getRescuePrice());
         existingListing.setPickupStart(listingDetails.getPickupStart());
         existingListing.setPickupEnd(listingDetails.getPickupEnd());
-
-        // 再次强调：这里不需要更新 createdAt 或 status
+        existingListing.setExpiryAt(listingDetails.getExpiryAt());  // include expiry
 
         Listing updatedListing = listingRepository.save(existingListing);
         return ResponseEntity.ok(updatedListing);
     }
 
     // ==========================================
-    // 5. DELETE (删除)
+    // DELETE
     // ==========================================
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteListing(@PathVariable Long id) {
@@ -113,11 +143,12 @@ public class ListingController {
     }
 
     // ==========================================
-    // 辅助方法：统一验证逻辑
+    // Validation helper
     // ==========================================
     private List<String> validateListing(Listing listing) {
         List<String> errors = new ArrayList<>();
 
+        // basic required fields
         if (listing.getTitle() == null || listing.getTitle().trim().isEmpty()) {
             errors.add("Title is required");
         }
@@ -137,21 +168,33 @@ public class ListingController {
         if (listing.getPickupEnd() == null) {
             errors.add("Pickup end time is required");
         }
+        if (listing.getExpiryAt() == null) {
+            errors.add("Expiry time is required");
+        }
 
+        // if any required fields missing, stop here to avoid NullPointerException
         if (!errors.isEmpty()) {
             return errors;
         }
 
+        // price relationship
         if (listing.getRescuePrice().compareTo(listing.getOriginalPrice()) >= 0) {
             errors.add("Rescue price must be lower than original price");
         }
 
+        // pickup window: start must be in the future
         if (listing.getPickupStart().isBefore(LocalDateTime.now())) {
             errors.add("Pickup start time must be in the future");
         }
 
+        // pickup end must be after start
         if (listing.getPickupEnd().isBefore(listing.getPickupStart())) {
             errors.add("Pickup end time cannot be before start time");
+        }
+
+        // expiry must be after pickup end
+        if (listing.getExpiryAt().isBefore(listing.getPickupEnd())) {
+            errors.add("Expiry time must be after pickup end time");
         }
 
         return errors;
