@@ -50,10 +50,7 @@ jobs:
       - name: Backend Maven sanity check (dependency tree)
         working-directory: backend
         run: |
-          # Ensure wrapper is executable
           chmod +x ./mvnw
-
-          # This is what Snyk needs internally
           ./mvnw dependency:tree -DoutputType=dot --batch-mode --non-recursive --file pom.xml
 
       - name: Snyk SCA - Backend (Maven)
@@ -62,15 +59,12 @@ jobs:
           snyk test --file=pom.xml --package-manager=maven --severity-threshold=high
 
       # -------------------------
-      # Frontend SCA (npm)
+      # Frontend SCA (npm) - OPTION 3: NO INSTALL
       # -------------------------
-      - name: Install frontend dependencies (recommended)
-        working-directory: frontend
-        run: npm ci
-
-      - name: Snyk SCA - Frontend (npm)
+      - name: Snyk SCA - Frontend (npm) (no install)
         working-directory: frontend
         run: |
+          # This scans using package.json (+ lockfile if present)
           snyk test --severity-threshold=high
 
       # -------------------------
@@ -85,7 +79,7 @@ jobs:
           ./mvnw dependency:tree -DoutputType=dot --batch-mode --non-recursive --file pom.xml
           snyk test --file=pom.xml --package-manager=maven --json > ../snyk-backend-sca.json || true
 
-          # Frontend JSON
+          # Frontend JSON (no install)
           cd ../frontend
           snyk test --json > ../snyk-frontend-sca.json || true
 
