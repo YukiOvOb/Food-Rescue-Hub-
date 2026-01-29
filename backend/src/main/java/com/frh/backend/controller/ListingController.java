@@ -1,5 +1,5 @@
 package com.frh.backend.controller;
-// 1. 修正了这里的包路径，指向你的真实路径
+
 import com.frh.backend.Model.Listing;
 import com.frh.backend.repository.ListingRepository;
 
@@ -19,38 +19,32 @@ public class ListingController {
     @Autowired
     private ListingRepository listingRepository;
 
-    // ==========================================
-    // 1. CREATE (新增)
-    // ==========================================
+    // create
     @PostMapping
     public ResponseEntity<?> createListing(@RequestBody Listing listing) {
-        // 1. 调用验证方法
+        // use validation
         List<String> errors = validateListing(listing);
         if (!errors.isEmpty()) {
             return ResponseEntity.badRequest().body(errors);
         }
 
-        // 2. 补全系统字段
-        // 【注意】我已经把 setCreatedAt 和 setStatus 删掉了
-        // 因为你的 Entity 中 @CreationTimestamp 和 default value 会自动处理它们。
 
-        // 3. 保存
+        // delete setCreatedAt  setStatus
+        //  in Entity  @CreationTimestamp and default value can solve them
+
+        // save
         Listing savedListing = listingRepository.save(listing);
         return ResponseEntity.ok(savedListing);
     }
 
-    // ==========================================
-    // 2. READ ALL (查询所有)
-    // ==========================================
+    //search all
     @GetMapping
     public ResponseEntity<List<Listing>> getAllListings() {
         List<Listing> listings = listingRepository.findAll();
         return ResponseEntity.ok(listings);
     }
 
-    // ==========================================
-    // 3. READ ONE (查询单个详情)
-    // ==========================================
+    // search 1
     @GetMapping("/{id}")
     public ResponseEntity<?> getListingById(@PathVariable Long id) {
         Optional<Listing> listingOptional = listingRepository.findById(id);
@@ -62,9 +56,7 @@ public class ListingController {
         }
     }
 
-    // ==========================================
-    // 4. UPDATE (修改)
-    // ==========================================
+    // update
     @PutMapping("/{id}")
     public ResponseEntity<?> updateListing(@PathVariable Long id, @RequestBody Listing listingDetails) {
         Optional<Listing> existingListingOpt = listingRepository.findById(id);
@@ -74,13 +66,13 @@ public class ListingController {
 
         Listing existingListing = existingListingOpt.get();
 
-        // 验证数据
+        // validate data
         List<String> errors = validateListing(listingDetails);
         if (!errors.isEmpty()) {
             return ResponseEntity.badRequest().body(errors);
         }
 
-        // 更新字段
+        // update field
         existingListing.setTitle(listingDetails.getTitle());
         existingListing.setDescription(listingDetails.getDescription());
         existingListing.setOriginalPrice(listingDetails.getOriginalPrice());
@@ -88,15 +80,13 @@ public class ListingController {
         existingListing.setPickupStart(listingDetails.getPickupStart());
         existingListing.setPickupEnd(listingDetails.getPickupEnd());
 
-        // 再次强调：这里不需要更新 createdAt 或 status
+
 
         Listing updatedListing = listingRepository.save(existingListing);
         return ResponseEntity.ok(updatedListing);
     }
 
-    // ==========================================
-    // 5. DELETE (删除)
-    // ==========================================
+    // delete
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteListing(@PathVariable Long id) {
         if (!listingRepository.existsById(id)) {
@@ -107,9 +97,7 @@ public class ListingController {
         return ResponseEntity.ok("Listing deleted successfully");
     }
 
-    // ==========================================
-    // 辅助方法：统一验证逻辑
-    // ==========================================
+    // validation
     private List<String> validateListing(Listing listing) {
         List<String> errors = new ArrayList<>();
 

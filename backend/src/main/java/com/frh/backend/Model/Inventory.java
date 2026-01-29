@@ -2,40 +2,33 @@ package com.frh.backend.Model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.UpdateTimestamp;
-
 import java.time.LocalDateTime;
+@Data
 
 @Entity
 @Table(name = "inventory")
-@Data
+@Getter
+@Setter
 public class Inventory {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "inventory_id", nullable = false)
+    @Column(name = "inventory_id")
     private Long inventoryId;
 
-    // --- Relationship ---
-    // Assuming 1 Listing has 1 Inventory record.
-    // If your logic allows multiple inventory batches per listing, change this to @ManyToOne.
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "listing_id", nullable = false)
+    @JoinColumn(name = "listing_id")
     private Listing listing;
 
-    // --- Stock Levels ---
+    @Column(name = "qty_available")
+    private Integer qtyAvailable; // form
 
-    @Column(name = "qty_available", nullable = false)
-    private Integer qtyAvailable;
+    @Column(name = "qty_reserved")
+    private Integer qtyReserved = 0;
 
-    @Column(name = "qty_reserved", nullable = false)
-    private Integer qtyReserved = 0; // Default to 0 in Java to match DB default
-
-    // --- Timestamp ---
-    
-    // @UpdateTimestamp will automatically update this field whenever the entity is modified.
-    // This is perfect for inventory tracking where you want to know when the stock last changed.
     @UpdateTimestamp
-    @Column(name = "last_updated", nullable = false)
+    @Column(name = "last_updated")
     private LocalDateTime lastUpdated;
 }
