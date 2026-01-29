@@ -1,42 +1,36 @@
-name: Runtime Security Test (ZAP)
+name: IAST - ZAP Runtime Scan
 
 on:
   push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
-
-permissions:
-  contents: read
+    branches: [ "main" ]
 
 jobs:
   zap:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify EC2 reachable
+      - name: Test app reachable
         run: |
-          curl -I http://47.129.223.141:8080 || true
-          curl -I http://47.129.223.141:8080/api/hello || true
+          curl -I http://47.129.223.141:8080/api/hello
 
-      - name: ZAP Baseline Scan (EC2) - manual docker
+      - name: Run ZAP scan
         run: |
           docker pull ghcr.io/zaproxy/zaproxy:stable
           docker run --rm \
-            -v "${{ github.workspace }}:/zap/wrk/:rw" \
+            -v "$PWD:/zap/wrk/:rw" \
             --network=host \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py \
               -t http://47.129.223.141:8080/api/hello \
-              -J report_json.json -w report_md.md -r report_html.html -a
+              -J report.json -w report.md -r report.html -a
 
-      - name: Upload ZAP report
-        if: always()
+      - name: Upload report
         uses: actions/upload-artifact@v4
         with:
-          name: zap-scan
+          name: zap-report
           path: |
-            report_html.html
-            report_md.md
-            report_json.json
+            report.html
+            report.md
+            report.json
