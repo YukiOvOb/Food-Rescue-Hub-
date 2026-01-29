@@ -14,23 +14,39 @@ import com.example.foodrescuehub.R
 import com.example.foodrescuehub.data.model.CartItem
 
 class CartAdapter(
-    private val onQuantityChanged: (CartItem, Int) -> Unit,
+    private val onIncreaseClick: (Long) -> Unit,
+    private val onDecreaseClick: (Long) -> Unit,
     private val onRemoveItem: (CartItem) -> Unit
 ) : ListAdapter<CartItem, CartAdapter.CartViewHolder>(CartDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CartViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_cart, parent, false)
-        return CartViewHolder(view, onQuantityChanged, onRemoveItem)
+        return CartViewHolder(view, onIncreaseClick, onDecreaseClick, onRemoveItem)
     }
 
     override fun onBindViewHolder(holder: CartViewHolder, position: Int) {
         holder.bind(getItem(position))
     }
 
+    override fun onBindViewHolder(holder: CartViewHolder, position: Int, payloads: MutableList<Any>) {
+        if (payloads.isEmpty()) {
+            super.onBindViewHolder(holder, position, payloads)
+        } else {
+            // Handle partial update for quantity changes
+            val item = getItem(position)
+            for (payload in payloads) {
+                if (payload == PAYLOAD_QUANTITY_CHANGED) {
+                    holder.updateQuantity(item)
+                }
+            }
+        }
+    }
+
     class CartViewHolder(
         itemView: View,
-        private val onQuantityChanged: (CartItem, Int) -> Unit,
+        private val onIncreaseClick: (Long) -> Unit,
+        private val onDecreaseClick: (Long) -> Unit,
         private val onRemoveItem: (CartItem) -> Unit
     ) : RecyclerView.ViewHolder(itemView) {
 
@@ -44,7 +60,12 @@ class CartAdapter(
         private val btnRemove: ImageButton = itemView.findViewById(R.id.btnRemoveItem)
         private val tvSubtotal: TextView = itemView.findViewById(R.id.tvCartSubtotal)
 
+        // Store only the ID to ensure we always work with latest data
+        private var currentListingId: Long = -1
+
         fun bind(item: CartItem) {
+            currentListingId = item.listingId
+
             if (!item.photoUrl.isNullOrBlank()) {
                 Glide.with(itemView.context)
                     .load(item.photoUrl)
@@ -59,22 +80,37 @@ class CartAdapter(
             tvItemTitle.text = item.title
             tvStoreName.text = item.storeName
             tvItemPrice.text = "$%.2f".format(item.price)
-            tvQuantity.text = item.quantity.toString()
-            tvSubtotal.text = "$%.2f".format(item.getSubtotal())
+            updateQuantity(item)
+        }
 
+        init {
             btnDecrease.setOnClickListener {
-                onQuantityChanged(item, item.quantity - 1)
-            }
-
-            btnIncrease.setOnClickListener {
-                if (item.quantity < item.maxQuantity) {
-                    onQuantityChanged(item, item.quantity + 1)
+                if (currentListingId != -1L) {
+                    onDecreaseClick(currentListingId)
                 }
             }
 
+            btnIncrease.setOnClickListener {
+                if (currentListingId != -1L) {
+                    onIncreaseClick(currentListingId)
+                }
+            }
+
+            btnRemove.setOnClickListener {
+                // For remove, we still need the full item to show in dialog
+                // But we fetch it fresh from the current binding
+            }
+        }
+
+        // Method to update only quantity-related UI for better performance
+        fun updateQuantity(item: CartItem) {
+            currentListingId = item.listingId
+            tvQuantity.text = item.quantity.toString()
+            tvSubtotal.text = "$%.2f".format(item.getSubtotal())
             btnDecrease.isEnabled = item.quantity > 1
             btnIncrease.isEnabled = item.quantity < item.maxQuantity
 
+            // Update remove button with current item
             btnRemove.setOnClickListener {
                 onRemoveItem(item)
             }
@@ -89,5 +125,18 @@ class CartAdapter(
         override fun areContentsTheSame(oldItem: CartItem, newItem: CartItem): Boolean {
             return oldItem == newItem
         }
+
+        override fun getChangePayload(oldItem: CartItem, newItem: CartItem): Any? {
+            // Return a payload when quantity changes for more efficient updates
+            return if (oldItem.quantity != newItem.quantity) {
+                PAYLOAD_QUANTITY_CHANGED
+            } else {
+                null
+            }
+        }
+    }
+
+    companion object {
+        private const val PAYLOAD_QUANTITY_CHANGED = "quantity_changed"
     }
 }

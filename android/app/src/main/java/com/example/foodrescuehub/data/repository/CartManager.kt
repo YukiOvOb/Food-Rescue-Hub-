@@ -23,35 +23,44 @@ object CartManager {
 
     fun addItem(item: CartItem) {
         val currentItems = _cartItems.value ?: mutableListOf()
-        val existingItem = currentItems.find { it.listingId == item.listingId }
+        val itemIndex = currentItems.indexOfFirst { it.listingId == item.listingId }
 
-        if (existingItem != null) {
+        if (itemIndex != -1) {
+            val existingItem = currentItems[itemIndex]
             if (existingItem.quantity < existingItem.maxQuantity) {
-                existingItem.quantity++
+                // Create a new CartItem with increased quantity (deep copy)
+                val updatedItem = existingItem.copy(quantity = existingItem.quantity + 1)
+                currentItems[itemIndex] = updatedItem
             }
         } else {
             currentItems.add(item)
         }
 
-        _cartItems.value = currentItems
+        // Create a new list to trigger LiveData and DiffUtil properly
+        _cartItems.value = currentItems.toMutableList()
         updateTotals()
     }
 
     fun removeItem(listingId: Long) {
         val currentItems = _cartItems.value ?: mutableListOf()
         currentItems.removeAll { it.listingId == listingId }
-        _cartItems.value = currentItems
+        // Create a new list to trigger LiveData update properly
+        _cartItems.value = currentItems.toMutableList()
         updateTotals()
     }
 
     fun updateQuantity(listingId: Long, newQuantity: Int) {
         val currentItems = _cartItems.value ?: mutableListOf()
-        val item = currentItems.find { it.listingId == listingId }
+        val itemIndex = currentItems.indexOfFirst { it.listingId == listingId }
 
-        item?.let {
-            if (newQuantity > 0 && newQuantity <= it.maxQuantity) {
-                it.quantity = newQuantity
-                _cartItems.value = currentItems
+        if (itemIndex != -1) {
+            val item = currentItems[itemIndex]
+            if (newQuantity > 0 && newQuantity <= item.maxQuantity) {
+                // Create a new CartItem with updated quantity (deep copy)
+                val updatedItem = item.copy(quantity = newQuantity)
+                currentItems[itemIndex] = updatedItem
+                // Create a new list to trigger LiveData and DiffUtil properly
+                _cartItems.value = currentItems.toMutableList()
                 updateTotals()
             } else if (newQuantity <= 0) {
                 removeItem(listingId)
@@ -61,12 +70,16 @@ object CartManager {
 
     fun increaseQuantity(listingId: Long) {
         val currentItems = _cartItems.value ?: mutableListOf()
-        val item = currentItems.find { it.listingId == listingId }
+        val itemIndex = currentItems.indexOfFirst { it.listingId == listingId }
 
-        item?.let {
-            if (it.quantity < it.maxQuantity) {
-                it.quantity++
-                _cartItems.value = currentItems
+        if (itemIndex != -1) {
+            val item = currentItems[itemIndex]
+            if (item.quantity < item.maxQuantity) {
+                // Create a new CartItem with increased quantity (deep copy)
+                val updatedItem = item.copy(quantity = item.quantity + 1)
+                currentItems[itemIndex] = updatedItem
+                // Create a new list to trigger LiveData and DiffUtil properly
+                _cartItems.value = currentItems.toMutableList()
                 updateTotals()
             }
         }
@@ -74,12 +87,16 @@ object CartManager {
 
     fun decreaseQuantity(listingId: Long) {
         val currentItems = _cartItems.value ?: mutableListOf()
-        val item = currentItems.find { it.listingId == listingId }
+        val itemIndex = currentItems.indexOfFirst { it.listingId == listingId }
 
-        item?.let {
-            if (it.quantity > 1) {
-                it.quantity--
-                _cartItems.value = currentItems
+        if (itemIndex != -1) {
+            val item = currentItems[itemIndex]
+            if (item.quantity > 1) {
+                // Create a new CartItem with decreased quantity (deep copy)
+                val updatedItem = item.copy(quantity = item.quantity - 1)
+                currentItems[itemIndex] = updatedItem
+                // Create a new list to trigger LiveData and DiffUtil properly
+                _cartItems.value = currentItems.toMutableList()
                 updateTotals()
             } else {
                 removeItem(listingId)

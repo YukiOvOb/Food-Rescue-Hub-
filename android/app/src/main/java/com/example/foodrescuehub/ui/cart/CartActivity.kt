@@ -49,8 +49,11 @@ class CartActivity : AppCompatActivity() {
 
     private fun setupRecyclerView() {
         cartAdapter = CartAdapter(
-            onQuantityChanged = { item, newQuantity ->
-                handleQuantityChange(item, newQuantity)
+            onIncreaseClick = { listingId ->
+                handleIncrease(listingId)
+            },
+            onDecreaseClick = { listingId ->
+                handleDecrease(listingId)
             },
             onRemoveItem = { item ->
                 handleRemoveItem(item)
@@ -80,6 +83,7 @@ class CartActivity : AppCompatActivity() {
 
     private fun observeCart() {
         CartManager.cartItems.observe(this) { items ->
+            // Create a new immutable list to ensure DiffUtil properly detects changes
             cartAdapter.submitList(items.toList())
 
             if (items.isEmpty()) {
@@ -102,6 +106,33 @@ class CartActivity : AppCompatActivity() {
 
         CartManager.totalSavings.observe(this) { savings ->
             tvSavings.text = "-$%.2f".format(savings)
+        }
+    }
+
+    private fun handleIncrease(listingId: Long) {
+        // Get fresh data from CartManager
+        val currentQuantity = CartManager.getItemQuantity(listingId)
+        val currentItems = CartManager.cartItems.value ?: return
+        val item = currentItems.find { it.listingId == listingId } ?: return
+
+        if (currentQuantity < item.maxQuantity) {
+            CartManager.increaseQuantity(listingId)
+        } else {
+            Toast.makeText(this, "Maximum quantity is ${item.maxQuantity}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun handleDecrease(listingId: Long) {
+        // Get fresh data from CartManager
+        val currentQuantity = CartManager.getItemQuantity(listingId)
+
+        if (currentQuantity > 1) {
+            CartManager.decreaseQuantity(listingId)
+        } else {
+            // Show confirmation dialog when trying to decrease from 1 to 0
+            val currentItems = CartManager.cartItems.value ?: return
+            val item = currentItems.find { it.listingId == listingId } ?: return
+            showRemoveItemDialog(item)
         }
     }
 
