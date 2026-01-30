@@ -1,6 +1,10 @@
 package com.frh.backend.controller;
 
+import com.frh.backend.Model.Store;
+import com.frh.backend.Model.SupplierProfile;
 import com.frh.backend.repository.ListingRepository;
+import com.frh.backend.repository.StoreRepository;
+import com.frh.backend.repository.SupplierProfileRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,12 +28,35 @@ class ListingControllerTest {
     @Autowired
     private ListingRepository listingRepository;
 
+    @Autowired
+    private SupplierProfileRepository supplierProfileRepository;
+
+    @Autowired
+    private StoreRepository storeRepository;
+
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         listingRepository.deleteAll(); // keep DB clean for each test
+      storeRepository.deleteAll();
+      supplierProfileRepository.deleteAll();
+
+      // create a minimal supplier and store to attach listings to
+      SupplierProfile supplier = new SupplierProfile();
+      supplier.setEmail("test@example.com");
+      supplier.setPassword("password123");
+      supplier = supplierProfileRepository.save(supplier);
+
+      Store store = new Store();
+      store.setSupplierProfile(supplier);
+      store.setStoreName("Test Store");
+      store.setAddressLine("123 Test St");
+      store = storeRepository.save(store);
+
+      // make storeId available via system property for tests if needed
+      System.setProperty("test.storeId", String.valueOf(store.getStoreId()));
     }
 
     // 1) Simple sanity check – GET /api/listings returns 200
@@ -54,8 +81,10 @@ class ListingControllerTest {
           }
         """;
 
+        String storeId = System.getProperty("test.storeId");
+
         mockMvc.perform(
-                    post("/api/listings")
+              post("/api/supplier/listings?storeId=" + storeId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json)
                 )
