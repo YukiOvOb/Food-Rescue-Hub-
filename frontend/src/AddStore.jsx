@@ -86,7 +86,7 @@ export default function AddStore() {
             if (response.ok) {
                 alert("Store Created Successfully!");
                 // Redirect to your store list page commented out for testing
-                // navigate('/my-stores');
+                navigate('/my-stores');
             } else {
                 const errorData = await response.json();
                 // Show specific validation errors (e.g., "Latitude must be within Singapore")
