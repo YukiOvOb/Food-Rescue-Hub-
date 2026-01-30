@@ -1,30 +1,27 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
-// 1. Import your group's pages
-import Test from './Test';   // The code you just moved
-import AddStore from './AddStore'; // The new feature we just built
-// import Inventory from './pages/Inventory'; (Example of a groupmate's file)
-// import Login from './pages/Login';         (Example of another file)
+import Test from './Test';
+import AddStore from './AddStore';
+import StoreList from './StoreList';
 
 export default function App() {
     return (
         <Router>
             <div className="App">
-                {/* Global Navigation Bar (Always visible) */}
-                <nav style={{ padding: 10, borderBottom: "1px solid #ccc" }}>
-                    <Link to="/" style={{ marginRight: 10 }}>Home</Link>
-                    <Link to="/add-store" style={{ marginRight: 10 }}>Add Store</Link>
-                    {/* <Link to="/inventory">Inventory</Link> */}
+                {/* Global Navigation Bar */}
+                <nav style={{ padding: 10, borderBottom: "1px solid #ccc", display: 'flex', gap: '15px' }}>
+                    <Link to="/">Home</Link>
+                    <Link to="/my-stores">My Stores</Link>
+                    <Link to="/add-store">Add Store</Link>
                 </nav>
 
-                {/* The "Switchboard" - Only ONE of these shows at a time */}
+                {/* The "Switchboard" */}
                 <Routes>
                     <Route path="/" element={<Test />} />
+                    <Route path="/my-stores" element={<StoreList />} />
                     <Route path="/add-store" element={<AddStore />} />
 
-                    {/* Future Group Work */}
-                    {/* <Route path="/inventory" element={<Inventory />} /> */}
-                    {/* <Route path="/login" element={<Login />} /> */}
+                    {/* We will add /edit-store/:storeId here later */}
                 </Routes>
             </div>
         </Router>
