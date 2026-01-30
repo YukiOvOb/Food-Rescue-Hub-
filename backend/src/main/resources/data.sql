@@ -5,28 +5,28 @@
 -- note that it will be populated inside ec2 server upon running
 -- Note: Fields with @CreationTimestamp and @UpdateTimestamp are auto-generated
 
--- Reset tables for deterministic seeding
-SET FOREIGN_KEY_CHECKS=0;
-TRUNCATE TABLE pickup_feedback;
-TRUNCATE TABLE pickup_tokens;
-TRUNCATE TABLE payments;
-TRUNCATE TABLE commission_ledger;
-TRUNCATE TABLE order_items;
-TRUNCATE TABLE orders;
-TRUNCATE TABLE listing_dietary_tags;
-TRUNCATE TABLE listing_photos;
-TRUNCATE TABLE inventory;
-TRUNCATE TABLE listings;
-TRUNCATE TABLE store_types;
-TRUNCATE TABLE stores;
-TRUNCATE TABLE payouts;
-TRUNCATE TABLE wallet_transactions;
-TRUNCATE TABLE wallets;
-TRUNCATE TABLE admin_profiles;
-TRUNCATE TABLE supplier_profiles;
-TRUNCATE TABLE consumer_profiles;
-TRUNCATE TABLE dietary_tags;
-SET FOREIGN_KEY_CHECKS=1;
+-- Reset tables for deterministic seeding (commented out - using ddl-auto=create instead)
+-- SET FOREIGN_KEY_CHECKS=0;
+-- TRUNCATE TABLE pickup_feedback;
+-- TRUNCATE TABLE pickup_tokens;
+-- TRUNCATE TABLE payments;
+-- TRUNCATE TABLE commission_ledger;
+-- TRUNCATE TABLE order_items;
+-- TRUNCATE TABLE orders;
+-- TRUNCATE TABLE listing_dietary_tags;
+-- TRUNCATE TABLE listing_photos;
+-- TRUNCATE TABLE inventory;
+-- TRUNCATE TABLE listings;
+-- TRUNCATE TABLE store_types;
+-- TRUNCATE TABLE stores;
+-- TRUNCATE TABLE payouts;
+-- TRUNCATE TABLE wallet_transactions;
+-- TRUNCATE TABLE wallets;
+-- TRUNCATE TABLE admin_profiles;
+-- TRUNCATE TABLE supplier_profiles;
+-- TRUNCATE TABLE consumer_profiles;
+-- TRUNCATE TABLE dietary_tags;
+-- SET FOREIGN_KEY_CHECKS=1;
 
 INSERT INTO dietary_tags (tag_name) VALUES
 ('Vegetarian'),
