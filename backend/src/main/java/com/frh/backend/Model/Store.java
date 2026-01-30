@@ -1,35 +1,42 @@
 package com.frh.backend.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "stores")
-@Data
+@Getter
+@Setter
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // Fixes lazy loading proxy errors
 public class Store {
 
-    // --- Primary Key ---
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Assumes Auto-Increment in DB
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "store_id", nullable = false)
     private Long storeId;
 
-    // --- Foreign Key Column ---
-    @ManyToOne(fetch = FetchType.LAZY)
+    // --- Relationships ---
+
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supplier_id", nullable = false)
+    @JsonIgnoreProperties("store") // Prevent Supplier -> Store -> Supplier loop
     private SupplierProfile supplierProfile;
 
-    @OneToMany(mappedBy = "store", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Order> orders = new ArrayList<>();
+    @OneToMany(mappedBy = "store", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("store") // Stop Listing from looking back at Store
+    private List<Listing> listings;
 
     @OneToMany(mappedBy = "store", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Listing> listings = new ArrayList<>();
+    @JsonIgnoreProperties("store")
+    private List<Order> orders;
 
     // --- Data Fields ---
 
@@ -39,13 +46,12 @@ public class Store {
     @Column(name = "description", length = 500)
     private String description;
 
-    @Column(name = "address_line", nullable = false, length = 255)
+    @Column(name = "address_line", nullable = false)
     private String addressLine;
 
     @Column(name = "postal_code", length = 20)
     private String postalCode;
 
-    // using BigDecimal for precision (10,7)
     @Column(name = "lat", precision = 10, scale = 7)
     private BigDecimal lat;
 
@@ -59,7 +65,7 @@ public class Store {
     private String openingHours;
 
     @Column(name = "is_active", nullable = false)
-    private boolean isActive = true; // Default to true
+    private boolean isActive = true;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

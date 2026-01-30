@@ -29,7 +29,7 @@ public class AdminProfile {
     private String displayName;
 
     @Column(name = "role", nullable = false, length = 20)
-    private String role = "ADMIN";
+    private String role = "ADMIN"; // Default to ADMIN
 
     @Column(name = "status", nullable = false, length = 20)
     private  String status = "ACTIVE";

@@ -1,7 +1,6 @@
 package com.frh.backend.Model;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
@@ -9,13 +8,14 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "supplier_profiles")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class SupplierProfile {
@@ -24,17 +24,10 @@ public class SupplierProfile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "supplier_id", nullable = false)
     private Long supplierId;
+// --- Relationships ---
 
-    // --- Relationships ---
-
-    /**
-     * One-to-One relationship with StoreType
-     * The StoreType entity owns this relationship (has the foreign key)
-     */
-    @OneToOne(mappedBy = "supplierProfile", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToOne(mappedBy = "supplierProfile", cascade = CascadeType.ALL)
     private StoreType storeType;
-
-    // --- Authentication Fields ---
 
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
@@ -70,5 +63,4 @@ public class SupplierProfile {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
 }

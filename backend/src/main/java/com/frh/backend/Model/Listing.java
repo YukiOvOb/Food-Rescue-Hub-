@@ -3,7 +3,8 @@ package com.frh.backend.Model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
@@ -13,8 +14,9 @@ import java.util.List;
 
 @Entity
 @Table(name = "listings")
-@Data
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@Getter
+@Setter
 public class Listing {
 
     @Id
@@ -23,23 +25,21 @@ public class Listing {
     private Long listingId;
 
     // --- Relationship ---
-    @JsonIgnore // avoid lazy serialization loops
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id", nullable = false)
+    @JsonIgnoreProperties({"listings", "orders", "supplierProfile"}) // Breaks the loop here
     private Store store;
 
     @JsonIgnore
     @OneToOne(fetch = FetchType.LAZY, mappedBy = "listing", cascade = CascadeType.ALL)
     private Inventory inventory;
 
-    @JsonIgnore
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "listing_dietary_tags",
-            joinColumns = @JoinColumn(name = "listing_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id"))
-    private List<DietaryTag> dietaryTags;
+    joinColumns = @JoinColumn(name = "listing_id"),
+    inverseJoinColumns = @JoinColumn(name = "tag_id")) 
+    private java.util.List<DietaryTag> dietaryTags;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ListingPhoto> photos = new ArrayList<>();
 

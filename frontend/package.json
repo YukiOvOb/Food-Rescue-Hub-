@@ -3,25 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "vite start",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint src/ --ext .js,.jsx",
-    "lint:fix": "eslint src/ --ext .js,.jsx --fix",
-    "eject": "vite eject"
+    "lint": "eslint src --ext .js,.jsx",
+    "lint:fix": "eslint src --ext .js,.jsx --fix"
   },
   "dependencies": {
+    "@react-google-maps/api": "^2.20.8",
     "axios": "^1.13.4",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-router-dom": "^6.30.3",
-    "react-scripts": "5.0.1"
+    "react-router-dom": "^7.13.0"
   },
   "devDependencies": {
+    "vite": "4.3.9",
     "@vitejs/plugin-react": "3.1.0",
     "eslint": "^8.57.0",
-    "eslint-plugin-react": "^7.33.2",
-    "vite": "4.3.9"
+    "eslint-plugin-react": "^7.33.2"
   }
 }
