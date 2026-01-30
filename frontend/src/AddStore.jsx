@@ -22,6 +22,7 @@ export default function AddStore() {
     const [postalCode, setPostalCode] = useState("");
     const [openingHours, setOpeningHours] = useState("");
     const [description, setDescription] = useState("");
+    const [pickupInstructions, setPickupInstructions] = useState("");
     const [coordinates, setCoordinates] = useState(center);
     const [autocomplete, setAutocomplete] = useState(null);
 
@@ -71,7 +72,8 @@ export default function AddStore() {
             lat: coordinates.lat,
             lng: coordinates.lng,
             openingHours: openingHours,
-            description: description
+            description: description,
+            pickupInstructions: pickupInstructions
         };
 
         try {
@@ -132,6 +134,17 @@ export default function AddStore() {
                 <div style={inputGroupStyle}>
                     <label>Description:</label>
                     <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows="3" style={inputStyle} />
+                </div>
+
+                <div style={inputGroupStyle}>
+                    <label>Pickup Instructions:</label>
+                    <textarea
+                        placeholder="e.g. Please collect from the side door."
+                        value={pickupInstructions}
+                        onChange={(e) => setPickupInstructions(e.target.value)}
+                        rows="2"
+                        style={inputStyle}
+                    />
                 </div>
 
                 <div style={{ marginBottom: "15px", border: "1px solid #ccc" }}>

@@ -23,16 +23,16 @@ import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(StoreController.class) // 1. Only load the StoreController
+@WebMvcTest(StoreController.class)
 public class StoreControllerTest {
 
     @Autowired
-    private MockMvc mockMvc; // 2. The tool to fake HTTP requests
+    private MockMvc mockMvc;
 
     @MockitoBean
-    private StoreService storeService; // 3. Mock the service (don't use the real database)
+    private StoreService storeService;
 
-    private final ObjectMapper objectMapper = new ObjectMapper(); // 4. Tool to convert Objects <-> JSON string
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private Store sampleStore;
     private StoreRequest sampleRequest;
@@ -67,6 +67,7 @@ public class StoreControllerTest {
         mockResponse.setPostalCode("119077");
         mockResponse.setLat(new BigDecimal("1.3521"));
         mockResponse.setLng(new BigDecimal("103.8198"));
+        mockResponse.setPickupInstructions("Collect at the side entrance near the red door.");
         mockResponse.setActive(true);
 
         // 2. Mock the service: it now returns a StoreResponse
@@ -79,6 +80,7 @@ public class StoreControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.storeName").value("Bakery"))
                 .andExpect(jsonPath("$.storeId").value(1))
+                .andExpect(jsonPath("$.pickupInstructions").value("Collect at the side entrance near the red door."))
                 .andExpect(jsonPath("$.active").value(true));
     }
 
@@ -127,6 +129,7 @@ public class StoreControllerTest {
         mockResponse.setPostalCode("119077");
         mockResponse.setLat(new java.math.BigDecimal("1.3521"));
         mockResponse.setLng(new java.math.BigDecimal("103.8198"));
+        mockResponse.setPickupInstructions("Collect at the side entrance near the red door.");
         mockResponse.setActive(true);
 
         // 2. Mock the service: it must now return the StoreResponse DTO

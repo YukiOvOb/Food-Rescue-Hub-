@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class StoreResponse {
     private Long storeId;
-    private Long supplierId; // Just the ID, not the whole object!
+    private Long supplierId;
     private String storeName;
     private String addressLine;
     private String postalCode;
@@ -20,5 +20,6 @@ public class StoreResponse {
     private BigDecimal lng;
     private String openingHours;
     private String description;
+    private String pickupInstructions;
     private boolean active;
 }

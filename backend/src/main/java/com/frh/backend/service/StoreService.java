@@ -37,6 +37,7 @@ public class StoreService {
         store.setLng(dto.getLng());
         store.setOpeningHours(dto.getOpeningHours());
         store.setDescription(dto.getDescription());
+        store.setPickupInstructions(dto.getPickupInstructions());
         store.setActive(true);
 
         Store savedStore = storeRepository.save(store);
@@ -69,6 +70,7 @@ public class StoreService {
         response.setLng(store.getLng());
         response.setOpeningHours(store.getOpeningHours());
         response.setDescription(store.getDescription());
+        response.setPickupInstructions(store.getPickupInstructions());
         response.setActive(store.isActive());
 
         if (store.getSupplierProfile() != null) {
