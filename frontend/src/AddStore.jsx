@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { GoogleMap, useLoadScript, Autocomplete, Marker } from '@react-google-maps/api';
+import { useNavigate } from 'react-router-dom';
 
 const libraries = ['places']; // Load the "Places" library for Autocomplete
 const mapContainerStyle = { width: '100%', height: '300px', marginTop: '10px' };
@@ -11,11 +12,16 @@ export default function AddStore() {
         libraries,
     });
 
+    const navigate = useNavigate();
+
     // Form State
     // first is variable name, second is setter
     // need to useState so that view gets refreshed everytime new variable is set
     const [storeName, setStoreName] = useState("");
     const [address, setAddress] = useState("");
+    const [postalCode, setPostalCode] = useState("");
+    const [openingHours, setOpeningHours] = useState("");
+    const [description, setDescription] = useState("");
     const [coordinates, setCoordinates] = useState(center);
     const [autocomplete, setAutocomplete] = useState(null);
 
@@ -37,6 +43,13 @@ export default function AddStore() {
                 const lng = place.geometry.location.lng();
                 const formattedAddress = place.formatted_address;
 
+                // Automatically extract Postal Code from Google Data
+                const addressComponents = place.address_components;
+                const postcodeObj = addressComponents.find(c => c.types.includes("postal_code"));
+                if (postcodeObj) {
+                    setPostalCode(postcodeObj.long_name);
+                }
+
                 // this sets the data for coordinates and address defined previously in the use state lines
                 // coordinates would center the map since it uses useState(center) which is replaced with selected coordinates
                 setCoordinates({ lat, lng });
@@ -54,10 +67,11 @@ export default function AddStore() {
             supplierId: 1, // Hardcoded for now (replace with User ID later)
             storeName: storeName,
             addressLine: address,
+            postalCode: postalCode,
             lat: coordinates.lat,
             lng: coordinates.lng,
-            openingHours: "09:00 - 21:00", // Default or add input field
-            description: "Fresh bakery goods"
+            openingHours: openingHours,
+            description: description
         };
 
         try {
@@ -69,12 +83,19 @@ export default function AddStore() {
 
             if (response.ok) {
                 alert("Store Created Successfully!");
+                // Redirect to your store list page commented out for testing
+                // navigate('/my-stores');
             } else {
-                alert("Failed to create store.");
+                const errorData = await response.json();
+                // Show specific validation errors (e.g., "Latitude must be within Singapore")
+                const errorMessage = errorData.errors
+                    ? Object.values(errorData.errors).join("\n")
+                    : "Failed to create store.";
+                alert("Validation Error:\n" + errorMessage);
             }
         } catch (error) {
             console.error("Error:", error);
-            alert("Server Error");
+            alert("Server Error: Check if your Backend is running.");
         }
     };
 
@@ -82,53 +103,52 @@ export default function AddStore() {
     if (!isLoaded) return "Loading Maps...";
 
     return (
-        <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
+        <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", fontFamily: "Arial" }}>
             <h2>Add New Store</h2>
             <form onSubmit={handleSubmit}>
-                {/* Store Name */}
-                <div style={{ marginBottom: "15px" }}>
-                    <label>Store Name:</label>
-                    <input
-                        type="text"
-                        value={storeName}
-                        onChange={(e) => setStoreName(e.target.value)}
-                        required
-                        style={{ width: "100%", padding: "8px" }}
-                    />
+                <div style={inputGroupStyle}>
+                    <label>Store Name*:</label>
+                    <input type="text" value={storeName} onChange={(e) => setStoreName(e.target.value)} required style={inputStyle} />
                 </div>
 
-                {/* Google Autocomplete Address */}
-                <div style={{ marginBottom: "15px" }}>
-                    <label>Search Address:</label>
+                <div style={inputGroupStyle}>
+                    <label>Search Address*:</label>
                     <Autocomplete onLoad={onLoad} onPlaceChanged={onPlaceChanged}>
-                        <input
-                            type="text"
-                            placeholder="Type location"
-                            style={{ width: "100%", padding: "8px" }}
-                        />
+                        <input type="text" placeholder="Type location" style={inputStyle} required />
                     </Autocomplete>
                 </div>
 
-                {/* The Map Visual */}
+                {/* Postal Code - Usually auto-filled by Google, but editable just in case */}
+                <div style={inputGroupStyle}>
+                    <label>Postal Code (6 digits)*:</label>
+                    <input type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} maxLength="6" required style={inputStyle} />
+                </div>
+
+                <div style={inputGroupStyle}>
+                    <label>Opening Hours:</label>
+                    <input type="text" value={openingHours} placeholder="e.g. 09:00 - 21:00" onChange={(e) => setOpeningHours(e.target.value)} style={inputStyle} />
+                </div>
+
+                <div style={inputGroupStyle}>
+                    <label>Description:</label>
+                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows="3" style={inputStyle} />
+                </div>
+
                 <div style={{ marginBottom: "15px", border: "1px solid #ccc" }}>
-                    <GoogleMap
-                        mapContainerStyle={mapContainerStyle}
-                        zoom={15}
-                        center={coordinates}
-                    >
+                    <GoogleMap mapContainerStyle={mapContainerStyle} zoom={15} center={coordinates}>
                         <Marker position={coordinates} />
                     </GoogleMap>
                 </div>
 
-                {/* Read-Only Coordinates (Optional Debugging) */}
-                <p style={{ fontSize: "12px", color: "#666" }}>
-                    Selected: {coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)}
-                </p>
-
-                <button type="submit" style={{ padding: "10px 20px", background: "green", color: "white", border: "none" }}>
+                <button type="submit" style={submitButtonStyle}>
                     Save Store
                 </button>
             </form>
         </div>
     );
 }
+
+// Simple Styles
+const inputGroupStyle = { marginBottom: "15px" };
+const inputStyle = { width: "100%", padding: "8px", boxSizing: "border-box" };
+const submitButtonStyle = { width: "100%", padding: "10px", background: "#28a745", color: "white", border: "none", cursor: "pointer", fontWeight: "bold" };
