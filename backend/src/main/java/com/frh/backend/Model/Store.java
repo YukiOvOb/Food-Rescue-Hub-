@@ -22,7 +22,7 @@ public class Store {
     private Long storeId;
 
     // --- Foreign Key Column ---
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supplier_id", nullable = false)
     private SupplierProfile supplierProfile;
 

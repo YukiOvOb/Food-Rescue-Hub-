@@ -2,6 +2,8 @@ package com.frh.backend.Model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -12,7 +14,8 @@ import java.util.ArrayList;
 
 @Entity
 @Table(name = "orders")
-@Data
+@Getter
+@Setter
 public class Order {
 
     @Id
