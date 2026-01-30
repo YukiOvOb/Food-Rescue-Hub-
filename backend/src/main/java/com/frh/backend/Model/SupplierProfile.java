@@ -58,7 +58,7 @@ public class SupplierProfile {
     private LocalDateTime createdAt;
 
     // role : consumer/ supplier/ admin (just for identification purpose)
-    @Column(name = "role", length = 20)
+    @Column(name = "role", length = 20, nullable = false)
     private String role = "SUPPLIER";
 
 }
