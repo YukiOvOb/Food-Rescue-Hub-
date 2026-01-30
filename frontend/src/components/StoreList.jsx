@@ -1,29 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axiosInstance from "../services/axiosConfig";
 
 export default function StoreList() {
     const [stores, setStores] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    // In a real app, this would come from your Auth context/Login session
-    const supplierId = 1;
+    const [supplierId, setSupplierId] = useState(null);
 
     useEffect(() => {
-        fetchStores();
-    }, []);
-
-    const fetchStores = async () => {
-        try {
-            const response = await fetch(`http://localhost:8081/api/stores/supplier/${supplierId}`);
-            if (response.ok) {
-                const data = await response.json();
-                setStores(data);
-            } else {
-                console.error("Failed to fetch stores");
+        const getSessionUser = async () => {
+            try {
+                // Fetch the logged-in user's details
+                const response = await axiosInstance.get('/auth/me');
+                const id = response.data.supplierId;
+                setSupplierId(id);
+                fetchStores(id); // Fetch stores for THIS specific supplier
+            } catch (error) {
+                navigate('/login');
             }
+        };
+        getSessionUser();
+    }, [navigate]);
+
+    const fetchStores = async (id) => {
+        try {
+            // Use axiosInstance - it already knows about localhost:8081/api
+            const response = await axiosInstance.get(`/stores/supplier/${id}`);
+            setStores(response.data);
         } catch (error) {
-            console.error("Error connecting to backend:", error);
+            console.error("Error fetching stores:", error);
         } finally {
             setLoading(false);
         }
@@ -32,25 +39,21 @@ export default function StoreList() {
     if (loading) return <p style={{ textAlign: 'center' }}>Loading your stores...</p>;
 
     const handleDelete = async (storeId) => {
-        // Confirmation prevents accidental clicks
         const confirmed = window.confirm("Are you sure you want to delete this store? This action cannot be undone.");
 
         if (confirmed) {
             try {
-                const response = await fetch(`http://localhost:8081/api/stores/delete/${storeId}`, {
-                    method: 'DELETE', // Matches your @DeleteMapping
-                });
+                // axiosInstance already has the baseURL (http://localhost:8081/api)
+                // and includes withCredentials: true
+                const response = await axiosInstance.delete(`/stores/delete/${storeId}`);
 
-                if (response.ok) {
-                    alert("Store deleted successfully.");
-                    // Update local state to remove the store from the list immediately
-                    setStores(stores.filter(store => store.storeId !== storeId));
-                } else {
-                    alert("Failed to delete the store.");
-                }
+                // Axios treats non-2xx status codes as errors, so if we reach here, it's a 200 OK
+                alert("Store deleted successfully.");
+                setStores(stores.filter(store => store.storeId !== storeId));
             } catch (error) {
                 console.error("Error deleting store:", error);
-                alert("Server error during deletion.");
+                const message = error.response?.data?.message || "Failed to delete the store.";
+                alert(message);
             }
         }
     };
@@ -58,6 +61,11 @@ export default function StoreList() {
     return (
         <div style={{ padding: "20px", maxWidth: "1000px", margin: "0 auto", fontFamily: "Arial" }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                    <button onClick={() => navigate('/dashboard')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px' }}>
+                        ⬅️
+                    </button>
+                </div>
                 <h2>My Stores</h2>
                 <button
                     onClick={() => navigate('/add-store')}

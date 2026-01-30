@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { GoogleMap, useLoadScript, Autocomplete, Marker } from '@react-google-maps/api';
+import axiosInstance from "../services/axiosConfig";
 
 const libraries = ['places'];
 const mapContainerStyle = { width: '100%', height: '300px', marginTop: '10px' };
@@ -23,29 +24,36 @@ export default function EditStore() {
     const [pickupInstructions, setPickupInstructions] = useState("");
     const [coordinates, setCoordinates] = useState({ lat: 1.3521, lng: 103.8198 });
     const [autocomplete, setAutocomplete] = useState(null);
+    const [supplierId, setSupplierId] = useState(null);
 
     // 1. Fetch existing data on page load
     useEffect(() => {
-        const fetchStoreData = async () => {
+        const initializeData = async () => {
             try {
-                // We use the simple GET by ID endpoint here
-                const response = await fetch(`http://localhost:8081/api/stores/${storeId}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setStoreName(data.storeName);
-                    setAddress(data.addressLine);
-                    setPostalCode(data.postalCode);
-                    setOpeningHours(data.openingHours);
-                    setDescription(data.description);
-                    setPickupInstructions(data.pickupInstructions);
-                    setCoordinates({ lat: data.lat, lng: data.lng });
-                }
+                // 2. First, get the current logged-in user
+                const userResponse = await axiosInstance.get('/auth/me');
+                setSupplierId(userResponse.data.supplierId);
+
+                // 3. Then, fetch the existing store data
+                const storeResponse = await axiosInstance.get(`/stores/${storeId}`);
+                const data = storeResponse.data;
+
+                setStoreName(data.storeName);
+                setAddress(data.addressLine);
+                setPostalCode(data.postalCode);
+                setOpeningHours(data.openingHours);
+                setDescription(data.description);
+                setPickupInstructions(data.pickupInstructions);
+                setCoordinates({ lat: data.lat, lng: data.lng });
             } catch (error) {
-                console.error("Error fetching store:", error);
+                console.error("Initialization error:", error);
+                // Redirect if unauthorized or store not found
+                navigate('/login');
             }
         };
-        if (storeId) fetchStoreData();
-    }, [storeId]);
+
+        if (storeId) initializeData();
+    }, [storeId, navigate]);
 
     const onPlaceChanged = () => {
         if (autocomplete !== null) {
@@ -65,8 +73,9 @@ export default function EditStore() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         const payload = {
-            supplierId: 1, // Keep consistent with your user session
+            supplierId: supplierId,
             storeName: storeName,
             addressLine: address,
             postalCode: postalCode,
@@ -74,24 +83,19 @@ export default function EditStore() {
             lng: coordinates.lng,
             openingHours: openingHours,
             description: description,
-            pickupInstructions:pickupInstructions
+            pickupInstructions: pickupInstructions
         };
 
         try {
-            const response = await fetch(`http://localhost:8081/api/stores/update/${storeId}`, {
-                method: 'PUT', // Using the PUT method we tested
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
+            const response = await axiosInstance.put(`/stores/update/${storeId}`, payload);
 
-            if (response.ok) {
+            if (response.status === 200) {
                 alert("Store Updated Successfully!");
-                navigate('/my-stores');
-            } else {
-                alert("Update failed.");
+                navigate('/stores');
             }
         } catch (error) {
-            console.error("Error updating:", error);
+            console.error("Error updating store:", error);
+            alert("Update failed.");
         }
     };
 
@@ -138,7 +142,7 @@ export default function EditStore() {
 
                 <div style={{ display: 'flex', gap: '10px' }}>
                     <button type="submit" style={{ ...submitButtonStyle, background: "#ffc107", color: "black" }}>Update Store</button>
-                    <button type="button" onClick={() => navigate('/my-stores')} style={{ ...submitButtonStyle, background: "#ccc", color: "black" }}>Cancel</button>
+                    <button type="button" onClick={() => navigate('/stores')} style={{ ...submitButtonStyle, background: "#ccc", color: "black" }}>Cancel</button>
                 </div>
             </form>
         </div>

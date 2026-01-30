@@ -1,29 +1,71 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './components/Login';
+import Register from './components/Register';
+import Dashboard from './components/Dashboard';
+import ProtectedRoute from './components/ProtectedRoute';
+import StoreList from './components/StoreList';
+import AddStore from './components/AddStore';
+import EditStore from './components/EditStore';
 
-import Test from './Test';
-import AddStore from './AddStore';
-import StoreList from './StoreList';
+import './App.css';
 
-export default function App() {
+function App() {
     return (
         <Router>
             <div className="App">
-                {/* Global Navigation Bar */}
-                <nav style={{ padding: 10, borderBottom: "1px solid #ccc", display: 'flex', gap: '15px' }}>
-                    <Link to="/">Home</Link>
-                    <Link to="/my-stores">My Stores</Link>
-                    <Link to="/add-store">Add Store</Link>
-                </nav>
-
-                {/* The "Switchboard" */}
                 <Routes>
-                    <Route path="/" element={<Test />} />
-                    <Route path="/my-stores" element={<StoreList />} />
-                    <Route path="/add-store" element={<AddStore />} />
+                    {/* Public Routes */}
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
 
-                    {/* We will add /edit-store/:storeId here later */}
+                    {/* Protected Routes */}
+                    <Route
+                        path="/dashboard"
+                        element={
+                            <ProtectedRoute>
+                                <Dashboard />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* 2. Store Management Routes */}
+                    <Route
+                        path="/stores"
+                        element={
+                            <ProtectedRoute>
+                                <StoreList />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/add-store"
+                        element={
+                            <ProtectedRoute>
+                                <AddStore />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/edit-store/:storeId"
+                        element={
+                            <ProtectedRoute>
+                                <EditStore />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* Default Route - Redirect to login */}
+                    <Route path="/" element={<Navigate to="/login" replace />} />
+
+                    {/* Catch all - Redirect to login */}
+                    <Route path="*" element={<Navigate to="/login" replace />} />
                 </Routes>
             </div>
         </Router>
     );
 }
+
+export default App;

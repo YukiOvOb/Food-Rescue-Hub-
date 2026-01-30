@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState , useEffect} from 'react';
 import { GoogleMap, useLoadScript, Autocomplete, Marker } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
+import axiosInstance from "../services/axiosConfig";
 
 const libraries = ['places']; // Load the "Places" library for Autocomplete
 const mapContainerStyle = { width: '100%', height: '300px', marginTop: '10px' };
@@ -11,8 +12,9 @@ export default function AddStore() {
         googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
         libraries,
     });
-
+    console.log("Key Loaded:", import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? "Yes" : "No");
     const navigate = useNavigate();
+    const [supplierId, setSupplierId] = useState(null);
 
     // Form State
     // first is variable name, second is setter
@@ -30,6 +32,18 @@ export default function AddStore() {
     // prop name onLoad is fixed by google
     // google would call the onLoad prop and would place their autocomplete logic inside it
     const onLoad = (autoC) => setAutocomplete(autoC);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const response = await axiosInstance.get('/auth/me');
+                setSupplierId(response.data.supplierId);
+            } catch (error) {
+                navigate('/login');
+            }
+        };
+        fetchUser();
+    }, [navigate]);
 
     const onPlaceChanged = () => {
         // this ensures that autocomplete is loaded
@@ -61,11 +75,18 @@ export default function AddStore() {
     };
 
     // 2. Handle Submit to Backend
+    // ... inside AddStore component
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        if (!supplierId) {
+            alert("Session expired. Please log in again.");
+            navigate('/login');
+            return;
+        }
+
         const payload = {
-            supplierId: 1, // Hardcoded for now (replace with User ID later)
+            supplierId: supplierId, // Use the dynamic ID from session
             storeName: storeName,
             addressLine: address,
             postalCode: postalCode,
@@ -77,27 +98,17 @@ export default function AddStore() {
         };
 
         try {
-            const response = await fetch('http://localhost:8081/api/stores/create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
+            // Axios handles JSON stringification automatically
+            const response = await axiosInstance.post('/stores/create', payload);
 
-            if (response.ok) {
+            if (response.status === 201 || response.status === 200) {
                 alert("Store Created Successfully!");
-                // Redirect to your store list page commented out for testing
-                navigate('/my-stores');
-            } else {
-                const errorData = await response.json();
-                // Show specific validation errors (e.g., "Latitude must be within Singapore")
-                const errorMessage = errorData.errors
-                    ? Object.values(errorData.errors).join("\n")
-                    : "Failed to create store.";
-                alert("Validation Error:\n" + errorMessage);
+                navigate('/stores');
             }
         } catch (error) {
-            console.error("Error:", error);
-            alert("Server Error: Check if your Backend is running.");
+            console.error("Error creating store:", error);
+            const errorMessage = error.response?.data?.message || "Failed to create store.";
+            alert("Error:\n" + errorMessage);
         }
     };
 
@@ -105,8 +116,18 @@ export default function AddStore() {
     if (!isLoaded) return "Loading Maps...";
 
     return (
+
         <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", fontFamily: "Arial" }}>
-            <h2>Add New Store</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
+                <button
+                    type="button"
+                    onClick={() => navigate('/stores')}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', padding: 0 }}
+                >
+                    ⬅️
+                </button>
+                <h2 style={{ margin: 0 }}>Add New Store</h2>
+            </div>
             <form onSubmit={handleSubmit}>
                 <div style={inputGroupStyle}>
                     <label>Store Name*:</label>
