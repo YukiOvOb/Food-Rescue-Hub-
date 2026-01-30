@@ -1,7 +1,9 @@
 package com.frh.backend.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -12,7 +14,9 @@ import java.util.ArrayList;
 
 @Entity
 @Table(name = "orders")
-@Data
+@Getter
+@Setter
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // Prevents proxy serialization errors
 public class Order {
 
     @Id
@@ -21,38 +25,41 @@ public class Order {
     private Long orderId;
 
     // --- Relationships ---
-    
-    // Many orders belong to one Store
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id", nullable = false)
+    @JsonIgnoreProperties({"orders", "listings", "supplierProfile"}) // Prevent Store -> Order -> Store loop
     private Store store;
 
-    // Many orders belong to one Consumer
-    // Assuming you have a ConsumerProfile entity. 
-    // If not, you can temporarily use: private Long consumerId;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "consumer_id", nullable = false)
+    @JsonIgnoreProperties("orders") // Prevent Consumer -> Order -> Consumer loop
     private ConsumerProfile consumer;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("order") // Prevent Item -> Order -> Item loop
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("order")
     private PickupFeedback pickupFeedback;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY) 
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("order")
     private List<Payment> payments = new ArrayList<>();
 
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY) 
-    private PickupToken pickupToken; 
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("order")
+    private PickupToken pickupToken;
 
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY) 
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("order")
     private CommissionLedger commission;
-    
+
     // --- Order Details ---
 
     @Column(name = "status", nullable = false, length = 30)
-    private String status = "PENDING"; // Default
+    private String status = "PENDING";
 
     @Column(name = "pickup_slot_start")
     private LocalDateTime pickupSlotStart;
@@ -60,12 +67,11 @@ public class Order {
     @Column(name = "pickup_slot_end")
     private LocalDateTime pickupSlotEnd;
 
-    // Using BigDecimal for money (Precision 10,2)
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
     @Column(name = "currency", nullable = false, length = 10)
-    private String currency = "SGD"; // Default to SGD
+    private String currency = "SGD";
 
     @Column(name = "cancel_reason", length = 300)
     private String cancelReason;

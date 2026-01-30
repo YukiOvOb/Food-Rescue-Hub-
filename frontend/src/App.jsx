@@ -4,45 +4,81 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+
+// Component Imports
+import StoreList from './components/StoreList';
+import AddStore from './components/AddStore';
+import EditStore from './components/EditStore';
 import ListingsPage from './pages/ListingsPage';
+
 import './App.css';
 
 function App() {
-  return (
-    <Router>
-      <div className="App">
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+    return (
+        <Router>
+            <div className="App">
+                <Routes>
+                    {/* Public Routes */}
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
 
-          {/* Protected Routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/listings"
-            element={
-              <ProtectedRoute>
-                <ListingsPage />
-              </ProtectedRoute>
-            }
-          />
+                    {/* Protected Routes */}
+                    <Route
+                        path="/dashboard"
+                        element={
+                            <ProtectedRoute>
+                                <Dashboard />
+                            </ProtectedRoute>
+                        }
+                    />
 
-          {/* Default Route - Redirect to login */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+                    {/* Listings Management */}
+                    <Route
+                        path="/listings"
+                        element={
+                            <ProtectedRoute>
+                                <ListingsPage />
+                            </ProtectedRoute>
+                        }
+                    />
 
-          {/* Catch all - Redirect to login */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </div>
-    </Router>
-  );
+                    {/* Store Management */}
+                    <Route
+                        path="/stores"
+                        element={
+                            <ProtectedRoute>
+                                <StoreList />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/add-store"
+                        element={
+                            <ProtectedRoute>
+                                <AddStore />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/edit-store/:storeId"
+                        element={
+                            <ProtectedRoute>
+                                <EditStore />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* Default Route - Redirect to login */}
+                    <Route path="/" element={<Navigate to="/login" replace />} />
+
+                    {/* Catch all - Redirect to login */}
+                    <Route path="*" element={<Navigate to="/login" replace />} />
+                </Routes>
+            </div>
+        </Router>
+    );
 }
 
 export default App;

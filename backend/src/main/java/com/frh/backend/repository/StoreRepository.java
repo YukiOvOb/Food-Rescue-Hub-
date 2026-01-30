@@ -8,6 +8,7 @@ import java.util.List;
 
 @Repository
 public interface StoreRepository extends JpaRepository<Store, Long> {
+    List<Store> findBySupplierProfile_SupplierId(Long supplierId);
 
     // Find all active stores
     List<Store> findByIsActive(boolean isActive);

@@ -1,5 +1,6 @@
 package com.frh.backend.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -19,7 +20,8 @@ public class StoreType {
 
     // --- Foreign Key ---
    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER) 
-   @JoinColumn(name = "supplier_id", referencedColumnName = "supplier_id", nullable = false, unique = true) 
+   @JoinColumn(name = "supplier_id", referencedColumnName = "supplier_id", nullable = false, unique = true)
+   @JsonIgnore
    private SupplierProfile supplierProfile;
 
     // --- Data Fields ---

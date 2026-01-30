@@ -1,5 +1,6 @@
 package com.frh.backend.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -18,8 +19,10 @@ public class ListingPhoto {
 
     // --- Relationship ---
     // Many photos belong to one Listing
+    // Inside ListingPhoto.java
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "listing_id", nullable = false)
+    @JoinColumn(name = "listing_id")
+    @JsonIgnore
     private Listing listing;
 
     // --- Photo Details ---

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
 import './styles/Dashboard.css';
 
@@ -12,13 +12,13 @@ const Dashboard = () => {
     const fetchUser = async () => {
       try {
         const currentUser = await authService.getCurrentUser();
-        
+
         if (!currentUser) {
           console.log('No user found, redirecting to login');
           navigate('/login');
           return;
         }
-        
+
         console.log('User loaded:', currentUser);
         setUser(currentUser);
       } catch (error) {
@@ -86,6 +86,14 @@ const Dashboard = () => {
 
         {/* Dashboard Cards */}
         <div className="dashboard-cards">
+          <div className="card">
+            <div className="card-icon">🏪</div>
+            <h3>Store Management</h3>
+            <p>View and manage your store details</p>
+            <Link to="/stores" className="btn-card" style={{ textDecoration: 'none', textAlign: 'center' }}>
+              Go to Stores
+            </Link>
+          </div>
           <div className="card">
             <div className="card-icon">📦</div>
             <h3>Products</h3>
