@@ -60,6 +60,12 @@ public class StoreService {
                 .orElseThrow(() -> new RuntimeException("Store not found"));
     };
 
+    @Transactional(readOnly = true)
+    public StoreResponse getStoreResponseById(Long storeId) {
+        Store store = getStoreById(storeId);
+        return mapToResponse(store);
+    }
+
     private StoreResponse mapToResponse(Store store) {
         StoreResponse response = new StoreResponse();
         response.setStoreId(store.getStoreId());
@@ -90,6 +96,7 @@ public class StoreService {
         existingStore.setPostalCode(dto.getPostalCode());
         existingStore.setOpeningHours(dto.getOpeningHours());
         existingStore.setDescription(dto.getDescription());
+        existingStore.setPickupInstructions(dto.getPickupInstructions());
 
         Store savedStore = storeRepository.save(existingStore);
 

@@ -1,0 +1,150 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { GoogleMap, useLoadScript, Autocomplete, Marker } from '@react-google-maps/api';
+
+const libraries = ['places'];
+const mapContainerStyle = { width: '100%', height: '300px', marginTop: '10px' };
+
+export default function EditStore() {
+    const { storeId } = useParams(); // Extracts the ID from the URL
+    const navigate = useNavigate();
+
+    const { isLoaded, loadError } = useLoadScript({
+        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+        libraries,
+    });
+
+    // State matching your StoreRequest DTO
+    const [storeName, setStoreName] = useState("");
+    const [address, setAddress] = useState("");
+    const [postalCode, setPostalCode] = useState("");
+    const [openingHours, setOpeningHours] = useState("");
+    const [description, setDescription] = useState("");
+    const [pickupInstructions, setPickupInstructions] = useState("");
+    const [coordinates, setCoordinates] = useState({ lat: 1.3521, lng: 103.8198 });
+    const [autocomplete, setAutocomplete] = useState(null);
+
+    // 1. Fetch existing data on page load
+    useEffect(() => {
+        const fetchStoreData = async () => {
+            try {
+                // We use the simple GET by ID endpoint here
+                const response = await fetch(`http://localhost:8081/api/stores/${storeId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setStoreName(data.storeName);
+                    setAddress(data.addressLine);
+                    setPostalCode(data.postalCode);
+                    setOpeningHours(data.openingHours);
+                    setDescription(data.description);
+                    setPickupInstructions(data.pickupInstructions);
+                    setCoordinates({ lat: data.lat, lng: data.lng });
+                }
+            } catch (error) {
+                console.error("Error fetching store:", error);
+            }
+        };
+        if (storeId) fetchStoreData();
+    }, [storeId]);
+
+    const onPlaceChanged = () => {
+        if (autocomplete !== null) {
+            const place = autocomplete.getPlace();
+            if (place.geometry) {
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
+                const addressComponents = place.address_components;
+                const postcodeObj = addressComponents.find(c => c.types.includes("postal_code"));
+
+                setCoordinates({ lat, lng });
+                setAddress(place.formatted_address);
+                if (postcodeObj) setPostalCode(postcodeObj.long_name);
+            }
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const payload = {
+            supplierId: 1, // Keep consistent with your user session
+            storeName: storeName,
+            addressLine: address,
+            postalCode: postalCode,
+            lat: coordinates.lat,
+            lng: coordinates.lng,
+            openingHours: openingHours,
+            description: description,
+            pickupInstructions:pickupInstructions
+        };
+
+        try {
+            const response = await fetch(`http://localhost:8081/api/stores/update/${storeId}`, {
+                method: 'PUT', // Using the PUT method we tested
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+
+            if (response.ok) {
+                alert("Store Updated Successfully!");
+                navigate('/my-stores');
+            } else {
+                alert("Update failed.");
+            }
+        } catch (error) {
+            console.error("Error updating:", error);
+        }
+    };
+
+    if (loadError) return "Error loading maps";
+    if (!isLoaded) return "Loading Maps...";
+
+    return (
+        <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", fontFamily: "Arial" }}>
+            <h2>Edit Store: {storeName}</h2>
+            <form onSubmit={handleSubmit}>
+                <div style={inputGroupStyle}>
+                    <label>Store Name*:</label>
+                    <input type="text" value={storeName} onChange={(e) => setStoreName(e.target.value)} required style={inputStyle} />
+                </div>
+
+                <div style={inputGroupStyle}>
+                    <label>Address (Search to update location):</label>
+                    <Autocomplete onLoad={setAutocomplete} onPlaceChanged={onPlaceChanged}>
+                        <input type="text" placeholder={address} style={inputStyle} />
+                    </Autocomplete>
+                    <small>Current: {address}</small>
+                </div>
+
+                <div style={inputGroupStyle}>
+                    <label>Postal Code*:</label>
+                    <input type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} maxLength="6" required style={inputStyle} />
+                </div>
+
+                <div style={inputGroupStyle}>
+                    <label>Opening Hours:</label>
+                    <input type="text" value={openingHours} onChange={(e) => setOpeningHours(e.target.value)} style={inputStyle} />
+                </div>
+
+                <div style={inputGroupStyle}>
+                    <label>Pickup Instructions:</label>
+                    <textarea value={pickupInstructions} onChange={(e) => setPickupInstructions(e.target.value)} rows="2" style={inputStyle} />
+                </div>
+
+                <div style={{ marginBottom: "15px", border: "1px solid #ccc" }}>
+                    <GoogleMap mapContainerStyle={mapContainerStyle} zoom={15} center={coordinates}>
+                        <Marker position={coordinates} />
+                    </GoogleMap>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button type="submit" style={{ ...submitButtonStyle, background: "#ffc107", color: "black" }}>Update Store</button>
+                    <button type="button" onClick={() => navigate('/my-stores')} style={{ ...submitButtonStyle, background: "#ccc", color: "black" }}>Cancel</button>
+                </div>
+            </form>
+        </div>
+    );
+}
+
+const inputGroupStyle = { marginBottom: "15px" };
+const inputStyle = { width: "100%", padding: "8px", boxSizing: "border-box" };
+const submitButtonStyle = { flex: 1, padding: "10px", border: "none", cursor: "pointer", fontWeight: "bold" };

@@ -25,6 +25,12 @@ public class StoreController {
         return ResponseEntity.status(HttpStatus.CREATED).body(newStore);
     }
 
+    @GetMapping("/{storeId}")
+    public ResponseEntity<StoreResponse> getStoreById(@PathVariable Long storeId) {
+        StoreResponse store = storeService.getStoreResponseById(storeId);
+        return ResponseEntity.ok(store);
+    }
+
     @GetMapping("/supplier/{supplierId}") // GET /api/stores/supplier/1
     public ResponseEntity<List<StoreResponse>> getStoresBySupplier(@PathVariable Long supplierId) {
         List<StoreResponse> stores = storeService.getAllStores(supplierId);

@@ -31,6 +31,30 @@ export default function StoreList() {
 
     if (loading) return <p style={{ textAlign: 'center' }}>Loading your stores...</p>;
 
+    const handleDelete = async (storeId) => {
+        // Confirmation prevents accidental clicks
+        const confirmed = window.confirm("Are you sure you want to delete this store? This action cannot be undone.");
+
+        if (confirmed) {
+            try {
+                const response = await fetch(`http://localhost:8081/api/stores/delete/${storeId}`, {
+                    method: 'DELETE', // Matches your @DeleteMapping
+                });
+
+                if (response.ok) {
+                    alert("Store deleted successfully.");
+                    // Update local state to remove the store from the list immediately
+                    setStores(stores.filter(store => store.storeId !== storeId));
+                } else {
+                    alert("Failed to delete the store.");
+                }
+            } catch (error) {
+                console.error("Error deleting store:", error);
+                alert("Server error during deletion.");
+            }
+        }
+    };
+
     return (
         <div style={{ padding: "20px", maxWidth: "1000px", margin: "0 auto", fontFamily: "Arial" }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -65,13 +89,22 @@ export default function StoreList() {
                             <td style={tableCellStyle}>
                                 <small style={{ color: "#555" }}>{store.pickupInstructions || "No instructions provided"}</small>
                             </td>
+                            {/* Combine all actions into this single cell */}
                             <td style={tableCellStyle}>
-                                <button
-                                    onClick={() => navigate(`/edit-store/${store.storeId}`)}
-                                    style={editButtonStyle}
-                                >
-                                    Edit
-                                </button>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button
+                                        onClick={() => navigate(`/edit-store/${store.storeId}`)}
+                                        style={editButtonStyle}
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(store.storeId)}
+                                        style={deleteButtonStyle}
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     ))}
@@ -86,3 +119,4 @@ export default function StoreList() {
 const tableHeaderStyle = { padding: "12px", borderBottom: "2px solid #ddd" };
 const tableCellStyle = { padding: "12px" };
 const editButtonStyle = { background: "#ffc107", border: "none", padding: "5px 10px", cursor: "pointer", borderRadius: "4px" };
+const deleteButtonStyle = { background: "#dc3545", color: "white", border: "none", padding: "5px 10px", cursor: "pointer", borderRadius: "4px" };
