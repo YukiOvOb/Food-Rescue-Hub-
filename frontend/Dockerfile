@@ -21,6 +21,9 @@ FROM nginx:1.27-alpine
 # Remove default nginx content
 RUN rm -rf /usr/share/nginx/html/*
 
+# Update OS packages to pick up security fixes
+RUN apk update && apk upgrade --no-cache
+
 # Copy built static files from build stage
 COPY --from=build /app/frontend/dist /usr/share/nginx/html
 
