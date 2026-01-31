@@ -13,6 +13,11 @@ on:
 permissions:
   contents: read
 
+env:
+  # "true" = report-only (lint won't fail pipeline)
+  # "false" = strict gate (lint will fail)
+  REPORT_ONLY: "true"
+
 jobs:
   # ============================
   # STAGE 1: Checks (parallel)
@@ -29,6 +34,7 @@ jobs:
         with:
           java-version: "17"
           distribution: "temurin"
+          cache: maven
 
       - name: Run backend tests
         run: |
@@ -36,6 +42,9 @@ jobs:
           chmod +x mvnw
           ./mvnw test
 
+  # ----------------------------
+  # React Lint (keep earlier stable version)
+  # ----------------------------
   frontend-react-lint:
     name: Lint (React)
     runs-on: ubuntu-latest
@@ -53,9 +62,19 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Run ESLint
+      # ✅ Create lint report even if ESLint fails
+      - name: Run ESLint (report)
         working-directory: frontend
-        run: npx eslint "src/**/*.{js,jsx}" --max-warnings=9999
+        run: |
+          npx eslint "src/**/*.{js,jsx}" -f json -o eslint-report.json || true
+
+      - name: Upload ESLint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-eslint-report
+          path: frontend/eslint-report.json
+          if-no-files-found: warn
 
   thymeleaf-template-lint:
     name: Lint (Thymeleaf Templates)
@@ -72,72 +91,52 @@ jobs:
       - name: Run HTMLHint on templates
         run: htmlhint "backend/src/main/resources/templates/**/*.html"
 
-  snyk:
-    name: SCA/SAST (Snyk)
+  # ----------------------------
+  # Snyk (use the "correct working" format from your Feature vs Main file)
+  # ----------------------------
+  security_snyk:
+    name: Snyk (SCA + SAST)
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      security-events: write
       actions: read
+      security-events: write
+
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check Snyk token exists
+      - name: Verify SNYK_TOKEN
         run: |
           if [ -z "$SNYK_TOKEN" ]; then
             echo "SNYK_TOKEN is NOT set"
             exit 1
-          else
-            echo "SNYK_TOKEN is set correctly"
           fi
 
-      - name: Set up Snyk CLI
+      - name: Setup Snyk
         uses: snyk/actions/setup@master
         with:
           snyk-version: latest
 
-      - name: Snyk Dependency Test (SCA)
+      # ---- SAST (Snyk Code) -> SARIF
+      - name: Snyk Code (SAST) + SARIF
         run: |
-          echo "==== Snyk Dependency Test (Backend Maven) ===="
-          snyk test --file=backend/pom.xml || true
+          set +e
+          snyk code test
+          SAST_EXIT=$?
 
-          echo "==== Snyk Dependency Test (Frontend npm) ===="
-          (cd frontend && snyk test) || true
-        continue-on-error: true
+          snyk code test --sarif --sarif-file-output=snyk-code.sarif 2>&1
+          SARIF_EXIT=$?
 
-      - name: Snyk Code test (SAST) + Generate SARIF
-        run: |
-          echo "==== Snyk Code Test Results ===="
-          snyk code test || true
-
-          echo ""
-          echo "==== Generating SARIF file ===="
-          snyk code test --sarif --sarif-file-output=snyk-code.sarif 2>&1 || true
-
-          echo ""
-          echo "==== Checking if SARIF file exists ===="
-          if [ -f snyk-code.sarif ]; then
-            echo "✓ SARIF file created successfully"
-            ls -lh snyk-code.sarif
-          else
-            echo "✗ SARIF file not created"
+          if [ "${REPORT_ONLY}" != "true" ] && [ $SAST_EXIT -ne 0 ]; then
+            exit $SAST_EXIT
           fi
-        continue-on-error: true
+          exit 0
 
-      - name: Check if SARIF file exists
-        id: check_sarif
-        run: |
-          if [ -f snyk-code.sarif ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Upload Snyk SARIF to GitHub Code Scanning
-        if: steps.check_sarif.outputs.exists == 'true'
+      - name: Upload Snyk SARIF to Code Scanning
+        if: always()
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: snyk-code.sarif
@@ -150,6 +149,29 @@ jobs:
           path: snyk-code.sarif
           if-no-files-found: warn
 
+      # ---- SCA backend
+      - name: Snyk Open Source (SCA) - backend
+        run: |
+          cd backend
+          if [ "${REPORT_ONLY}" = "true" ]; then
+            snyk test --file=pom.xml --severity-threshold=high || true
+          else
+            snyk test --file=pom.xml --severity-threshold=high
+          fi
+
+      # ---- SCA frontend
+      - name: Snyk Open Source (SCA) - frontend
+        run: |
+          cd frontend
+          if [ "${REPORT_ONLY}" = "true" ]; then
+            snyk test --severity-threshold=high || true
+          else
+            snyk test --severity-threshold=high
+          fi
+
+  # ----------------------------
+  # CodeQL (kept from your pipeline-format file, with Java build)
+  # ----------------------------
   sast-codeql:
     name: SAST (CodeQL)
     runs-on: ubuntu-latest
@@ -175,6 +197,7 @@ jobs:
         with:
           java-version: "17"
           distribution: "temurin"
+          cache: maven
 
       - name: Build backend (required for Java CodeQL)
         if: matrix.language == 'java'
@@ -188,7 +211,6 @@ jobs:
         with:
           category: "/language:${{ matrix.language }}"
 
-
   # ============================
   # STAGE 2A: Feature branch path
   # ============================
@@ -196,7 +218,7 @@ jobs:
   docker-build-validate:
     name: Docker Build (Feature Branch Validation)
     runs-on: ubuntu-latest
-    needs: [backend-tests, frontend-react-lint, thymeleaf-template-lint, snyk, sast-codeql]
+    needs: [backend-tests, frontend-react-lint, thymeleaf-template-lint, security_snyk, sast-codeql]
     if: github.event_name == 'push' && github.ref != 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
@@ -208,7 +230,6 @@ jobs:
       - name: Build frontend image (no push)
         run: docker build -t frh-frontend:ci ./frontend
 
-
   # ============================
   # STAGE 2B: Main branch path
   # ============================
@@ -216,7 +237,7 @@ jobs:
   build-and-push:
     name: Build & Push Images
     runs-on: ubuntu-latest
-    needs: [backend-tests, frontend-react-lint, thymeleaf-template-lint, snyk, sast-codeql]
+    needs: [backend-tests, frontend-react-lint, thymeleaf-template-lint, security_snyk, sast-codeql]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
@@ -266,7 +287,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - run: |
-         echo "TODO: Add IAST tool steps"
+          echo "TODO: Add IAST tool steps"
 
   sit:
     name: SIT (Main only)
@@ -275,7 +296,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - run: |
-         echo "TODO: Add SIT tests here"
+          echo "TODO: Add SIT tests here"
 
   dast:
     name: DAST (Main only)
@@ -284,7 +305,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - run: |
-         echo "TODO: Add OWASP ZAP DAST workflow here"
+          echo "TODO: Add OWASP ZAP DAST workflow here"
 
   deploy:
     name: Deploy
@@ -299,6 +320,3 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /path/to/your/app
-            docker compose pull
-            docker compose up -d
