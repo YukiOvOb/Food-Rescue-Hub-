@@ -3,9 +3,10 @@ name: Food Rescue Hub CI/CD
 on:
   push:
     branches:
-     - "development/Sprint2" #sprint 2 development branch
-     - "feature/**"
-     - "main"
+      - "development/Sprint2"
+      - "development/Sprint2/**"
+      - "feature/**"
+      - "main"
   pull_request:
     branches:
       - main
@@ -37,6 +38,7 @@ jobs:
 
   # ----------------------------
   # 2) FRONTEND - React Lint
+  # (fails only on ESLint errors; warnings allowed)
   # ----------------------------
   frontend-react-lint:
     name: Lint (React)
@@ -55,8 +57,7 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      # ✅ Fail only on ESLint errors, not warnings
-      - name: Run ESLint
+      - name: Run ESLint (warnings allowed)
         working-directory: frontend
         run: npx eslint "src/**/*.{js,jsx}" --max-warnings=9999
 
@@ -68,6 +69,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -79,7 +81,7 @@ jobs:
         run: htmlhint "backend/src/main/resources/templates/**/*.html"
 
   # ----------------------------
-  # 4) SCA/SAST - Snyk (same style as your workflow)
+  # 4) Snyk - SCA + SAST (SARIF)
   # ----------------------------
   snyk:
     name: SCA/SAST (Snyk)
@@ -108,7 +110,7 @@ jobs:
         with:
           snyk-version: latest
 
-      # ✅ Dependency scan (SCA)
+      # Dependency scan (SCA) - do not break build (evidence only)
       - name: Snyk Dependency Test (SCA)
         run: |
           echo "==== Snyk Dependency Test (Backend Maven) ===="
@@ -118,7 +120,7 @@ jobs:
           (cd frontend && snyk test) || true
         continue-on-error: true
 
-      # ✅ Code scan (SAST) + SARIF
+      # Code scan (SAST) + SARIF - do not break build (evidence only)
       - name: Snyk Code test (SAST) + Generate SARIF
         run: |
           echo "==== Snyk Code Test Results ===="
@@ -162,8 +164,8 @@ jobs:
           if-no-files-found: warn
 
   # ----------------------------
-  # 5) SAST - CodeQL
-  # ✅ NOTE: CodeQL supports java, javascript (not kotlin/thymeleaf)
+  # 5) CodeQL - SAST
+  # supports: java, javascript
   # ----------------------------
   sast-codeql:
     name: SAST (CodeQL)
@@ -178,14 +180,16 @@ jobs:
         language: [ "java", "javascript" ]
     steps:
       - uses: actions/checkout@v4
+
       - uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
+
       - uses: github/codeql-action/analyze@v3
 
   # ----------------------------
-  # 6) FEATURE BRANCH DOCKER BUILD VALIDATION (no push)
-  # runs on non-main pushes only
+  # 6) FEATURE/Sprint - Docker build validation (NO PUSH)
+  # runs only on push events that are NOT main
   # ----------------------------
   docker-build-validate:
     name: Docker Build (Feature Branch Validation)
@@ -209,7 +213,7 @@ jobs:
     name: Build & Push Images
     runs-on: ubuntu-latest
     needs: [backend-tests, frontend-react-lint, thymeleaf-template-lint, snyk, sast-codeql]
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
@@ -236,7 +240,7 @@ jobs:
     name: Docker Image Scan (Trivy)
     runs-on: ubuntu-latest
     needs: [build-and-push]
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Scan backend image
         uses: aquasecurity/trivy-action@0.24.0
@@ -261,9 +265,9 @@ jobs:
     name: IAST (Main Only)
     runs-on: ubuntu-latest
     needs: [docker-image-scan]
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - run: echo "TODO: Add IAST tool steps (e.g. Contrast, Snyk IAST, etc.)"
+      - run: echo "TODO: Add IAST steps (Contrast, Snyk IAST, etc.)"
 
   # ----------------------------
   # 10) MAIN ONLY - SIT (placeholder)
@@ -272,9 +276,9 @@ jobs:
     name: SIT (Main Only)
     runs-on: ubuntu-latest
     needs: [iast]
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - run: echo "TODO: Add SIT tests here (integration tests, API tests, etc.)"
+      - run: echo "TODO: Add SIT tests (integration/API tests) here"
 
   # ----------------------------
   # 11) MAIN ONLY - DAST (placeholder)
@@ -283,9 +287,9 @@ jobs:
     name: DAST (Main Only)
     runs-on: ubuntu-latest
     needs: [sit]
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - run: echo "TODO: Add OWASP ZAP DAST workflow here"
+      - run: echo "TODO: Add OWASP ZAP DAST here"
 
   # ----------------------------
   # 12) MAIN ONLY - Deploy
@@ -294,7 +298,7 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     needs: [dast]
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
