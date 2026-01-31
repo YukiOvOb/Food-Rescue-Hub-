@@ -14,9 +14,10 @@ permissions:
   contents: read
 
 jobs:
-  # ----------------------------
-  # 1) BACKEND - JUnit Tests
-  # ----------------------------
+  # ============================
+  # STAGE 1: Checks (parallel)
+  # ============================
+
   backend-tests:
     name: JUnit (Backend)
     runs-on: ubuntu-latest
@@ -35,9 +36,6 @@ jobs:
           chmod +x mvnw
           ./mvnw test
 
-  # ----------------------------
-  # 2) FRONTEND - React Lint
-  # ----------------------------
   frontend-react-lint:
     name: Lint (React)
     runs-on: ubuntu-latest
@@ -55,14 +53,10 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      # ✅ Fail only on ESLint errors, not warnings
       - name: Run ESLint
         working-directory: frontend
         run: npx eslint "src/**/*.{js,jsx}" --max-warnings=9999
 
-  # ----------------------------
-  # 3) THYMELEAF TEMPLATE LINT
-  # ----------------------------
   thymeleaf-template-lint:
     name: Lint (Thymeleaf Templates)
     runs-on: ubuntu-latest
@@ -78,9 +72,6 @@ jobs:
       - name: Run HTMLHint on templates
         run: htmlhint "backend/src/main/resources/templates/**/*.html"
 
-  # ----------------------------
-  # 4) SCA/SAST - Snyk (same style as your workflow)
-  # ----------------------------
   snyk:
     name: SCA/SAST (Snyk)
     runs-on: ubuntu-latest
@@ -108,7 +99,6 @@ jobs:
         with:
           snyk-version: latest
 
-      # ✅ Dependency scan (SCA)
       - name: Snyk Dependency Test (SCA)
         run: |
           echo "==== Snyk Dependency Test (Backend Maven) ===="
@@ -118,7 +108,6 @@ jobs:
           (cd frontend && snyk test) || true
         continue-on-error: true
 
-      # ✅ Code scan (SAST) + SARIF
       - name: Snyk Code test (SAST) + Generate SARIF
         run: |
           echo "==== Snyk Code Test Results ===="
@@ -161,11 +150,6 @@ jobs:
           path: snyk-code.sarif
           if-no-files-found: warn
 
-  # ----------------------------
-  # 5) SAST - CodeQL
-  # FIXED: Java needs a build step
-  # Optional: run only on main + PR to main
-  # ----------------------------
   sast-codeql:
     name: SAST (CodeQL)
     runs-on: ubuntu-latest
@@ -173,15 +157,10 @@ jobs:
       security-events: write
       actions: read
       contents: read
-
-    # If you want CodeQL ONLY on main and PR-to-main, keep this IF:
-    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
-
     strategy:
       fail-fast: false
       matrix:
-        language: [ "java", "javascript" ]
-
+        language: ["java", "javascript"]
     steps:
       - uses: actions/checkout@v4
 
@@ -196,7 +175,6 @@ jobs:
         with:
           java-version: "17"
           distribution: "temurin"
-          cache: maven
 
       - name: Build backend (required for Java CodeQL)
         if: matrix.language == 'java'
@@ -210,14 +188,15 @@ jobs:
         with:
           category: "/language:${{ matrix.language }}"
 
-  # ----------------------------
-  # 6) FEATURE BRANCH DOCKER BUILD VALIDATION (no push)
-  # runs on non-main pushes only
-  # ----------------------------
+
+  # ============================
+  # STAGE 2A: Feature branch path
+  # ============================
+
   docker-build-validate:
     name: Docker Build (Feature Branch Validation)
     runs-on: ubuntu-latest
-    needs: [backend-tests, frontend-react-lint, thymeleaf-template-lint, snyk]
+    needs: [backend-tests, frontend-react-lint, thymeleaf-template-lint, snyk, sast-codeql]
     if: github.event_name == 'push' && github.ref != 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
@@ -229,9 +208,11 @@ jobs:
       - name: Build frontend image (no push)
         run: docker build -t frh-frontend:ci ./frontend
 
-  # ----------------------------
-  # 7) MAIN ONLY - Build & Push Images
-  # ----------------------------
+
+  # ============================
+  # STAGE 2B: Main branch path
+  # ============================
+
   build-and-push:
     name: Build & Push Images
     runs-on: ubuntu-latest
@@ -256,9 +237,6 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest ./frontend
           docker push ${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest
 
-  # ----------------------------
-  # 8) MAIN ONLY - Docker Image Scan (Trivy)
-  # ----------------------------
   docker-image-scan:
     name: Docker Image Scan (Trivy)
     runs-on: ubuntu-latest
@@ -281,45 +259,33 @@ jobs:
           exit-code: "1"
           severity: "CRITICAL,HIGH"
 
-  # ----------------------------
-  # 9) MAIN ONLY - IAST (placeholder)
-  # ----------------------------
   iast:
-    name: IAST (Main Only)
+    name: IAST (Main only)
     runs-on: ubuntu-latest
     needs: [docker-image-scan]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - run: |
-         echo "TODO: Add IAST tool steps (Contrast/Seeker/Veracode/etc.)"
+         echo "TODO: Add IAST tool steps"
 
-  # ----------------------------
-  # 10) MAIN ONLY - SIT (placeholder)
-  # ----------------------------
   sit:
-    name: SIT (Main Only)
+    name: SIT (Main only)
     runs-on: ubuntu-latest
     needs: [iast]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - run: |
-         echo "TODO: Add SIT tests here (integration/API tests)"
+         echo "TODO: Add SIT tests here"
 
-  # ----------------------------
-  # 11) MAIN ONLY - DAST (placeholder)
-  # ----------------------------
   dast:
-    name: DAST (Main Only)
+    name: DAST (Main only)
     runs-on: ubuntu-latest
     needs: [sit]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - run: |
-           echo "TODO: Add OWASP ZAP DAST scan here"
+         echo "TODO: Add OWASP ZAP DAST workflow here"
 
-  # ----------------------------
-  # 12) MAIN ONLY - Deploy
-  # ----------------------------
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
