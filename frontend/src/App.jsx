@@ -10,6 +10,7 @@ import StoreList from './components/StoreList';
 import AddStore from './components/AddStore';
 import EditStore from './components/EditStore';
 import ListingsPage from './pages/ListingsPage';
+import OrdersPage from './pages/OrdersPage';
 import QRCodeDecoder from './components/QRCodeDecoder';
 
 import './App.css';
@@ -39,6 +40,16 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <ListingsPage />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* Orders Management */}
+                    <Route
+                        path="/orders"
+                        element={
+                            <ProtectedRoute>
+                                <OrdersPage />
                             </ProtectedRoute>
                         }
                     />
