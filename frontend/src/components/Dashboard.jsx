@@ -41,6 +41,7 @@ const Dashboard = () => {
   };
 
   const goToListings = () => navigate('/listings');
+  const goToOrders = () => navigate('/orders');
   const goToQRDecoder = () => navigate('/qr-decoder');
 
   if (loading) {
@@ -105,7 +106,7 @@ const Dashboard = () => {
             <div className="card-icon">📊</div>
             <h3>Orders</h3>
             <p>Track and manage orders</p>
-            <button className="btn-card">View Orders</button>
+            <button className="btn-card" onClick={goToOrders}>View Orders</button>
           </div>
           <div className="card">
             <div className="card-icon">💰</div>
