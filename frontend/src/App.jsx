@@ -10,6 +10,7 @@ import StoreList from './components/StoreList';
 import AddStore from './components/AddStore';
 import EditStore from './components/EditStore';
 import ListingsPage from './pages/ListingsPage';
+import QRCodeDecoder from './components/QRCodeDecoder';
 
 import './App.css';
 
@@ -66,6 +67,15 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <EditStore />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/qr-decoder"
+                        element={
+                            <ProtectedRoute>
+                                <QRCodeDecoder />
                             </ProtectedRoute>
                         }
                     />

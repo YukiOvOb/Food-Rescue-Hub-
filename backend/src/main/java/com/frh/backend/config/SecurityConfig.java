@@ -47,7 +47,8 @@ public class SecurityConfig {
                 "http://localhost:3000",
                 "http://localhost:5173",
                 "http://localhost:5174", 
-                "http://47.129.223.141:8080"));
+                "http://47.129.223.141:8080",
+                "http://172.26.235.205:5174"));
 
         config.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS"));

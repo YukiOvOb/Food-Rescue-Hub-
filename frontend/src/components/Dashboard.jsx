@@ -41,6 +41,7 @@ const Dashboard = () => {
   };
 
   const goToListings = () => navigate('/listings');
+  const goToQRDecoder = () => navigate('/qr-decoder');
 
   if (loading) {
     return (
@@ -135,6 +136,12 @@ const Dashboard = () => {
             <h3>Listings</h3>
             <p>Create and manage rescue listings</p>
             <button className="btn-card" onClick={goToListings}>Create Listing</button>
+          </div>
+          <div className="card">
+            <div className="card-icon">📱</div>
+            <h3>QR Code Detector</h3>
+            <p>Scan and decode pickup tokens</p>
+            <button className="btn-card" onClick={goToQRDecoder}>Scan QR Code</button>
           </div>
         </div>
 
