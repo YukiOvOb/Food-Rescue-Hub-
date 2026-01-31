@@ -3,7 +3,7 @@ name: Food Rescue Hub CI/CD
 on:
   push:
     branches:
-     - "development/Sprint2"
+     - "development/Sprint2" #sprint 2 development branch
      - "feature/**"
      - "main"
   pull_request:
