@@ -1,16 +1,16 @@
 # Build stage - Node 20 for Vite build
 FROM node:20-alpine AS build
 
-WORKDIR /app
+WORKDIR /app/frontend
 
 # Copy package files for dependency caching
-COPY package.json package-lock.json* ./
+COPY frontend/package.json frontend/package-lock.json* ./
 
 # Install dependencies
 RUN npm ci
 
 # Copy source code
-COPY . .
+COPY frontend/ ./
 
 # Build production assets
 RUN npm run build
@@ -22,10 +22,10 @@ FROM nginx:1.27-alpine
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copy built static files from build stage
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=build /app/frontend/dist /usr/share/nginx/html
 
 # Copy custom nginx config
-COPY ../nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
