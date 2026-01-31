@@ -4,8 +4,7 @@ on:
   push:
     branches:
       - "development/Sprint2"
-      - "development/Sprint2/**"
-      - "feature/**"
+      
       - "main"
   pull_request:
     branches:
