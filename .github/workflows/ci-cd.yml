@@ -228,7 +228,7 @@ jobs:
         run: docker build -t frh-backend:ci ./backend
 
       - name: Build frontend image (no push)
-        run: docker build -t frh-frontend:ci ./frontend
+        run: docker build -t frh-frontend:ci -f frontend/Dockerfile .
 
   # ============================
   # STAGE 2B: Main branch path
@@ -253,9 +253,9 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/frh-backend:latest ./backend
           docker push ${{ secrets.DOCKER_USERNAME }}/frh-backend:latest
 
-      - name: Build & push frontend
+      - name: Build & push frontend (nginx image with static assets)
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest ./frontend
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest -f frontend/Dockerfile .
           docker push ${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest
 
   docker-image-scan:

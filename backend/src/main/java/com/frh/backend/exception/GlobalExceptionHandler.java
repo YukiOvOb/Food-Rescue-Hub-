@@ -14,11 +14,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
         Map<String, String> error = new HashMap<>();
+        String msg = ex.getMessage() == null ? "" : ex.getMessage().toLowerCase();
         error.put("error", ex.getMessage());
 
-        // If the message contains "not found", return 404
-        if (ex.getMessage().toLowerCase().contains("not found")) {
+        if (msg.contains("not found")) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
+
+        if (msg.contains("invalid email or password") || msg.contains("invalid credentials")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
         }
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
