@@ -36,11 +36,38 @@ jobs:
           distribution: "temurin"
           cache: maven
 
-      - name: Run backend tests
+      - name: Run backend tests with coverage
         run: |
           cd backend
           chmod +x mvnw
-          ./mvnw test
+          ./mvnw clean verify
+
+      - name: Generate JaCoCo Badge
+        if: always()
+        uses: cicirello/jacoco-badge-generator@v2
+        with:
+          jacoco-csv-file: backend/target/site/jacoco/jacoco.csv
+          badges-directory: .github/badges
+          generate-branches-badge: true
+          generate-summary: true
+
+      - name: Upload JaCoCo coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage-report
+          path: backend/target/site/jacoco/
+          if-no-files-found: warn
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: madrapps/jacoco-report@v1.6.1
+        with:
+          paths: backend/target/site/jacoco/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 40
+          min-coverage-changed-files: 60
+          title: Code Coverage Report
 
   # ----------------------------
   # React Lint (keep earlier stable version)
