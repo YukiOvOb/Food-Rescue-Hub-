@@ -6,6 +6,7 @@ import com.example.foodrescuehub.data.model.UpdateLocationRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -80,4 +81,13 @@ interface ApiService {
     suspend fun getConsumerLocation(
         @Path("consumerId") consumerId: Long
     ): Response<UpdateLocationRequest>
+
+    /**
+     * Generate QR code for order pickup
+     * POST /api/pickup-tokens/{orderId}/generate-qrcode
+     */
+    @POST("api/pickup-tokens/{orderId}/generate-qrcode")
+    suspend fun generatePickupQRCode(
+        @Path("orderId") orderId: Long
+    ): Response<Map<String, String>>
 }

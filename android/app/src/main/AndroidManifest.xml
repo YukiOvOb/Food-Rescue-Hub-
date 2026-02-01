@@ -69,6 +69,11 @@
             android:label="Nearby Stores"
             android:parentActivityName=".ui.home.HomeActivity" />
         <activity
+            android:name=".ui.qrcode.QRCodeActivity"
+            android:exported="false"
+            android:label="Pickup Code"
+            android:parentActivityName=".ui.orders.OrderDetailActivity" />
+        <activity
             android:name=".MainActivity"
             android:exported="false" />
     </application>

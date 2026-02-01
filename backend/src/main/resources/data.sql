@@ -229,7 +229,13 @@ INSERT INTO payments (order_id, provider, provider_ref, amount, status, created_
 INSERT INTO pickup_tokens (order_id, qr_token_hash, issued_at, expires_at, used_at) VALUES
 (1, 'hash-order-1', NOW(), DATE_ADD(NOW(), INTERVAL 1 DAY), NOW()),
 (2, 'hash-order-2', NOW(), DATE_ADD(NOW(), INTERVAL 1 DAY), NOW()),
-(3, 'hash-order-3', NOW(), DATE_ADD(NOW(), INTERVAL 1 DAY), NULL);
+(3, 'hash-order-3', NOW(), DATE_ADD(NOW(), INTERVAL 1 DAY), NULL),
+(4, 'hash-order-4', NOW(), DATE_ADD(NOW(), INTERVAL 1 DAY), NULL),
+(5, 'hash-order-5', NOW(), DATE_ADD(NOW(), INTERVAL 1 DAY), NULL),
+(6, 'hash-order-6', NOW(), DATE_ADD(NOW(), INTERVAL 1 DAY), NULL),
+(7, 'hash-order-7', NOW(), DATE_ADD(NOW(), INTERVAL 1 DAY), NULL),
+(8, 'hash-order-8', NOW(), DATE_ADD(NOW(), INTERVAL 1 DAY), NULL),
+(9, 'hash-order-9', NOW(), DATE_ADD(NOW(), INTERVAL 1 DAY), NULL);
 
 -- ============================================
 -- 16. PICKUP_FEEDBACK (Feedback per order)
