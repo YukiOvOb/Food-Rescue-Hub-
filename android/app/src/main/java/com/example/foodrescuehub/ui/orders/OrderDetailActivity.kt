@@ -65,6 +65,11 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     private var consumerLng: Double? = null
     private var googleMap: GoogleMap? = null
 
+    private var orderStatus: String = ""
+    private var storeName: String = ""
+    private var pickupSlotStart: String? = null
+    private var pickupSlotEnd: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_order_detail)
@@ -112,9 +117,7 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun setupButtons() {
-        btnViewQrCode.setOnClickListener {
-            Toast.makeText(this, "QR Code feature coming soon", Toast.LENGTH_SHORT).show()
-        }
+        // QR Code button logic will be set based on order status in displayOrderDetails()
 
         btnGetDirections.setOnClickListener {
             if (storeLat != null && storeLng != null) {
@@ -160,6 +163,12 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         // Order ID
         tvOrderId.text = "Order #${order.orderId}"
 
+        // Save order info for QR code
+        orderStatus = order.status
+        storeName = order.store?.storeName ?: "Store"
+        pickupSlotStart = order.pickupSlotStart
+        pickupSlotEnd = order.pickupSlotEnd
+
         // Pickup Window
         val pickupWindow = if (order.pickupSlotStart != null && order.pickupSlotEnd != null) {
             "${formatTime(order.pickupSlotStart)} - ${formatTime(order.pickupSlotEnd)}"
@@ -169,7 +178,7 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         tvPickupWindow.text = "Pickup Window: $pickupWindow"
 
         // Store Info
-        tvStoreName.text = order.store?.storeName ?: "Store"
+        tvStoreName.text = storeName
         tvStoreAddress.text = order.store?.addressLine ?: "Address not available"
         storeLat = order.store?.lat
         storeLng = order.store?.lng
@@ -194,6 +203,9 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         // Update Status Progress
         updateOrderStatus(order.status)
 
+        // Setup QR Code button based on order status
+        setupQRCodeButton(order.status)
+
         // Calculate ETA
         order.pickupSlotEnd?.let { calculateETA(it) }
 
@@ -213,6 +225,53 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
             llOrderItems.addView(itemView)
         }
+    }
+
+    private fun setupQRCodeButton(status: String) {
+        when (status.uppercase()) {
+            "CANCELLED" -> {
+                // Grey, disabled
+                btnViewQrCode.isEnabled = false
+                btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                    getColor(android.R.color.darker_gray)
+                )
+                btnViewQrCode.setOnClickListener(null)
+            }
+            "READY", "COMPLETED", "COLLECTED" -> {
+                // Green, enabled, navigate to QR code
+                btnViewQrCode.isEnabled = true
+                btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                    getColor(R.color.status_confirmed)
+                )
+                btnViewQrCode.setOnClickListener {
+                    navigateToQRCode()
+                }
+            }
+            else -> {
+                // Yellow, enabled but show toast (PENDING, ACCEPTED, CONFIRMED)
+                btnViewQrCode.isEnabled = true
+                btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                    getColor(R.color.status_pending)
+                )
+                btnViewQrCode.setOnClickListener {
+                    Toast.makeText(
+                        this,
+                        "Order must be ready before viewing QR code. Please wait.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+    }
+
+    private fun navigateToQRCode() {
+        val intent = Intent(this, com.example.foodrescuehub.ui.qrcode.QRCodeActivity::class.java).apply {
+            putExtra(com.example.foodrescuehub.ui.qrcode.QRCodeActivity.EXTRA_ORDER_ID, orderId)
+            putExtra(com.example.foodrescuehub.ui.qrcode.QRCodeActivity.EXTRA_STORE_NAME, storeName)
+            putExtra(com.example.foodrescuehub.ui.qrcode.QRCodeActivity.EXTRA_PICKUP_START, pickupSlotStart)
+            putExtra(com.example.foodrescuehub.ui.qrcode.QRCodeActivity.EXTRA_PICKUP_END, pickupSlotEnd)
+        }
+        startActivity(intent)
     }
 
     private fun updateOrderStatus(status: String) {
