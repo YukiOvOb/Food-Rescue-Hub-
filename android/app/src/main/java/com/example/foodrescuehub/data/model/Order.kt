@@ -61,25 +61,11 @@ data class OrderStore(
     val postalCode: String?,
 
     @SerializedName("lat")
-    private val _lat: Any?,
+    val lat: Double?,
 
     @SerializedName("lng")
-    private val _lng: Any?
-) {
-    val lat: Double?
-        get() = when (_lat) {
-            is Number -> _lat.toDouble()
-            is String -> _lat.toDoubleOrNull()
-            else -> null
-        }
-
     val lng: Double?
-        get() = when (_lng) {
-            is Number -> _lng.toDouble()
-            is String -> _lng.toDoubleOrNull()
-            else -> null
-        }
-}
+)
 
 /**
  * Consumer information in an order

@@ -118,7 +118,13 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
         btnGetDirections.setOnClickListener {
             if (storeLat != null && storeLng != null) {
-                openMapsForDirections(storeLat!!, storeLng!!)
+                // If we have consumer location, show route from consumer to store
+                if (consumerLat != null && consumerLng != null) {
+                    openMapsWithRoute(consumerLat!!, consumerLng!!, storeLat!!, storeLng!!)
+                } else {
+                    // Otherwise just show the store location
+                    openMapsForDirections(storeLat!!, storeLng!!)
+                }
             } else {
                 Toast.makeText(this, "Store location not available", Toast.LENGTH_SHORT).show()
             }
@@ -154,16 +160,6 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         // Order ID
         tvOrderId.text = "Order #${order.orderId}"
 
-        // Debug: Print full order JSON
-        val gson = com.google.gson.Gson()
-        val orderJson = gson.toJson(order)
-        android.util.Log.e("OrderDetail", "Full Order JSON: $orderJson")
-
-        // Debug store object
-        android.util.Log.e("OrderDetail", "Store object: ${order.store}")
-        android.util.Log.e("OrderDetail", "Store lat type: ${order.store?.let { it::class.java.getDeclaredField("_lat").get(it)?.javaClass }}")
-        android.util.Log.e("OrderDetail", "Store lat value: ${order.store?.let { it::class.java.getDeclaredField("_lat").get(it) }}")
-
         // Pickup Window
         val pickupWindow = if (order.pickupSlotStart != null && order.pickupSlotEnd != null) {
             "${formatTime(order.pickupSlotStart)} - ${formatTime(order.pickupSlotEnd)}"
@@ -182,18 +178,12 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         consumerLat = order.consumer?.defaultLat
         consumerLng = order.consumer?.defaultLng
 
-        // Debug: Show all order data
-        val storeInfo = "Store: ${order.store != null}, lat=${order.store?.lat}, lng=${order.store?.lng}"
-        val consumerInfo = "Consumer: ${order.consumer != null}, lat=${consumerLat}, lng=${consumerLng}"
-        val finalInfo = "Final: storeLat=$storeLat, storeLng=$storeLng"
-
-        Toast.makeText(this, storeInfo, Toast.LENGTH_LONG).show()
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            Toast.makeText(this, consumerInfo, Toast.LENGTH_LONG).show()
-        }, 2000)
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            Toast.makeText(this, finalInfo, Toast.LENGTH_LONG).show()
-        }, 4000)
+        // Debug logs
+        android.util.Log.d("OrderDetail", "Store: ${order.store?.storeName}")
+        android.util.Log.d("OrderDetail", "Store Lat: ${order.store?.lat}, Type: ${order.store?.lat?.javaClass}")
+        android.util.Log.d("OrderDetail", "Store Lng: ${order.store?.lng}, Type: ${order.store?.lng?.javaClass}")
+        android.util.Log.d("OrderDetail", "Final storeLat: $storeLat, storeLng: $storeLng")
+        android.util.Log.d("OrderDetail", "Consumer Lat: $consumerLat, Lng: $consumerLng")
 
         // Update map if ready
         updateMapMarkers()
@@ -345,6 +335,24 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    /**
+     * Open Google Maps with route from origin to destination
+     */
+    private fun openMapsWithRoute(originLat: Double, originLng: Double, destLat: Double, destLng: Double) {
+        // Use Google Maps Directions API URL format
+        val uri = Uri.parse("https://www.google.com/maps/dir/?api=1&origin=$originLat,$originLng&destination=$destLat,$destLng&travelmode=driving")
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+        intent.setPackage("com.google.android.apps.maps")
+
+        if (intent.resolveActivity(packageManager) != null) {
+            startActivity(intent)
+        } else {
+            // Fallback to browser if Google Maps is not installed
+            val browserIntent = Intent(Intent.ACTION_VIEW, uri)
+            startActivity(browserIntent)
+        }
+    }
+
     // ========== Google Maps Integration ==========
 
     override fun onMapReady(map: GoogleMap) {
@@ -355,23 +363,16 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
             isMapToolbarEnabled = false
         }
 
-        Toast.makeText(this, "Map loaded successfully!", Toast.LENGTH_SHORT).show()
         updateMapMarkers()
     }
 
     private fun updateMapMarkers() {
-        val map = googleMap ?: run {
-            Toast.makeText(this, "Map not ready yet", Toast.LENGTH_SHORT).show()
-            return
-        }
+        val map = googleMap ?: return
 
         // Check if we have location data
         if (storeLat == null || storeLng == null) {
-            Toast.makeText(this, "Location data not ready", Toast.LENGTH_SHORT).show()
             return
         }
-
-        Toast.makeText(this, "Adding markers to map...", Toast.LENGTH_SHORT).show()
 
         map.clear()
 
