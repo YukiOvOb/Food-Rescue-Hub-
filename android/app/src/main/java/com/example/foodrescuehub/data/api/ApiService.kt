@@ -1,6 +1,7 @@
 package com.example.foodrescuehub.data.api
 
 import com.example.foodrescuehub.data.model.Listing
+import com.example.foodrescuehub.data.model.Order
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -8,7 +9,7 @@ import retrofit2.http.Query
 
 /**
  * Retrofit API interface for Food Rescue Hub backend
- * Defines all API endpoints for listing operations
+ * Defines all API endpoints for listing and order operations
  */
 interface ApiService {
 
@@ -38,4 +39,23 @@ interface ApiService {
     suspend fun getListingsByCategory(
         @Path("category") category: String
     ): Response<List<Listing>>
+
+    /**
+     * Get all orders for a specific consumer
+     * GET /api/consumer/orders/{consumerId}
+     */
+    @GET("api/consumer/orders/{consumerId}")
+    suspend fun getConsumerOrders(
+        @Path("consumerId") consumerId: Long
+    ): Response<List<Order>>
+
+    /**
+     * Get a specific order by ID
+     * GET /api/consumer/orders/{consumerId}/order/{orderId}
+     */
+    @GET("api/consumer/orders/{consumerId}/order/{orderId}")
+    suspend fun getOrderById(
+        @Path("consumerId") consumerId: Long,
+        @Path("orderId") orderId: Long
+    ): Response<Order>
 }

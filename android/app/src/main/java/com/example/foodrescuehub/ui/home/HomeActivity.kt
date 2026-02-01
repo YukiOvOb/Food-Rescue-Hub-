@@ -231,7 +231,9 @@ class HomeActivity : AppCompatActivity() {
                     false
                 }
                 R.id.nav_orders -> {
-                    Toast.makeText(this, "Orders feature coming soon", Toast.LENGTH_SHORT).show()
+                    // Navigate to OrdersActivity
+                    val intent = Intent(this, com.example.foodrescuehub.ui.orders.OrdersActivity::class.java)
+                    startActivity(intent)
                     false
                 }
                 R.id.nav_profile -> {

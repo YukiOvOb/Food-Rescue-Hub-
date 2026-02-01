@@ -2,4 +2,8 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="status_confirmed">#4CAF50</color>
+    <color name="status_pending">#FFA726</color>
+    <color name="status_completed">#66BB6A</color>
+    <color name="status_cancelled">#EF5350</color>
 </resources>
