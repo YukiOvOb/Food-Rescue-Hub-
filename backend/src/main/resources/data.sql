@@ -60,7 +60,18 @@ INSERT INTO supplier_profiles (email, password, phone, display_name, status, rol
 ('cafe@toastbox.sg', 'password123', '+6562345679', 'Toast Box Manager', 'ACTIVE', 'SUPPLIER', 'Toast Box Pte Ltd', NOW()),
 ('restaurant@paradise.sg', 'password123', '+6562345680', 'Paradise Dynasty Manager', 'ACTIVE', 'SUPPLIER', 'Paradise Group (Singapore) Pte Ltd', NOW()),
 ('market@fairprice.sg', 'password123', '+6562345681', 'FairPrice Manager', 'ACTIVE', 'SUPPLIER', 'FairPrice Singapore', NOW()),
-('cafe@starbucks.sg', 'password123', '+6562345682', 'Starbucks Manager', 'ACTIVE', 'SUPPLIER', 'Starbucks Coffee Singapore', NOW());
+('cafe@starbucks.sg', 'password123', '+6562345682', 'Starbucks Manager', 'ACTIVE', 'SUPPLIER', 'Starbucks Coffee Singapore', NOW()),
+-- New suppliers near Alice's location
+('tongtong@bakehouse.sg', 'password123', '+6562345683', 'Tong Tong Manager', 'ACTIVE', 'SUPPLIER', 'Tong Tong Bakehouse Pte Ltd', NOW()),
+('greenbowl@healthy.sg', 'password123', '+6562345684', 'Green Bowl Manager', 'ACTIVE', 'SUPPLIER', 'Green Bowl Cafe Pte Ltd', NOW()),
+('pasta@paradise.sg', 'password123', '+6562345685', 'Pasta Paradise Manager', 'ACTIVE', 'SUPPLIER', 'Pasta Paradise Restaurant', NOW()),
+('sunrise@coffee.sg', 'password123', '+6562345686', 'Sunrise Manager', 'ACTIVE', 'SUPPLIER', 'Sunrise Coffee House Pte Ltd', NOW()),
+('freshbites@deli.sg', 'password123', '+6562345687', 'Fresh Bites Manager', 'ACTIVE', 'SUPPLIER', 'Fresh Bites Deli Pte Ltd', NOW()),
+('sweetheaven@dessert.sg', 'password123', '+6562345688', 'Sweet Heaven Manager', 'ACTIVE', 'SUPPLIER', 'Sweet Heaven Desserts Pte Ltd', NOW()),
+('laksa@delight.sg', 'password123', '+6562345689', 'Laksa Delight Manager', 'ACTIVE', 'SUPPLIER', 'Laksa Delight Restaurant', NOW()),
+('urban@bites.sg', 'password123', '+6562345690', 'Urban Bites Manager', 'ACTIVE', 'SUPPLIER', 'Urban Bites Kitchen Pte Ltd', NOW()),
+('morning@glory.sg', 'password123', '+6562345691', 'Morning Glory Manager', 'ACTIVE', 'SUPPLIER', 'Morning Glory Bakery Pte Ltd', NOW()),
+('spice@garden.sg', 'password123', '+6562345692', 'Spice Garden Manager', 'ACTIVE', 'SUPPLIER', 'Spice Garden Restaurant Pte Ltd', NOW());
 
 -- ============================================
 -- 4. ADMIN_PROFILES
@@ -95,7 +106,18 @@ INSERT INTO stores (supplier_id, store_name, description, address_line, postal_c
 (4, 'FairPrice Finest Bukit Timah', 'Premium supermarket', '170 Upper Bukit Timah Road, #B1-01', '588179', 1.3431, 103.7764, 'Customer service counter', 'Mon-Sun: 08:00-23:00', true, NOW()),
 (4, 'FairPrice Xtra Ang Mo Kio', 'Large format supermarket', '53 Ang Mo Kio Avenue 3, #01-01', '569933', 1.3691, 103.8489, 'Pickup point near entrance', 'Mon-Sun: 07:00-23:00', true, NOW()),
 (5, 'Starbucks Raffles Place', 'Coffee and pastries', '6 Raffles Quay, #01-12', '048580', 1.2812, 103.8517, 'Show mobile order at counter', 'Mon-Fri: 07:00-20:00, Sat-Sun: 08:00-18:00', true, NOW()),
-(5, 'Starbucks Changi Airport', 'Airport outlet', '60 Airport Boulevard, #02-234', '819643', 1.3644, 103.9915, 'Counter pickup', 'Mon-Sun: 06:00-23:00', true, NOW());
+(5, 'Starbucks Changi Airport', 'Airport outlet', '60 Airport Boulevard, #02-234', '819643', 1.3644, 103.9915, 'Counter pickup', 'Mon-Sun: 06:00-23:00', true, NOW()),
+-- New stores near Alice's location (1.3521, 103.8198)
+(6, 'Tong Tong Bakehouse Somerset', 'Artisan breads and pastries made fresh daily', '111 Somerset Road, #01-15', '238164', 1.3503, 103.8384, 'Pick up at main counter', 'Mon-Sun: 08:00-21:00', true, NOW()),
+(7, 'Green Bowl Cafe Dhoby Ghaut', 'Healthy bowls and fresh juices', '68 Orchard Road, Plaza Singapura #B1-20', '238839', 1.3506, 103.8455, 'Food court level B1, counter 20', 'Mon-Sun: 10:00-22:00', true, NOW()),
+(8, 'Pasta Paradise Fort Canning', 'Authentic Italian cuisine with fresh ingredients', '5 Fort Canning Road, #01-01', '179493', 1.3450, 103.8442, 'Main entrance, first counter', 'Tue-Sun: 11:00-22:00', true, NOW()),
+(9, 'Sunrise Coffee House Bras Basah', 'Premium coffee and breakfast items', '231 Bain Street, #01-23', '180231', 1.3542, 103.8500, 'Counter service available', 'Mon-Sun: 07:00-19:00', true, NOW()),
+(10, 'Fresh Bites Deli Clarke Quay', 'Fresh sandwiches and salads daily', '3 River Valley Road, #01-05', '179024', 1.3430, 103.8420, 'Pickup at deli counter', 'Mon-Sat: 09:00-21:00', true, NOW()),
+(11, 'Sweet Heaven Desserts Bugis', 'Cakes, cookies and sweet treats', '200 Victoria Street, Bugis Junction #B1-10', '188021', 1.3561, 103.8546, 'Basement level, dessert corner', 'Mon-Sun: 11:00-22:00', true, NOW()),
+(12, 'Laksa Delight Chinatown', 'Traditional laksa and noodle dishes', '335 Smith Street, Chinatown Complex #02-112', '050335', 1.3420, 103.8388, 'Level 2, stall 112', 'Mon-Sun: 10:00-20:00', true, NOW()),
+(13, 'Urban Bites Kitchen City Hall', 'Modern fusion cuisine and coffee', '3 Temasek Boulevard, Suntec City #01-645', '038983', 1.3540, 103.8588, 'Level 1, near fountain', 'Mon-Sun: 10:00-22:00', true, NOW()),
+(14, 'Morning Glory Bakery Tanjong Pagar', 'Fresh bread and morning pastries', '7 Wallich Street, Guoco Tower #01-03', '078884', 1.3380, 103.8450, 'Ground floor lobby', 'Mon-Fri: 07:00-19:00', true, NOW()),
+(15, 'Spice Garden Restaurant Little India', 'Indian cuisine with vegetarian options', '48 Serangoon Road, Little India Arcade #01-20', '217959', 1.3598, 103.8520, 'First floor, unit 20', 'Mon-Sun: 11:00-23:00', true, NOW());
 
 -- ============================================
 -- 7. STORE_TYPES (Depends on supplier_profiles - OneToOne)

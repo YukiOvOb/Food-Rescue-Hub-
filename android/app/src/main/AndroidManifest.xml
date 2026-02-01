@@ -64,6 +64,11 @@
             android:label="Order Details"
             android:parentActivityName=".ui.orders.OrdersActivity" />
         <activity
+            android:name=".ui.location.LocationActivity"
+            android:exported="false"
+            android:label="Nearby Stores"
+            android:parentActivityName=".ui.home.HomeActivity" />
+        <activity
             android:name=".MainActivity"
             android:exported="false" />
     </application>

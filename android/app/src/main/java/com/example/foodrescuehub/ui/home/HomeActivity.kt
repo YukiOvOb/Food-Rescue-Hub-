@@ -227,7 +227,9 @@ class HomeActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_location -> {
-                    Toast.makeText(this, "Location feature coming soon", Toast.LENGTH_SHORT).show()
+                    // Navigate to LocationActivity
+                    val intent = Intent(this, com.example.foodrescuehub.ui.location.LocationActivity::class.java)
+                    startActivity(intent)
                     false
                 }
                 R.id.nav_orders -> {
