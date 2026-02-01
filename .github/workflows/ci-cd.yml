@@ -320,3 +320,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            cd ~/Food-Rescue-Hub-
+            docker compose pull
+            docker compose up -d
+            docker system prune -f
