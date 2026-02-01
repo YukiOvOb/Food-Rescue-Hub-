@@ -42,15 +42,6 @@ jobs:
           chmod +x mvnw
           ./mvnw clean verify
 
-      - name: Generate JaCoCo Badge
-        if: always()
-        uses: cicirello/jacoco-badge-generator@v2
-        with:
-          jacoco-csv-file: backend/target/site/jacoco/jacoco.csv
-          badges-directory: .github/badges
-          generate-branches-badge: true
-          generate-summary: true
-
       - name: Upload JaCoCo coverage report
         if: always()
         uses: actions/upload-artifact@v4
