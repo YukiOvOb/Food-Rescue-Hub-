@@ -54,8 +54,9 @@ object AuthManager {
         }
 
         // Mock login: Generate a user object
+        // Always use Alice's consumer ID (1) for testing
         val user = User(
-            userId = Random.nextLong(1000, 999999),
+            userId = 1L,  // Alice's consumer_id in database
             email = email,
             displayName = extractDisplayName(email),
             phone = null,

@@ -2,8 +2,11 @@ package com.example.foodrescuehub.data.api
 
 import com.example.foodrescuehub.data.model.Listing
 import com.example.foodrescuehub.data.model.Order
+import com.example.foodrescuehub.data.model.UpdateLocationRequest
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -58,4 +61,23 @@ interface ApiService {
         @Path("consumerId") consumerId: Long,
         @Path("orderId") orderId: Long
     ): Response<Order>
+
+    /**
+     * Update consumer's default location
+     * PUT /api/consumer/profile/{consumerId}/location
+     */
+    @PUT("api/consumer/profile/{consumerId}/location")
+    suspend fun updateConsumerLocation(
+        @Path("consumerId") consumerId: Long,
+        @Body request: UpdateLocationRequest
+    ): Response<UpdateLocationRequest>
+
+    /**
+     * Get consumer's default location
+     * GET /api/consumer/profile/{consumerId}/location
+     */
+    @GET("api/consumer/profile/{consumerId}/location")
+    suspend fun getConsumerLocation(
+        @Path("consumerId") consumerId: Long
+    ): Response<UpdateLocationRequest>
 }
