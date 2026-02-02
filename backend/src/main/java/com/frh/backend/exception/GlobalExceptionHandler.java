@@ -27,4 +27,13 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
+
+    @ExceptionHandler(CrossStoreException.class)
+    public ResponseEntity<Map<String, Object>> handleCrossStoreException(CrossStoreException ex) {
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("code", HttpStatus.CONFLICT.value());
+        errorResponse.put("message", ex.getMessage());
+        errorResponse.put("currentSupplierId", ex.getCurrentSupplierId());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
 }

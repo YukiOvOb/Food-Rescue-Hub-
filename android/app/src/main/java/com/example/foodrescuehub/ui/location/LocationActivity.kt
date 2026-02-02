@@ -1,13 +1,9 @@
 package com.example.foodrescuehub.ui.location
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Location
 import android.os.Bundle
-import android.widget.EditText
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.app.ActivityCompat
@@ -26,7 +22,6 @@ import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.appbar.MaterialToolbar
@@ -41,7 +36,7 @@ class LocationActivity : AppCompatActivity(), OnMapReadyCallback {
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1001
         private const val DEFAULT_ZOOM = 13f
-        // Default location: Alice's location in Singapore
+        // Default location: Singapore
         private val DEFAULT_LOCATION = LatLng(1.3521, 103.8198)
     }
 
@@ -106,7 +101,8 @@ class LocationActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun setupChangeLocationButton() {
         fabChangeLocation.setOnClickListener {
-            showChangeLocationDialog()
+            isSelectingLocation = true
+            Toast.makeText(this, "Tap on the map to set your location", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -118,166 +114,85 @@ class LocationActivity : AppCompatActivity(), OnMapReadyCallback {
             uiSettings.isMyLocationButtonEnabled = true
             uiSettings.isMapToolbarEnabled = true
 
-            // Set map click listener for location selection
             setOnMapClickListener { latLng ->
                 if (isSelectingLocation) {
                     updateUserLocation(latLng)
                     isSelectingLocation = false
-                    Toast.makeText(
-                        this@LocationActivity,
-                        "Location updated!",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-
-            // Set marker click listener to show info windows
-            setOnMarkerClickListener { marker ->
-                marker.showInfoWindow()
-                true
-            }
-
-            // Set info window click listener to navigate to product detail
-            setOnInfoWindowClickListener { marker ->
-                val listing = storeMarkers[marker]
-                listing?.let {
-                    navigateToProductDetail(it)
                 }
             }
         }
 
-        // Request location permission
         requestLocationPermission()
     }
 
     private fun requestLocationPermission() {
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             enableMyLocation()
         } else {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                LOCATION_PERMISSION_REQUEST_CODE
-            )
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQUEST_CODE)
         }
     }
 
     private fun enableMyLocation() {
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             googleMap?.isMyLocationEnabled = true
-
-            // Load saved location from server first
             loadSavedLocation()
         }
     }
 
-    /**
-     * Load user's saved location from server
-     */
     private fun loadSavedLocation() {
         lifecycleScope.launch {
             try {
-                // Get current user ID (use Alice's ID: 1 as default)
-                val consumerId = AuthManager.getCurrentUser()?.userId ?: 1L
-
-                val response = RetrofitClient.apiService.getConsumerLocation(consumerId)
+                // Call session-based endpoint (no ID required)
+                val response = RetrofitClient.apiService.getConsumerLocation()
 
                 if (response.isSuccessful) {
                     val location = response.body()
-                    if (location != null && location.latitude != null && location.longitude != null) {
-                        // Use saved location from server
+                    if (location?.latitude != null && location.longitude != null) {
                         currentLocation = LatLng(location.latitude, location.longitude)
-                        android.util.Log.d(
-                            "LocationActivity",
-                            "Loaded saved location from server: $currentLocation"
-                        )
-                    } else {
-                        // Use default location (Alice's location)
-                        currentLocation = DEFAULT_LOCATION
-                        android.util.Log.d(
-                            "LocationActivity",
-                            "No saved location, using default Alice's location: $currentLocation"
-                        )
                     }
-                } else {
-                    // Use default location if API call fails
-                    currentLocation = DEFAULT_LOCATION
-                    android.util.Log.d(
-                        "LocationActivity",
-                        "Failed to load location, using default: $currentLocation"
-                    )
                 }
             } catch (e: Exception) {
-                // Use default location on error
-                currentLocation = DEFAULT_LOCATION
-                android.util.Log.e(
-                    "LocationActivity",
-                    "Error loading saved location, using default",
-                    e
-                )
+                e.printStackTrace()
             } finally {
-                // Update map and markers after loading location
-                updateMapCamera()
-                // If listings are already loaded, update the map display
-                if (allListings.isNotEmpty()) {
-                    displayStoresOnMap()
-                }
+                updateMapAndMarkers()
             }
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                enableMyLocation()
-            } else {
-                Toast.makeText(
-                    this,
-                    "Location permission denied. Using default location.",
-                    Toast.LENGTH_SHORT
-                ).show()
-                currentLocation = DEFAULT_LOCATION
-                updateMapCamera()
+    private fun updateUserLocation(latLng: LatLng) {
+        lifecycleScope.launch {
+            try {
+                val request = UpdateLocationRequest(latLng.latitude, latLng.longitude)
+                // Call session-based update (no ID required)
+                val response = RetrofitClient.apiService.updateConsumerLocation(request)
+                if (response.isSuccessful) {
+                    currentLocation = latLng
+                    updateMapAndMarkers()
+                    Toast.makeText(this@LocationActivity, "Location updated!", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@LocationActivity, "Failed to update location", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    private fun updateMapAndMarkers() {
+        googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, DEFAULT_ZOOM))
+        displayStoresOnMap()
     }
 
     private fun loadNearbyListings() {
         lifecycleScope.launch {
             try {
                 val response = RetrofitClient.apiService.getAllListings()
-
                 if (response.isSuccessful) {
                     allListings = response.body() ?: emptyList()
                     filteredListings = allListings
                     displayStoresOnMap()
-                } else {
-                    Toast.makeText(
-                        this@LocationActivity,
-                        "Failed to load stores",
-                        Toast.LENGTH_SHORT
-                    ).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(
-                    this@LocationActivity,
-                    "Error: ${e.message}",
-                    Toast.LENGTH_SHORT
-                ).show()
+                e.printStackTrace()
             }
         }
     }
@@ -286,210 +201,29 @@ class LocationActivity : AppCompatActivity(), OnMapReadyCallback {
         filteredListings = if (query.isBlank()) {
             allListings
         } else {
-            allListings.filter { listing ->
-                listing.storeName?.contains(query, ignoreCase = true) == true ||
-                listing.title.contains(query, ignoreCase = true) ||
-                listing.category?.contains(query, ignoreCase = true) == true ||
-                listing.addressLine?.contains(query, ignoreCase = true) == true
-            }
+            allListings.filter { it.storeName?.contains(query, ignoreCase = true) == true }
         }
-
         displayStoresOnMap()
     }
 
     private fun displayStoresOnMap() {
         val map = googleMap ?: return
-
-        // Clear existing markers
         map.clear()
-        storeMarkers.clear()
+        
+        map.addMarker(MarkerOptions()
+            .position(currentLocation)
+            .title("You are here")
+            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)))
 
-        // Add user's location marker (green)
-        map.addMarker(
-            MarkerOptions()
-                .position(currentLocation)
-                .title("Your Location")
-                .snippet("Alice's current location")
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
-        )
-
-        if (filteredListings.isEmpty()) {
-            Toast.makeText(this, "No stores found", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val bounds = LatLngBounds.Builder()
-        var hasMarkers = false
-
-        // Include user's location in bounds
-        bounds.include(currentLocation)
-
-        // Group listings by store to avoid duplicate markers
-        val storeListings = filteredListings.groupBy { it.storeId }
-
-        storeListings.forEach { (_, listings) ->
-            val listing = listings.first()
-
+        filteredListings.forEach { listing ->
             if (listing.lat != null && listing.lng != null) {
-                val position = LatLng(listing.lat, listing.lng)
-
-                val marker = map.addMarker(
-                    MarkerOptions()
-                        .position(position)
-                        .title(listing.storeName ?: "Store")
-                        .snippet("${listings.size} item(s) available\n${listing.addressLine ?: ""}")
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
-                )
-
-                marker?.let {
-                    storeMarkers[it] = listing
-                    bounds.include(position)
-                    hasMarkers = true
-                }
-            }
-        }
-
-        // Update camera to show all markers
-        if (hasMarkers) {
-            try {
-                val padding = 100
-                val cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds.build(), padding)
-                map.animateCamera(cameraUpdate)
-            } catch (e: Exception) {
-                // If bounds are invalid, just move to default location
-                updateMapCamera()
-            }
-        } else {
-            updateMapCamera()
-        }
-    }
-
-    private fun updateMapCamera() {
-        googleMap?.moveCamera(
-            CameraUpdateFactory.newLatLngZoom(currentLocation, DEFAULT_ZOOM)
-        )
-    }
-
-    private fun showChangeLocationDialog() {
-        val options = arrayOf("Enter Coordinates", "Tap on Map to Select")
-
-        AlertDialog.Builder(this)
-            .setTitle("Change Your Location")
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> showEnterCoordinatesDialog()
-                    1 -> enableMapSelectionMode()
-                }
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun showEnterCoordinatesDialog() {
-        val dialogView = layoutInflater.inflate(android.R.layout.simple_list_item_2, null)
-        val latInput = EditText(this).apply {
-            hint = "Latitude (e.g., 1.3521)"
-            setText(currentLocation.latitude.toString())
-        }
-        val lngInput = EditText(this).apply {
-            hint = "Longitude (e.g., 103.8198)"
-            setText(currentLocation.longitude.toString())
-        }
-
-        val container = android.widget.LinearLayout(this).apply {
-            orientation = android.widget.LinearLayout.VERTICAL
-            setPadding(50, 40, 50, 10)
-            addView(latInput)
-            addView(lngInput)
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle("Enter Coordinates")
-            .setView(container)
-            .setPositiveButton("Update") { _, _ ->
-                val lat = latInput.text.toString().toDoubleOrNull()
-                val lng = lngInput.text.toString().toDoubleOrNull()
-
-                if (lat != null && lng != null && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-                    updateUserLocation(LatLng(lat, lng))
-                    Toast.makeText(this, "Location updated!", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(
-                        this,
-                        "Invalid coordinates. Please enter valid latitude (-90 to 90) and longitude (-180 to 180).",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun enableMapSelectionMode() {
-        isSelectingLocation = true
-        Toast.makeText(
-            this,
-            "Tap anywhere on the map to set your location",
-            Toast.LENGTH_LONG
-        ).show()
-    }
-
-    private fun updateUserLocation(newLocation: LatLng) {
-        currentLocation = newLocation
-        displayStoresOnMap()
-        updateMapCamera()
-
-        // Save location to server
-        saveLocationToServer(newLocation)
-    }
-
-    /**
-     * Save user's location to the server database
-     */
-    private fun saveLocationToServer(location: LatLng) {
-        lifecycleScope.launch {
-            try {
-                // Get current user ID (use Alice's ID: 1 as default)
-                val consumerId = AuthManager.getCurrentUser()?.userId ?: 1L
-
-                val request = UpdateLocationRequest(
-                    latitude = location.latitude,
-                    longitude = location.longitude
-                )
-
-                val response = RetrofitClient.apiService.updateConsumerLocation(
-                    consumerId = consumerId,
-                    request = request
-                )
-
-                if (response.isSuccessful) {
-                    android.util.Log.d(
-                        "LocationActivity",
-                        "Location saved to server: lat=${location.latitude}, lng=${location.longitude}"
-                    )
-                } else {
-                    android.util.Log.e(
-                        "LocationActivity",
-                        "Failed to save location: ${response.code()}"
-                    )
-                    Toast.makeText(
-                        this@LocationActivity,
-                        "Failed to save location to server",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("LocationActivity", "Error saving location", e)
-                Toast.makeText(
-                    this@LocationActivity,
-                    "Error: ${e.message}",
-                    Toast.LENGTH_SHORT
-                ).show()
+                map.addMarker(MarkerOptions()
+                    .position(LatLng(listing.lat, listing.lng))
+                    .title(listing.storeName))
             }
         }
     }
 
-    // MapView lifecycle methods
     override fun onResume() {
         super.onResume()
         mapView.onResume()
@@ -508,36 +242,5 @@ class LocationActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onLowMemory() {
         super.onLowMemory()
         mapView.onLowMemory()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        mapView.onSaveInstanceState(outState)
-    }
-
-    /**
-     * Navigate to product detail page
-     */
-    private fun navigateToProductDetail(listing: Listing) {
-        val intent = Intent(this, com.example.foodrescuehub.ui.detail.ProductDetailActivity::class.java).apply {
-            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_ID, listing.listingId)
-            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_TITLE, listing.title)
-            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_STORE_NAME, "🏪 ${listing.storeName}")
-            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_CATEGORY, listing.category)
-            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_DISTANCE, "📍 Nearby")
-            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_PRICE, listing.rescuePrice)
-            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_ORIGINAL_PRICE, listing.originalPrice)
-            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_SAVINGS_LABEL, listing.savingsLabel)
-            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_PICKUP_START, listing.pickupStart)
-            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_PICKUP_END, listing.pickupEnd)
-            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_DESCRIPTION, listing.description ?: "")
-            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_QTY_AVAILABLE, listing.qtyAvailable)
-
-            // Pass first photo URL if available
-            if (!listing.photoUrls.isNullOrEmpty()) {
-                putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_PHOTO_URL, listing.photoUrls[0])
-            }
-        }
-        startActivity(intent)
     }
 }

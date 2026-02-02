@@ -114,3 +114,33 @@ data class OrderListingInfo(
     @SerializedName("title")
     val title: String
 )
+
+// CreateOrderRequest.kt
+data class CreateOrderRequest(
+    val pickupSlotStart: String, // ISO 8601 format: "2026-02-03T10:00:00"
+    val pickupSlotEnd: String
+)
+
+// CreateOrderResponseDto.kt
+data class CreateOrderResponseDto(
+    val orderId: Long,
+    val status: String,
+    val totalAmount: Double,
+    val pickupToken: String,
+    val pickupSlotStart: String,
+    val pickupSlotEnd: String,
+    val items: List<OrderItemDto>
+)
+
+data class OrderItemDto(
+    val listingId: Long,
+    val title: String,
+    val unitPrice: Double,
+    val qty: Int,
+    val lineTotal: Double
+)
+
+// CancelOrderRequest.kt
+data class CancelOrderRequest(
+    val reason: String
+)

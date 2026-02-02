@@ -3,16 +3,13 @@ package com.example.foodrescuehub.ui.orders
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.LinearLayout
-import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.example.foodrescuehub.R
 import com.example.foodrescuehub.data.api.RetrofitClient
-import com.google.android.material.appbar.MaterialToolbar
+import com.example.foodrescuehub.data.repository.AuthManager
+import com.example.foodrescuehub.databinding.ActivityOrdersBinding
 import kotlinx.coroutines.launch
 
 /**
@@ -20,34 +17,21 @@ import kotlinx.coroutines.launch
  */
 class OrdersActivity : AppCompatActivity() {
 
-    private lateinit var toolbar: MaterialToolbar
-    private lateinit var rvOrders: RecyclerView
-    private lateinit var progressBar: ProgressBar
-    private lateinit var llEmptyState: LinearLayout
+    private lateinit var binding: ActivityOrdersBinding
     private lateinit var ordersAdapter: OrdersAdapter
-
-    // TODO: Replace with actual consumer ID from AuthManager
-    private val consumerId: Long = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_orders)
+        binding = ActivityOrdersBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        initViews()
         setupToolbar()
         setupRecyclerView()
         loadOrders()
     }
 
-    private fun initViews() {
-        toolbar = findViewById(R.id.toolbar)
-        rvOrders = findViewById(R.id.rvOrders)
-        progressBar = findViewById(R.id.progressBar)
-        llEmptyState = findViewById(R.id.llEmptyState)
-    }
-
     private fun setupToolbar() {
-        toolbar.setNavigationOnClickListener {
+        binding.toolbar.setNavigationOnClickListener {
             finish()
         }
     }
@@ -56,11 +40,10 @@ class OrdersActivity : AppCompatActivity() {
         ordersAdapter = OrdersAdapter { order ->
             val intent = Intent(this, OrderDetailActivity::class.java).apply {
                 putExtra(OrderDetailActivity.EXTRA_ORDER_ID, order.orderId)
-                putExtra(OrderDetailActivity.EXTRA_CONSUMER_ID, consumerId)
             }
             startActivity(intent)
         }
-        rvOrders.apply {
+        binding.rvOrders.apply {
             layoutManager = LinearLayoutManager(this@OrdersActivity)
             adapter = ordersAdapter
             setHasFixedSize(true)
@@ -72,7 +55,8 @@ class OrdersActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                val response = RetrofitClient.apiService.getConsumerOrders(consumerId)
+                //Use getMyOrders() which is session-based
+                val response = RetrofitClient.apiService.getMyOrders()
 
                 if (response.isSuccessful) {
                     val orders = response.body() ?: emptyList()
@@ -105,16 +89,16 @@ class OrdersActivity : AppCompatActivity() {
     }
 
     private fun showLoading(isLoading: Boolean) {
-        progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
     }
 
     private fun showOrders() {
-        rvOrders.visibility = View.VISIBLE
-        llEmptyState.visibility = View.GONE
+        binding.rvOrders.visibility = View.VISIBLE
+        binding.llEmptyState.visibility = View.GONE
     }
 
     private fun showEmptyState() {
-        rvOrders.visibility = View.GONE
-        llEmptyState.visibility = View.VISIBLE
+        binding.rvOrders.visibility = View.GONE
+        binding.llEmptyState.visibility = View.VISIBLE
     }
 }

@@ -1,11 +1,7 @@
 package com.frh.backend.service;
 
-import com.frh.backend.Model.Order;
-import com.frh.backend.Model.Store;
-import com.frh.backend.Model.ConsumerProfile;
-import com.frh.backend.repository.OrderRepository;
-import com.frh.backend.repository.StoreRepository;
-import com.frh.backend.repository.ConsumerProfileRepository;
+import com.frh.backend.Model.*;
+import com.frh.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,6 +20,9 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final StoreRepository storeRepository;
     private final ConsumerProfileRepository consumerRepository;
+    private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
+    private final ListingRepository listingRepository;
 
     /**
      * Create a new order
@@ -50,6 +49,61 @@ public class OrderService {
         Order savedOrder = orderRepository.save(order);
         log.info("Order created successfully with ID: {}", savedOrder.getOrderId());
         return savedOrder;
+    }
+
+    /**
+     * Create a new order from cart
+     */
+    @Transactional
+    public Order createOrderFromCart(Long consumerId, LocalDateTime pickupSlotStart, LocalDateTime pickupSlotEnd) {
+        Cart cart = cartRepository.findByConsumer_ConsumerIdAndStatus(consumerId, "ACTIVE")
+                .orElseThrow(() -> new RuntimeException("No active cart found"));
+
+        List<CartItem> items = cartItemRepository.findByCart_CartId(cart.getCartId());
+        if (items.isEmpty()) {
+            throw new RuntimeException("Cart is empty");
+        }
+
+        if (pickupSlotStart == null || pickupSlotEnd == null || !pickupSlotStart.isBefore(pickupSlotEnd)) {
+            throw new RuntimeException("Invalid pickup slot");
+        }
+
+        Order order = new Order();
+        order.setConsumer(cart.getConsumer());
+        order.setStore(cart.getStore());
+        order.setStatus("PENDING");
+        order.setPickupSlotStart(pickupSlotStart);
+        order.setPickupSlotEnd(pickupSlotEnd);
+
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        for (CartItem item : items) {
+            Listing listing = item.getListing();
+            if (listing.getAvailableQty() < item.getQuantity()) {
+                throw new RuntimeException("Insufficient stock for listing: " + listing.getListingId());
+            }
+
+            listing.setAvailableQty(listing.getAvailableQty() - item.getQuantity());
+            listingRepository.save(listing);
+
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order);
+            orderItem.setListing(listing);
+            orderItem.setQuantity(item.getQuantity());
+            orderItem.setUnitPrice(listing.getRescuePrice());
+            orderItem.setLineTotal(listing.getRescuePrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+            order.getOrderItems().add(orderItem);
+
+            totalAmount = totalAmount.add(orderItem.getLineTotal());
+        }
+
+        order.setTotalAmount(totalAmount);
+        orderRepository.save(order);
+
+        cartItemRepository.deleteByCart_CartId(cart.getCartId());
+        cart.setStore(null);
+        cartRepository.save(cart);
+
+        return order;
     }
 
     /**

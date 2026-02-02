@@ -5,23 +5,20 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.foodrescuehub.R
 import com.example.foodrescuehub.data.api.RetrofitClient
+import com.example.foodrescuehub.databinding.ActivityOrderDetailBinding
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -38,25 +35,8 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         const val EXTRA_CONSUMER_ID = "consumer_id"
     }
 
-    private lateinit var toolbar: MaterialToolbar
-    private lateinit var mapView: MapView
-    private lateinit var tvOrderId: TextView
-    private lateinit var tvPickupWindow: TextView
-    private lateinit var tvStoreName: TextView
-    private lateinit var tvStoreAddress: TextView
-    private lateinit var tvTotalAmount: TextView
-    private lateinit var tvEtaWarning: TextView
-    private lateinit var llEtaWarning: LinearLayout
-    private lateinit var llOrderItems: LinearLayout
-    private lateinit var btnViewQrCode: MaterialButton
-    private lateinit var btnGetDirections: MaterialButton
-
-    private lateinit var statusPaidIcon: TextView
-    private lateinit var statusReadyIcon: TextView
-    private lateinit var statusCollectedIcon: TextView
-    private lateinit var progressLine1: View
-    private lateinit var progressLine2: View
-
+    private lateinit var binding: ActivityOrderDetailBinding
+    
     private var orderId: Long = 0
     private var consumerId: Long = 0
     private var storeLat: Double? = null
@@ -72,46 +52,25 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_order_detail)
+        binding = ActivityOrderDetailBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         // Get order ID from intent
         orderId = intent.getLongExtra(EXTRA_ORDER_ID, 0)
         consumerId = intent.getLongExtra(EXTRA_CONSUMER_ID, 1)
 
-        initViews()
         setupToolbar()
         setupButtons()
 
         // Initialize MapView
-        mapView.onCreate(savedInstanceState)
-        mapView.getMapAsync(this)
+        binding.mapView.onCreate(savedInstanceState)
+        binding.mapView.getMapAsync(this)
 
         loadOrderDetails()
     }
 
-    private fun initViews() {
-        toolbar = findViewById(R.id.toolbar)
-        mapView = findViewById(R.id.mapView)
-        tvOrderId = findViewById(R.id.tvOrderId)
-        tvPickupWindow = findViewById(R.id.tvPickupWindow)
-        tvStoreName = findViewById(R.id.tvStoreName)
-        tvStoreAddress = findViewById(R.id.tvStoreAddress)
-        tvTotalAmount = findViewById(R.id.tvTotalAmount)
-        tvEtaWarning = findViewById(R.id.tvEtaWarning)
-        llEtaWarning = findViewById(R.id.llEtaWarning)
-        llOrderItems = findViewById(R.id.llOrderItems)
-        btnViewQrCode = findViewById(R.id.btnViewQrCode)
-        btnGetDirections = findViewById(R.id.btnGetDirections)
-
-        statusPaidIcon = findViewById(R.id.statusPaidIcon)
-        statusReadyIcon = findViewById(R.id.statusReadyIcon)
-        statusCollectedIcon = findViewById(R.id.statusCollectedIcon)
-        progressLine1 = findViewById(R.id.progressLine1)
-        progressLine2 = findViewById(R.id.progressLine2)
-    }
-
     private fun setupToolbar() {
-        toolbar.setNavigationOnClickListener {
+        binding.toolbar.setNavigationOnClickListener {
             finish()
         }
     }
@@ -119,7 +78,7 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun setupButtons() {
         // QR Code button logic will be set based on order status in displayOrderDetails()
 
-        btnGetDirections.setOnClickListener {
+        binding.btnGetDirections.setOnClickListener {
             if (storeLat != null && storeLng != null) {
                 // If we have consumer location, show route from consumer to store
                 if (consumerLat != null && consumerLng != null) {
@@ -137,7 +96,7 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun loadOrderDetails() {
         lifecycleScope.launch {
             try {
-                val response = RetrofitClient.apiService.getOrderById(consumerId, orderId)
+                val response = RetrofitClient.apiService.getOrderById(orderId)
 
                 if (response.isSuccessful) {
                     val order = response.body()
@@ -161,7 +120,7 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun displayOrderDetails(order: com.example.foodrescuehub.data.model.Order) {
         // Order ID
-        tvOrderId.text = "Order #${order.orderId}"
+        binding.tvOrderId.text = "Order #${order.orderId}"
 
         // Save order info for QR code
         orderStatus = order.status
@@ -175,11 +134,11 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         } else {
             "Not specified"
         }
-        tvPickupWindow.text = "Pickup Window: $pickupWindow"
+        binding.tvPickupWindow.text = "Pickup Window: $pickupWindow"
 
         // Store Info
-        tvStoreName.text = storeName
-        tvStoreAddress.text = order.store?.addressLine ?: "Address not available"
+        binding.tvStoreName.text = storeName
+        binding.tvStoreAddress.text = order.store?.addressLine ?: "Address not available"
         storeLat = order.store?.lat
         storeLng = order.store?.lng
 
@@ -189,8 +148,8 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // Debug logs
         android.util.Log.d("OrderDetail", "Store: ${order.store?.storeName}")
-        android.util.Log.d("OrderDetail", "Store Lat: ${order.store?.lat}, Type: ${order.store?.lat?.javaClass}")
-        android.util.Log.d("OrderDetail", "Store Lng: ${order.store?.lng}, Type: ${order.store?.lng?.javaClass}")
+        android.util.Log.d("OrderDetail", "Store Lat: ${order.store?.lat}")
+        android.util.Log.d("OrderDetail", "Store Lng: ${order.store?.lng}")
         android.util.Log.d("OrderDetail", "Final storeLat: $storeLat, storeLng: $storeLng")
         android.util.Log.d("OrderDetail", "Consumer Lat: $consumerLat, Lng: $consumerLng")
 
@@ -198,7 +157,7 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         updateMapMarkers()
 
         // Total Amount
-        tvTotalAmount.text = "$${String.format("%.2f", order.totalAmount)}"
+        binding.tvTotalAmount.text = "$${String.format("%.2f", order.totalAmount)}"
 
         // Update Status Progress
         updateOrderStatus(order.status)
@@ -210,10 +169,10 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         order.pickupSlotEnd?.let { calculateETA(it) }
 
         // Order Items
-        llOrderItems.removeAllViews()
+        binding.llOrderItems.removeAllViews()
         order.orderItems?.forEach { item ->
             val itemView = LayoutInflater.from(this)
-                .inflate(R.layout.item_order_item, llOrderItems, false)
+                .inflate(R.layout.item_order_item, binding.llOrderItems, false)
 
             val tvItemName = itemView.findViewById<TextView>(R.id.tvItemName)
             val tvItemQuantity = itemView.findViewById<TextView>(R.id.tvItemQuantity)
@@ -223,7 +182,7 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
             tvItemQuantity.text = "Qty: ${item.quantity} × $${String.format("%.2f", item.unitPrice)}"
             tvItemPrice.text = "$${String.format("%.2f", item.lineTotal)}"
 
-            llOrderItems.addView(itemView)
+            binding.llOrderItems.addView(itemView)
         }
     }
 
@@ -231,29 +190,29 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         when (status.uppercase()) {
             "CANCELLED" -> {
                 // Grey, disabled
-                btnViewQrCode.isEnabled = false
-                btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                binding.btnViewQrCode.isEnabled = false
+                binding.btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(
                     getColor(android.R.color.darker_gray)
                 )
-                btnViewQrCode.setOnClickListener(null)
+                binding.btnViewQrCode.setOnClickListener(null)
             }
             "READY", "COMPLETED", "COLLECTED" -> {
                 // Green, enabled, navigate to QR code
-                btnViewQrCode.isEnabled = true
-                btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                binding.btnViewQrCode.isEnabled = true
+                binding.btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(
                     getColor(R.color.status_confirmed)
                 )
-                btnViewQrCode.setOnClickListener {
+                binding.btnViewQrCode.setOnClickListener {
                     navigateToQRCode()
                 }
             }
             else -> {
                 // Yellow, enabled but show toast (PENDING, ACCEPTED, CONFIRMED)
-                btnViewQrCode.isEnabled = true
-                btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                binding.btnViewQrCode.isEnabled = true
+                binding.btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(
                     getColor(R.color.status_pending)
                 )
-                btnViewQrCode.setOnClickListener {
+                binding.btnViewQrCode.setOnClickListener {
                     Toast.makeText(
                         this,
                         "Order must be ready before viewing QR code. Please wait.",
@@ -278,43 +237,43 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         when (status.uppercase()) {
             "PENDING" -> {
                 // Only first step - Pending
-                setStatusIcon(statusPaidIcon, true)
-                setStatusIcon(statusReadyIcon, false)
-                setStatusIcon(statusCollectedIcon, false)
-                setProgressLine(progressLine1, false)
-                setProgressLine(progressLine2, false)
+                setStatusIcon(binding.statusPaidIcon, true)
+                setStatusIcon(binding.statusReadyIcon, false)
+                setStatusIcon(binding.statusCollectedIcon, false)
+                setProgressLine(binding.progressLine1, false)
+                setProgressLine(binding.progressLine2, false)
             }
             "ACCEPTED", "CONFIRMED" -> {
                 // First step completed - Accepted
-                setStatusIcon(statusPaidIcon, true)
-                setStatusIcon(statusReadyIcon, false)
-                setStatusIcon(statusCollectedIcon, false)
-                setProgressLine(progressLine1, false)
-                setProgressLine(progressLine2, false)
+                setStatusIcon(binding.statusPaidIcon, true)
+                setStatusIcon(binding.statusReadyIcon, false)
+                setStatusIcon(binding.statusCollectedIcon, false)
+                setProgressLine(binding.progressLine1, false)
+                setProgressLine(binding.progressLine2, false)
             }
             "READY" -> {
                 // First two steps - Accepted + Ready
-                setStatusIcon(statusPaidIcon, true)
-                setStatusIcon(statusReadyIcon, true)
-                setStatusIcon(statusCollectedIcon, false)
-                setProgressLine(progressLine1, true)
-                setProgressLine(progressLine2, false)
+                setStatusIcon(binding.statusPaidIcon, true)
+                setStatusIcon(binding.statusReadyIcon, true)
+                setStatusIcon(binding.statusCollectedIcon, false)
+                setProgressLine(binding.progressLine1, true)
+                setProgressLine(binding.progressLine2, false)
             }
             "COMPLETED", "COLLECTED" -> {
                 // All steps completed
-                setStatusIcon(statusPaidIcon, true)
-                setStatusIcon(statusReadyIcon, true)
-                setStatusIcon(statusCollectedIcon, true)
-                setProgressLine(progressLine1, true)
-                setProgressLine(progressLine2, true)
+                setStatusIcon(binding.statusPaidIcon, true)
+                setStatusIcon(binding.statusReadyIcon, true)
+                setStatusIcon(binding.statusCollectedIcon, true)
+                setProgressLine(binding.progressLine1, true)
+                setProgressLine(binding.progressLine2, true)
             }
             "CANCELLED" -> {
                 // Show all as cancelled/inactive
-                setStatusIcon(statusPaidIcon, false, true)
-                setStatusIcon(statusReadyIcon, false, true)
-                setStatusIcon(statusCollectedIcon, false, true)
-                setProgressLine(progressLine1, false, true)
-                setProgressLine(progressLine2, false, true)
+                setStatusIcon(binding.statusPaidIcon, false, true)
+                setStatusIcon(binding.statusReadyIcon, false, true)
+                setStatusIcon(binding.statusCollectedIcon, false, true)
+                setProgressLine(binding.progressLine1, false, true)
+                setProgressLine(binding.progressLine2, false, true)
             }
         }
     }
@@ -360,12 +319,12 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
                 val minutes = TimeUnit.MILLISECONDS.toMinutes(diffInMillis)
 
                 if (minutes > 0) {
-                    tvEtaWarning.text = "ETA: Time left to pick up: $minutes mins"
-                    llEtaWarning.visibility = View.VISIBLE
+                    binding.tvEtaWarning.text = "ETA: Time left to pick up: $minutes mins"
+                    binding.llEtaWarning.visibility = View.VISIBLE
                 }
             }
         } catch (e: Exception) {
-            llEtaWarning.visibility = View.GONE
+            binding.llEtaWarning.visibility = View.GONE
         }
     }
 
@@ -398,7 +357,6 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
      * Open Google Maps with route from origin to destination
      */
     private fun openMapsWithRoute(originLat: Double, originLng: Double, destLat: Double, destLng: Double) {
-        // Use Google Maps Directions API URL format
         val uri = Uri.parse("https://www.google.com/maps/dir/?api=1&origin=$originLat,$originLng&destination=$destLat,$destLng&travelmode=driving")
         val intent = Intent(Intent.ACTION_VIEW, uri)
         intent.setPackage("com.google.android.apps.maps")
@@ -406,99 +364,77 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         if (intent.resolveActivity(packageManager) != null) {
             startActivity(intent)
         } else {
-            // Fallback to browser if Google Maps is not installed
             val browserIntent = Intent(Intent.ACTION_VIEW, uri)
             startActivity(browserIntent)
         }
     }
 
-    // ========== Google Maps Integration ==========
-
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
-        googleMap?.uiSettings?.apply {
-            isZoomControlsEnabled = true
-            isMyLocationButtonEnabled = false
-            isMapToolbarEnabled = false
-        }
-
+        googleMap?.uiSettings?.isZoomControlsEnabled = true
         updateMapMarkers()
     }
 
     private fun updateMapMarkers() {
         val map = googleMap ?: return
-
-        // Check if we have location data
-        if (storeLat == null || storeLng == null) {
-            return
-        }
-
         map.clear()
 
-        val bounds = LatLngBounds.Builder()
-        var hasMarkers = false
+        val builder = LatLngBounds.Builder()
+        var hasPoints = false
 
-        // Add store marker
-        val storeLocation = LatLng(storeLat!!, storeLng!!)
-        map.addMarker(
-            MarkerOptions()
-                .position(storeLocation)
-                .title("Store Location")
-                .snippet(tvStoreAddress.text.toString())
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
-        )
-        bounds.include(storeLocation)
-        hasMarkers = true
-
-        // Add consumer marker if available
-        if (consumerLat != null && consumerLng != null) {
-            val consumerLocation = LatLng(consumerLat!!, consumerLng!!)
-            map.addMarker(
-                MarkerOptions()
-                    .position(consumerLocation)
-                    .title("Your Location")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
-            )
-            bounds.include(consumerLocation)
+        // Store location
+        if (storeLat != null && storeLng != null) {
+            val storePos = LatLng(storeLat!!, storeLng!!)
+            map.addMarker(MarkerOptions()
+                .position(storePos)
+                .title(storeName)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)))
+            builder.include(storePos)
+            hasPoints = true
         }
 
-        // Adjust camera to show all markers
-        if (hasMarkers) {
+        // Consumer location
+        if (consumerLat != null && consumerLng != null) {
+            val consumerPos = LatLng(consumerLat!!, consumerLng!!)
+            map.addMarker(MarkerOptions()
+                .position(consumerPos)
+                .title("Your Location")
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)))
+            builder.include(consumerPos)
+            hasPoints = true
+        }
+
+        if (hasPoints) {
             try {
-                val padding = 150 // padding in pixels
-                val cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds.build(), padding)
-                map.moveCamera(cameraUpdate)
+                map.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 100))
             } catch (e: Exception) {
-                // If only one marker or bounds issue, zoom to store location
-                map.moveCamera(CameraUpdateFactory.newLatLngZoom(storeLocation, 14f))
+                // If map not fully laid out yet, just move to store
+                storeLat?.let { lat ->
+                    storeLng?.let { lng ->
+                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 14f))
+                    }
+                }
             }
         }
     }
 
-    // ========== MapView Lifecycle Methods ==========
-
     override fun onResume() {
         super.onResume()
-        mapView.onResume()
+        binding.mapView.onResume()
     }
 
     override fun onPause() {
         super.onPause()
-        mapView.onPause()
+        binding.mapView.onPause()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        mapView.onDestroy()
+        binding.mapView.onDestroy()
     }
 
     override fun onLowMemory() {
         super.onLowMemory()
-        mapView.onLowMemory()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        mapView.onSaveInstanceState(outState)
+        binding.mapView.onLowMemory()
     }
 }

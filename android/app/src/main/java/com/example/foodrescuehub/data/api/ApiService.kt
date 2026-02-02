@@ -1,33 +1,28 @@
 package com.example.foodrescuehub.data.api
 
-import com.example.foodrescuehub.data.model.Listing
-import com.example.foodrescuehub.data.model.Order
-import com.example.foodrescuehub.data.model.UpdateLocationRequest
+import com.example.foodrescuehub.data.model.*
 import retrofit2.Response
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.PUT
-import retrofit2.http.Path
-import retrofit2.http.Query
+import retrofit2.http.*
 
 /**
  * Retrofit API interface for Food Rescue Hub backend
- * Defines all API endpoints for listing and order operations
+ * Uses session-based authentication (JSESSIONID cookie)
  */
 interface ApiService {
 
-    /**
-     * Get all active listings
-     * GET /api/listings
-     */
+    // ==================== AUTH ====================
+
+    @POST("api/auth/login")
+    suspend fun login(@Body loginRequest: LoginRequest): Response<User>
+
+    @POST("api/auth/logout")
+    suspend fun logout(): Response<Void>
+
+    // ==================== LISTINGS ====================
+
     @GET("api/listings")
     suspend fun getAllListings(): Response<List<Listing>>
 
-    /**
-     * Get nearby listings based on location
-     * GET /api/listings/nearby?lat={lat}&lng={lng}&radius={radius}
-     */
     @GET("api/listings/nearby")
     suspend fun getNearbyListings(
         @Query("lat") latitude: Double,
@@ -35,59 +30,61 @@ interface ApiService {
         @Query("radius") radius: Double = 5.0
     ): Response<List<Listing>>
 
-    /**
-     * Get listings filtered by category
-     * GET /api/listings/category/{category}
-     */
     @GET("api/listings/category/{category}")
     suspend fun getListingsByCategory(
         @Path("category") category: String
     ): Response<List<Listing>>
 
-    /**
-     * Get all orders for a specific consumer
-     * GET /api/consumer/orders/{consumerId}
-     */
-    @GET("api/consumer/orders/{consumerId}")
-    suspend fun getConsumerOrders(
-        @Path("consumerId") consumerId: Long
-    ): Response<List<Order>>
+    // ==================== CART ====================
+
+    @GET("api/cart")
+    suspend fun getCart(): Response<CartResponseDto>
+
+    @POST("api/cart/items")
+    suspend fun addItemToCart(@Body request: AddCartItemRequest): Response<CartResponseDto>
+
+    @PATCH("api/cart/items/{listingId}")
+    suspend fun updateCartItemQuantity(
+        @Path("listingId") listingId: Long, 
+        @Body request: UpdateCartItemRequest
+    ): Response<CartResponseDto>
+
+    @DELETE("api/cart/items/{listingId}")
+    suspend fun removeCartItem(@Path("listingId") listingId: Long): Response<CartResponseDto>
+
+    @DELETE("api/cart/items")
+    suspend fun clearCart(): Response<CartResponseDto>
+
+    // ==================== ORDERS ====================
+
+    @POST("api/orders")
+    suspend fun createOrder(@Body request: CreateOrderRequest): Response<CreateOrderResponseDto>
 
     /**
-     * Get a specific order by ID
-     * GET /api/consumer/orders/{consumerId}/order/{orderId}
+     * Get all orders for current user (session-based)
      */
-    @GET("api/consumer/orders/{consumerId}/order/{orderId}")
-    suspend fun getOrderById(
-        @Path("consumerId") consumerId: Long,
-        @Path("orderId") orderId: Long
-    ): Response<Order>
+    @GET("api/orders")
+    suspend fun getMyOrders(): Response<List<Order>>
 
     /**
-     * Update consumer's default location
-     * PUT /api/consumer/profile/{consumerId}/location
+     * Get specific order by ID for current user (session-based)
      */
-    @PUT("api/consumer/profile/{consumerId}/location")
-    suspend fun updateConsumerLocation(
-        @Path("consumerId") consumerId: Long,
-        @Body request: UpdateLocationRequest
-    ): Response<UpdateLocationRequest>
+    @GET("api/orders/{orderId}")
+    suspend fun getOrderById(@Path("orderId") orderId: Long): Response<Order>
 
-    /**
-     * Get consumer's default location
-     * GET /api/consumer/profile/{consumerId}/location
-     */
-    @GET("api/consumer/profile/{consumerId}/location")
-    suspend fun getConsumerLocation(
-        @Path("consumerId") consumerId: Long
-    ): Response<UpdateLocationRequest>
+    @POST("api/orders/{orderId}/cancel")
+    suspend fun cancelOrder(@Path("orderId") orderId: Long, @Body request: CancelOrderRequest): Response<Order>
 
-    /**
-     * Generate QR code for order pickup
-     * POST /api/pickup-tokens/{orderId}/generate-qrcode
-     */
+    // ==================== CONSUMER PROFILE ====================
+
+    @PUT("api/consumer/profile/location")
+    suspend fun updateConsumerLocation(@Body request: UpdateLocationRequest): Response<UpdateLocationRequest>
+
+    @GET("api/consumer/profile/location")
+    suspend fun getConsumerLocation(): Response<UpdateLocationRequest>
+
+    // ==================== PICKUP ====================
+
     @POST("api/pickup-tokens/{orderId}/generate-qrcode")
-    suspend fun generatePickupQRCode(
-        @Path("orderId") orderId: Long
-    ): Response<Map<String, String>>
+    suspend fun generatePickupQRCode(@Path("orderId") orderId: Long): Response<Map<String, String>>
 }

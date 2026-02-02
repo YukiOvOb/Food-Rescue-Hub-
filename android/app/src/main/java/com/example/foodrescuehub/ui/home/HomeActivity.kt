@@ -232,12 +232,12 @@ class HomeActivity : AppCompatActivity() {
                     startActivity(intent)
                     false
                 }
-                R.id.nav_orders -> {
-                    // Navigate to OrdersActivity
-                    val intent = Intent(this, com.example.foodrescuehub.ui.orders.OrdersActivity::class.java)
-                    startActivity(intent)
-                    false
-                }
+//                R.id.nav_orders -> {
+//                    // Navigate to OrdersActivity
+//                    val intent = Intent(this, com.example.foodrescuehub.ui.orders.OrdersActivity::class.java)
+//                    startActivity(intent)
+//                    false
+//                }
                 R.id.nav_profile -> {
                     // Navigate to ProfileActivity
                     val intent = Intent(this, ProfileActivity::class.java)

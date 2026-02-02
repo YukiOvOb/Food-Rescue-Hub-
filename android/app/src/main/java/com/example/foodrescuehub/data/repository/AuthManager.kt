@@ -3,13 +3,14 @@ package com.example.foodrescuehub.data.repository
 import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.foodrescuehub.data.api.RetrofitClient
+import com.example.foodrescuehub.data.model.LoginRequest
 import com.example.foodrescuehub.data.model.User
 import com.example.foodrescuehub.data.storage.SecurePreferences
-import kotlin.random.Random
 
 /**
  * Singleton manager for user authentication
- * Manages login state, current user, and persistence
+ * Manages login state, current user, and persistence with backend session support
  */
 object AuthManager {
 
@@ -37,49 +38,51 @@ object AuthManager {
     }
 
     /**
-     * Perform login with email and password
-     * Current implementation: Mock login (accepts any email + password length >= 6)
+     * Perform login with email and password against the Spring Boot backend.
+     * On success, the backend session (JSESSIONID) is automatically captured
+     * and persisted by the SessionCookieJar.
      *
      * @return true if login successful, false otherwise
      */
-    fun login(email: String, password: String): Boolean {
-        // Validate email format
-        if (!isValidEmail(email)) {
+    suspend fun login(email: String, password: String): Boolean {
+        // Basic local validation
+        if (!isValidEmail(email) || password.length < 6) {
             return false
         }
 
-        // Validate password length
-        if (password.length < 6) {
-            return false
+        return try {
+            val response = RetrofitClient.apiService.login(LoginRequest(email, password))
+            
+            if (response.isSuccessful && response.body() != null) {
+                val user = response.body()!!
+                
+                // Save user to encrypted storage
+                securePreferences.saveUser(user)
+
+                // Update LiveData (use postValue as this might be on a background thread)
+                _currentUser.postValue(user)
+                _isLoggedIn.postValue(true)
+                
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
         }
-
-        // Mock login: Generate a user object
-        // Always use Alice's consumer ID (1) for testing
-        val user = User(
-            userId = 1L,  // Alice's consumer_id in database
-            email = email,
-            displayName = extractDisplayName(email),
-            phone = null,
-            createdAt = System.currentTimeMillis()
-        )
-
-        // Save user to encrypted storage
-        securePreferences.saveUser(user)
-
-        // Update LiveData
-        _currentUser.value = user
-        _isLoggedIn.value = true
-
-        return true
     }
 
     /**
      * Logout the current user
-     * Clears user data and cart
+     * Clears user data, session cookies, and local cart
      */
     fun logout() {
-        // Clear user from storage
+        // Clear user and cookies from storage
         securePreferences.clearUser()
+        
+        // Clear cookies from the active Retrofit client
+        RetrofitClient.clearSession()
 
         // Update LiveData
         _currentUser.value = null
@@ -111,14 +114,5 @@ object AuthManager {
     private fun isValidEmail(email: String): Boolean {
         val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$".toRegex()
         return email.matches(emailRegex)
-    }
-
-    /**
-     * Extract display name from email (part before @)
-     */
-    private fun extractDisplayName(email: String): String {
-        val username = email.substringBefore("@")
-        // Capitalize first letter
-        return username.replaceFirstChar { it.uppercase() }
     }
 }

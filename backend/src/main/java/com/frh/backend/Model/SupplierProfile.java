@@ -2,9 +2,6 @@ package com.frh.backend.Model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
@@ -72,4 +69,7 @@ public class SupplierProfile {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "verification_status", nullable = false, columnDefinition = "varchar(32) default 'PENDING'")
+    private String verificationStatus = "PENDING";
 }

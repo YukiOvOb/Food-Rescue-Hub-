@@ -23,3 +23,34 @@ data class CartItem(
      */
     fun getSavings(): Double = (originalPrice - price) * quantity
 }
+
+// AddCartItemRequest.kt
+data class AddCartItemRequest(
+    val listingId: Long,
+    val qty: Int
+)
+
+// UpdateCartItemRequest.kt
+data class UpdateCartItemRequest(
+    val qty: Int
+)
+
+// CartResponseDto.kt
+data class CartResponseDto(
+    val cartId: Long,
+    val supplierId: Long?,
+    val items: List<CartItemDto>,
+    val subtotal: Double,
+    val total: Double
+)
+
+data class CartItemDto(
+    val listingId: Long,
+    val title: String,
+    val imageUrl: String?,
+    val unitPrice: Double,
+    val qty: Int,
+    val lineTotal: Double
+)
+
+

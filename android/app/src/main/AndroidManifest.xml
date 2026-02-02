@@ -27,15 +27,20 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDyRDq6SegBgoxIWUPmbFYqFSmcbCAadbo" />
+
         <activity
-            android:name=".ui.home.HomeActivity"
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ui.home.HomeActivity"
+            android:exported="false" />
+
         <activity
             android:name=".ui.detail.ProductDetailActivity"
             android:exported="false" />
@@ -73,9 +78,6 @@
             android:exported="false"
             android:label="Pickup Code"
             android:parentActivityName=".ui.orders.OrderDetailActivity" />
-        <activity
-            android:name=".MainActivity"
-            android:exported="false" />
     </application>
 
 </manifest>

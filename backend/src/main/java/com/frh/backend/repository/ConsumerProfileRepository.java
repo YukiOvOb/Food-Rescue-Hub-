@@ -14,4 +14,5 @@ public interface ConsumerProfileRepository extends JpaRepository<ConsumerProfile
     
     // Find consumer by phone
     Optional<ConsumerProfile> findByPhone(String phone);
+
 }

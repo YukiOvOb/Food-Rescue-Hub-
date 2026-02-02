@@ -25,4 +25,7 @@ public class RegisterRequest {
   private String businessName;
   private String businessType;
   private String payoutAccountRef;
+
+  @NotBlank(message = "Role is required")
+  private String role; // "CONSUMER" or "SUPPLIER
 }
