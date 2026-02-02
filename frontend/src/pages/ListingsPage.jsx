@@ -55,7 +55,7 @@ export default function ListingsPage() {
   const normalizeDateTimeLocal = (dt) =>
     dt && dt.length === 16 ? `${dt}:00` : dt; // "yyyy-MM-ddTHH:MM" -> "yyyy-MM-ddTHH:MM:00"
 
-  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8081/api';
+  const apiBase = '/api';
   const supplierBase = `${apiBase}/supplier`;
 
   useEffect(() => {
@@ -63,7 +63,9 @@ export default function ListingsPage() {
   }, []);
 
   const fetchListings = () => {
-    fetch(`${supplierBase}/listings`)
+    fetch(`${supplierBase}/listings`, {
+      credentials: 'include'
+    })
       .then((r) => {
         if (!r.ok) throw new Error('network');
         return r.json();
@@ -171,6 +173,7 @@ export default function ListingsPage() {
     fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(payload)
     })
       .then(async (r) => {

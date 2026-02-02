@@ -3,7 +3,6 @@ name: Food Rescue Hub CI/CD
 on:
   push:
     branches:
-      # Feature / dev patterns (you requested development/sprint2/** style)
       - "development/sprint2/**"
       - "development/Sprint2"
       - "feature/**"
@@ -17,30 +16,20 @@ permissions:
   contents: read
 
 env:
-  # "true" = report-only (lint/security won't fail pipeline)
-  # "false" = strict gate (fail pipeline on issues)
   REPORT_ONLY: "true"
-
-  # Optional: where your python ML code lives (adjust if needed)
   PYTHON_DIR: "ml"
-
-  # Optional: where your android project lives (adjust if needed)
   ANDROID_DIR: "android"
-
-  # Optional: URLs used by main-branch security checks (set as GitHub Secrets ideally)
-  # STAGING_URL should be a reachable URL for ZAP/k6/nmap (e.g., http://xx.xx.xx.xx:8080)
-  #STAGING_URL: ${{ secrets.STAGING_URL }}
+  # STAGING_URL should be stored in GitHub Secrets and exposed only when needed.
+  # We'll reference secrets.STAGING_URL directly in jobs (recommended).
 
 jobs:
   # ============================
   # STAGE 1: Feature/Dev checks
-  # (run on feature/** and development/sprint2/** and development/Sprint2)
   # ============================
 
   backend-junit:
     name: Unit Tests (Java Backend) + JaCoCo
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' || github.base_ref == 'main'
     steps:
       - uses: actions/checkout@v4
 
@@ -55,8 +44,6 @@ jobs:
         working-directory: backend
         run: |
           chmod +x mvnw
-          # "test" = unit tests; "verify" may include integration tests if configured
-          # For feature/dev we keep this as unit-level unless your pom triggers IT.
           ./mvnw -q clean test
 
       - name: Upload Maven test reports
@@ -356,9 +343,9 @@ jobs:
           category: "/language:${{ matrix.language }}"
 
   # ============================
-  # STAGE 2: Integration tests
-  # Only on development/Sprint2
+  # STAGE 2: Integration tests (only on development/Sprint2)
   # ============================
+
   integration-tests:
     name: Integration Tests (development/Sprint2)
     runs-on: ubuntu-latest
@@ -367,9 +354,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Free/Open-source approach:
-      # - Use Docker Compose to start services locally in CI runner
-      # - Run functional checks (curl) or Newman/Postman or Karate
       - name: Start stack (Docker Compose)
         run: |
           docker compose up -d
@@ -393,8 +377,6 @@ jobs:
         run: |
           curl -fsS http://localhost:8080/api/hello
 
-      # OPTIONAL (Open-source): Postman/Newman API collection tests
-      # Place your collection under tests/postman/collection.json
       - name: Newman API tests (optional)
         run: |
           if [ -f "tests/postman/collection.json" ]; then
@@ -471,37 +453,16 @@ jobs:
           exit-code: "1"
           severity: "CRITICAL,HIGH"
 
-      # OPTIONAL: also store results as artifact (Trivy action doesn't always output files by default)
       - name: Note
-        run: echo "Trivy scanned images. For file outputs, configure Trivy format= ساريف/json and save file."
-
-  # OPTIONAL alternative: Snyk Container scanning (can be used instead of Trivy)
-  # Keep disabled until you confirm your plan supports it reliably
-  # image-scan-snyk:
-  #   name: Container Image Scan (Snyk Container) - main
-  #   runs-on: ubuntu-latest
-  #   needs: [build-and-push]
-  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-  #   permissions:
-  #     contents: read
-  #     actions: read
-  #   env:
-  #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: snyk/actions/setup@master
-  #       with:
-  #         snyk-version: latest
-  #     - name: Scan backend image
-  #       run: snyk container test ${{ secrets.DOCKER_USERNAME }}/frh-backend:latest --severity-threshold=high || true
-  #     - name: Scan frontend image
-  #       run: snyk container test ${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest --severity-threshold=high || true
+        run: echo "Trivy scanned images. Configure Trivy SARIF/JSON output if you want downloadable reports."
 
   port-scan-nmap:
     name: Port Scan (nmap) - main
     runs-on: ubuntu-latest
     needs: [image-scan-trivy]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      STAGING_URL: ${{ secrets.STAGING_URL }}
     steps:
       - name: Validate STAGING_URL exists
         run: |
@@ -515,7 +476,6 @@ jobs:
 
       - name: Run nmap against staging host (basic)
         run: |
-          # Extract host/IP from URL for nmap (simple approach)
           HOST=$(echo "${STAGING_URL}" | sed -E 's#https?://##' | sed -E 's#/.*##')
           echo "Scanning host: $HOST"
           nmap -sV -Pn -T3 "$HOST" -oN nmap-report.txt || true
@@ -528,9 +488,6 @@ jobs:
           path: nmap-report.txt
           if-no-files-found: warn
 
-  # NOTE ON IAST:
-  # True IAST usually needs an agent (Contrast/Seeker/Veracode) and is often not fully OSS.
-  # For an open-source security test in CI, OWASP ZAP (DAST) is the practical choice.
   iast:
     name: IAST (placeholder) - main
     runs-on: ubuntu-latest
@@ -539,13 +496,15 @@ jobs:
     steps:
       - run: |
           echo "IAST placeholder: typically requires an instrumentation agent + running app."
-          echo "If you want OSS-only security, we can do DAST with OWASP ZAP + SAST + SCA + container scan."
+          echo "OSS-only alternative: DAST with OWASP ZAP + SAST + SCA + container scan."
 
   non-functional-k6:
     name: Non-functional Tests (k6 load/perf) - main
     runs-on: ubuntu-latest
     needs: [iast]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      STAGING_URL: ${{ secrets.STAGING_URL }}
     steps:
       - uses: actions/checkout@v4
 
@@ -566,7 +525,6 @@ jobs:
 
       - name: Run k6 (example script)
         run: |
-          # If you have your own script: tests/k6/script.js
           if [ -f "tests/k6/script.js" ]; then
             k6 run --summary-export=k6-summary.json tests/k6/script.js || true
           else
@@ -574,10 +532,7 @@ jobs:
             import http from 'k6/http';
             import { check, sleep } from 'k6';
 
-            export const options = {
-              vus: 5,
-              duration: '30s',
-            };
+            export const options = { vus: 5, duration: '30s' };
 
             export default function () {
               const url = __ENV.STAGING_URL + "/api/hello";
@@ -602,6 +557,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [non-functional-k6]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      STAGING_URL: ${{ secrets.STAGING_URL }}
     steps:
       - name: Validate STAGING_URL exists
         run: |
@@ -629,6 +586,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [dast-zap]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      STAGING_URL: ${{ secrets.STAGING_URL }}
     steps:
       - name: Deploy via SSH (docker compose)
         uses: appleboy/ssh-action@v1
@@ -642,7 +601,6 @@ jobs:
             docker compose pull
             docker compose up -d
             docker compose ps
-            # Basic config validation
             docker compose config >/dev/null
             docker system prune -f
 
