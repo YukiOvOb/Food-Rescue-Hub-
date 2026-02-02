@@ -76,33 +76,44 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      - name: Install Python deps (if ML folder exists)
+      - name: Install Python deps (only if folder exists)
         run: |
-          if [ -d "${PYTHON_DIR}" ]; then
-            cd "${PYTHON_DIR}"
-            if [ -f "requirements.txt" ]; then
-              pip install -r requirements.txt
-            elif [ -f "pyproject.toml" ]; then
-              pip install .
-            else
-              echo "No requirements.txt / pyproject.toml found in ${PYTHON_DIR}. Skipping deps."
-            fi
-            pip install pytest pytest-cov
-          else
-            echo "Python dir ${PYTHON_DIR} not found. Skipping."
+         if [ -d "${PYTHON_DIR}" ]; then
+          cd "${PYTHON_DIR}"
+
+         if [ -f "requirements.txt" ]; then
+          pip install -r requirements.txt
+         elif [ -f "pyproject.toml" ]; then
+          pip install .
+         else
+          echo "No dependency file found — skipping install"
+         fi
+
+           pip install pytest pytest-cov
+         else
+            echo "Python directory not found — skipping install"
           fi
 
-      - name: Run pytest + coverage (if tests exist)
+
+      - name: Run pytest + coverage (only if Python folder exists)
         run: |
           if [ -d "${PYTHON_DIR}" ]; then
             cd "${PYTHON_DIR}"
-            if ls -1 test* tests* >/dev/null 2>&1; then
-              pytest -q --junitxml=pytest-junit.xml --cov=. --cov-report=xml:coverage.xml --cov-report=html:htmlcov || \
-              ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
+
+          if ls -1 test* tests* >/dev/null 2>&1; then
+            pytest -q \
+              --junitxml=pytest-junit.xml \
+              --cov=. \
+              --cov-report=xml:coverage.xml \
+              --cov-report=html:htmlcov || \
+            ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
             else
-              echo "No Python tests folder found. Skipping pytest."
-            fi
+              echo "No Python test files found — skipping pytest"
+             fi
+          else
+            echo "Python directory not found — skipping Python tests"
           fi
+
 
       - name: Upload pytest reports
         if: always()
