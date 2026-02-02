@@ -70,53 +70,59 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check Python directory exists
+        id: pycheck
+        run: |
+          if [ -d "${PYTHON_DIR}" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Python dir found: ${PYTHON_DIR}"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Python dir NOT found: ${PYTHON_DIR}"
+          fi
+
       - name: Set up Python
+        if: steps.pycheck.outputs.exists == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
 
       - name: Install Python deps (only if folder exists)
+        if: steps.pycheck.outputs.exists == 'true'
         run: |
-         if [ -d "${PYTHON_DIR}" ]; then
+          set -e
           cd "${PYTHON_DIR}"
 
-         if [ -f "requirements.txt" ]; then
-          pip install -r requirements.txt
-         elif [ -f "pyproject.toml" ]; then
-          pip install .
-         else
-          echo "No dependency file found — skipping install"
-         fi
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov
 
-           pip install pytest pytest-cov
-         else
-            echo "Python directory not found — skipping install"
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          elif [ -f "pyproject.toml" ]; then
+            pip install .
+          else
+            echo "No requirements.txt / pyproject.toml found — skipping dependency install"
           fi
 
-
-      - name: Run pytest + coverage (only if Python folder exists)
+      - name: Run pytest + coverage (only if tests exist)
+        if: steps.pycheck.outputs.exists == 'true'
         run: |
-          if [ -d "${PYTHON_DIR}" ]; then
-            cd "${PYTHON_DIR}"
+          cd "${PYTHON_DIR}"
 
-          if ls -1 test* tests* >/dev/null 2>&1; then
+          if ls -1 tests test* >/dev/null 2>&1; then
             pytest -q \
               --junitxml=pytest-junit.xml \
               --cov=. \
               --cov-report=xml:coverage.xml \
               --cov-report=html:htmlcov || \
             ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
-            else
-              echo "No Python test files found — skipping pytest"
-             fi
           else
-            echo "Python directory not found — skipping Python tests"
+            echo "No Python tests found — skipping pytest"
           fi
 
-
-      - name: Upload pytest reports
-        if: always()
+      - name: Upload pytest reports (only if folder exists)
+        if: steps.pycheck.outputs.exists == 'true' && always()
         uses: actions/upload-artifact@v4
         with:
           name: python-test-reports
