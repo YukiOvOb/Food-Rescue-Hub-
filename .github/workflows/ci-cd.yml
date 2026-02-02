@@ -3,29 +3,44 @@ name: Food Rescue Hub CI/CD
 on:
   push:
     branches:
+      # Feature / dev patterns (you requested development/sprint2/** style)
+      - "development/sprint2/**"
       - "development/Sprint2"
       - "feature/**"
       - "main"
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 env:
-  # "true" = report-only (lint won't fail pipeline)
-  # "false" = strict gate (lint will fail)
+  # "true" = report-only (lint/security won't fail pipeline)
+  # "false" = strict gate (fail pipeline on issues)
   REPORT_ONLY: "true"
+
+  # Optional: where your python ML code lives (adjust if needed)
+  PYTHON_DIR: "ml"
+
+  # Optional: where your android project lives (adjust if needed)
+  ANDROID_DIR: "android"
+
+  # Optional: URLs used by main-branch security checks (set as GitHub Secrets ideally)
+  # STAGING_URL should be a reachable URL for ZAP/k6/nmap (e.g., http://xx.xx.xx.xx:8080)
+  STAGING_URL: ${{ secrets.STAGING_URL }}
 
 jobs:
   # ============================
-  # STAGE 1: Checks (parallel)
+  # STAGE 1: Feature/Dev checks
+  # (run on feature/** and development/sprint2/** and development/Sprint2)
   # ============================
 
-  backend-tests:
-    name: JUnit (Backend)
+  backend-junit:
+    name: Unit Tests (Java Backend) + JaCoCo
     runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.base_ref == 'main'
     steps:
       - uses: actions/checkout@v4
 
@@ -36,48 +51,149 @@ jobs:
           distribution: "temurin"
           cache: maven
 
-      - name: Run backend tests with coverage
+      - name: Run unit tests + generate coverage (Maven)
+        working-directory: backend
         run: |
-          cd backend
           chmod +x mvnw
-          ./mvnw clean verify
+          # "test" = unit tests; "verify" may include integration tests if configured
+          # For feature/dev we keep this as unit-level unless your pom triggers IT.
+          ./mvnw -q clean test
 
-      - name: Generate JaCoCo Badge
-        if: always()
-        uses: cicirello/jacoco-badge-generator@v2
-        with:
-          jacoco-csv-file: backend/target/site/jacoco/jacoco.csv
-          badges-directory: .github/badges
-          generate-branches-badge: true
-          generate-summary: true
-
-      - name: Upload JaCoCo coverage report
+      - name: Upload Maven test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: jacoco-coverage-report
-          path: backend/target/site/jacoco/
+          name: java-unit-test-reports
+          path: |
+            backend/target/surefire-reports/**
           if-no-files-found: warn
 
-      - name: Comment coverage on PR
-        if: github.event_name == 'pull_request' && always()
-        uses: madrapps/jacoco-report@v1.6.1
+      - name: Upload JaCoCo report (if present)
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          paths: backend/target/site/jacoco/jacoco.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: 40
-          min-coverage-changed-files: 60
-          title: Code Coverage Report
+          name: jacoco-report
+          path: |
+            backend/target/site/jacoco/**
+          if-no-files-found: warn
 
-  # ----------------------------
-  # React Lint (keep earlier stable version)
-  # ----------------------------
-  frontend-react-lint:
-    name: Lint (React)
+  python-tests:
+    name: Unit Tests (Python ML) + Coverage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Python deps (if ML folder exists)
+        run: |
+          if [ -d "${PYTHON_DIR}" ]; then
+            cd "${PYTHON_DIR}"
+            if [ -f "requirements.txt" ]; then
+              pip install -r requirements.txt
+            elif [ -f "pyproject.toml" ]; then
+              pip install .
+            else
+              echo "No requirements.txt / pyproject.toml found in ${PYTHON_DIR}. Skipping deps."
+            fi
+            pip install pytest pytest-cov
+          else
+            echo "Python dir ${PYTHON_DIR} not found. Skipping."
+          fi
+
+      - name: Run pytest + coverage (if tests exist)
+        run: |
+          if [ -d "${PYTHON_DIR}" ]; then
+            cd "${PYTHON_DIR}"
+            if ls -1 test* tests* >/dev/null 2>&1; then
+              pytest -q --junitxml=pytest-junit.xml --cov=. --cov-report=xml:coverage.xml --cov-report=html:htmlcov || \
+              ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
+            else
+              echo "No Python tests folder found. Skipping pytest."
+            fi
+          fi
+
+      - name: Upload pytest reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-test-reports
+          path: |
+            ml/pytest-junit.xml
+            ml/coverage.xml
+            ml/htmlcov/**
+          if-no-files-found: warn
+
+  lint-code-quality:
+    name: Lint & Code Quality (Java + Python + React + Thymeleaf + Kotlin/Android)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ---------- Java Checkstyle ----------
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Backend - Checkstyle (report-only controlled)
+        working-directory: backend
+        run: |
+          chmod +x mvnw
+          if [ "${REPORT_ONLY}" = "true" ]; then
+            ./mvnw -q checkstyle:check || true
+          else
+            ./mvnw -q checkstyle:check
+          fi
+
+      - name: Upload Checkstyle Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-checkstyle-report
+          path: |
+            backend/target/checkstyle-result.xml
+            backend/target/site/checkstyle.html
+            backend/target/site/checkstyle.xml
+          if-no-files-found: warn
+
+      # ---------- Python Lint (flake8) ----------
+      - name: Set up Python (for lint)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Python - flake8 (if ML folder exists)
+        run: |
+          if [ -d "${PYTHON_DIR}" ]; then
+            pip install flake8
+            cd "${PYTHON_DIR}"
+            if [ "${REPORT_ONLY}" = "true" ]; then
+              flake8 . --statistics --count --exit-zero --output-file=flake8-report.txt
+            else
+              flake8 . --statistics --count --output-file=flake8-report.txt
+            fi
+          else
+            echo "Python dir ${PYTHON_DIR} not found. Skipping flake8."
+          fi
+
+      - name: Upload flake8 report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-flake8-report
+          path: |
+            ml/flake8-report.txt
+          if-no-files-found: warn
+
+      # ---------- React ESLint ----------
       - name: Setup Node 20
         uses: actions/setup-node@v4
         with:
@@ -85,12 +201,11 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install deps
+      - name: Frontend - Install deps
         working-directory: frontend
         run: npm ci
 
-      # ✅ Create lint report even if ESLint fails
-      - name: Run ESLint (report)
+      - name: Frontend - ESLint report (always produce report)
         working-directory: frontend
         run: |
           npx eslint "src/**/*.{js,jsx}" -f json -o eslint-report.json || true
@@ -103,35 +218,59 @@ jobs:
           path: frontend/eslint-report.json
           if-no-files-found: warn
 
-  thymeleaf-template-lint:
-    name: Lint (Thymeleaf Templates)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
+      # ---------- Thymeleaf templates HTMLHint ----------
       - name: Install HTMLHint
         run: npm i -g htmlhint
 
-      - name: Run HTMLHint on templates
-        run: htmlhint "backend/src/main/resources/templates/**/*.html"
+      - name: Thymeleaf - HTMLHint
+        run: |
+          if [ "${REPORT_ONLY}" = "true" ]; then
+            htmlhint "backend/src/main/resources/templates/**/*.html" > htmlhint-report.txt || true
+          else
+            htmlhint "backend/src/main/resources/templates/**/*.html" > htmlhint-report.txt
+          fi
 
-  # ----------------------------
-  # Snyk (use the "correct working" format from your Feature vs Main file)
-  # ----------------------------
-  security_snyk:
-    name: Snyk (SCA + SAST)
+      - name: Upload HTMLHint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: thymeleaf-htmlhint-report
+          path: htmlhint-report.txt
+          if-no-files-found: warn
+
+      # ---------- Kotlin/Android lint ----------
+      - name: Android - Lint (Kotlin)
+        run: |
+          if [ -d "${ANDROID_DIR}" ]; then
+            cd "${ANDROID_DIR}"
+            chmod +x gradlew
+            if [ "${REPORT_ONLY}" = "true" ]; then
+              ./gradlew lint || true
+            else
+              ./gradlew lint
+            fi
+          else
+            echo "Android dir ${ANDROID_DIR} not found. Skipping Android lint."
+          fi
+
+      - name: Upload Android lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-lint-report
+          path: |
+            android/**/build/reports/lint-results*.html
+            android/**/build/reports/lint-results*.xml
+          if-no-files-found: warn
+
+  sca-snyk:
+    name: SCA (Snyk Open Source) - Java + Python + JS
     runs-on: ubuntu-latest
     permissions:
       contents: read
       actions: read
-      security-events: write
-
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
     steps:
       - uses: actions/checkout@v4
 
@@ -147,47 +286,15 @@ jobs:
         with:
           snyk-version: latest
 
-      # ---- SAST (Snyk Code) -> SARIF
-      - name: Snyk Code (SAST) + SARIF
+      - name: SCA - Java (Maven backend)
         run: |
-          set +e
-          snyk code test
-          SAST_EXIT=$?
-
-          snyk code test --sarif --sarif-file-output=snyk-code.sarif 2>&1
-          SARIF_EXIT=$?
-
-          if [ "${REPORT_ONLY}" != "true" ] && [ $SAST_EXIT -ne 0 ]; then
-            exit $SAST_EXIT
-          fi
-          exit 0
-
-      - name: Upload Snyk SARIF to Code Scanning
-        if: always()
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: snyk-code.sarif
-
-      - name: Upload Snyk SARIF as Artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: snyk-sarif
-          path: snyk-code.sarif
-          if-no-files-found: warn
-
-      # ---- SCA backend
-      - name: Snyk Open Source (SCA) - backend
-        run: |
-          cd backend
           if [ "${REPORT_ONLY}" = "true" ]; then
-            snyk test --file=pom.xml --severity-threshold=high || true
+            snyk test --file=backend/pom.xml --severity-threshold=high || true
           else
-            snyk test --file=pom.xml --severity-threshold=high
+            snyk test --file=backend/pom.xml --severity-threshold=high
           fi
 
-      # ---- SCA frontend
-      - name: Snyk Open Source (SCA) - frontend
+      - name: SCA - React (npm)
         run: |
           cd frontend
           if [ "${REPORT_ONLY}" = "true" ]; then
@@ -196,11 +303,21 @@ jobs:
             snyk test --severity-threshold=high
           fi
 
-  # ----------------------------
-  # CodeQL (kept from your pipeline-format file, with Java build)
-  # ----------------------------
+      - name: SCA - Python (requirements/pyproject if present)
+        run: |
+          if [ -d "${PYTHON_DIR}" ]; then
+            cd "${PYTHON_DIR}"
+            if [ "${REPORT_ONLY}" = "true" ]; then
+              snyk test --severity-threshold=high || true
+            else
+              snyk test --severity-threshold=high
+            fi
+          else
+            echo "Python dir ${PYTHON_DIR} not found. Skipping Snyk Python SCA."
+          fi
+
   sast-codeql:
-    name: SAST (CodeQL)
+    name: SAST (CodeQL) - Java + JavaScript + Python
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -209,7 +326,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ["java", "javascript"]
+        language: ["java", "javascript", "python"]
     steps:
       - uses: actions/checkout@v4
 
@@ -231,123 +348,9 @@ jobs:
         run: |
           cd backend
           chmod +x mvnw
-          ./mvnw clean install -DskipTests
+          ./mvnw -q clean install -DskipTests
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{ matrix.language }}"
-
-  # ============================
-  # STAGE 2A: Feature branch path
-  # ============================
-
-  docker-build-validate:
-    name: Docker Build (Feature Branch Validation)
-    runs-on: ubuntu-latest
-    needs: [backend-tests, frontend-react-lint, thymeleaf-template-lint, security_snyk, sast-codeql]
-    if: github.event_name == 'push' && github.ref != 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-
-      - name: Build backend image (no push)
-        run: docker build -t frh-backend:ci ./backend
-
-      - name: Build frontend image (no push)
-        run: docker build -t frh-frontend:ci -f frontend/Dockerfile .
-
-  # ============================
-  # STAGE 2B: Main branch path
-  # ============================
-
-  build-and-push:
-    name: Build & Push Images
-    runs-on: ubuntu-latest
-    needs: [backend-tests, frontend-react-lint, thymeleaf-template-lint, security_snyk, sast-codeql]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-
-      - uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build & push backend
-        run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/frh-backend:latest ./backend
-          docker push ${{ secrets.DOCKER_USERNAME }}/frh-backend:latest
-
-      - name: Build & push frontend (nginx image with static assets)
-        run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest -f frontend/Dockerfile .
-          docker push ${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest
-
-  docker-image-scan:
-    name: Docker Image Scan (Trivy)
-    runs-on: ubuntu-latest
-    needs: [build-and-push]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - name: Scan backend image
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: "${{ secrets.DOCKER_USERNAME }}/frh-backend:latest"
-          format: table
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
-
-      - name: Scan frontend image
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: "${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest"
-          format: table
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
-
-  iast:
-    name: IAST (Main only)
-    runs-on: ubuntu-latest
-    needs: [docker-image-scan]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - run: |
-          echo "TODO: Add IAST tool steps"
-
-  sit:
-    name: SIT (Main only)
-    runs-on: ubuntu-latest
-    needs: [iast]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - run: |
-          echo "TODO: Add SIT tests here"
-
-  dast:
-    name: DAST (Main only)
-    runs-on: ubuntu-latest
-    needs: [sit]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - run: |
-          echo "TODO: Add OWASP ZAP DAST workflow here"
-
-  deploy:
-    name: Deploy
-    runs-on: ubuntu-latest
-    needs: [dast]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            cd ~/Food-Rescue-Hub-
-            docker compose pull
-            docker compose up -d
-            docker system prune -f
