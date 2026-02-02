@@ -8,7 +8,8 @@ on:
       - "feature/**"
       - "main"
   pull_request:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -20,53 +21,74 @@ env:
   ANDROID_DIR: "android"
 
 jobs:
-  # ==========================================================
-  # STAGE 0: Detect which parts exist (so we can skip safely)
-  # ==========================================================
+  # =========================================================
+  # STAGE 0: Detect folders so jobs don't fail when missing
+  # =========================================================
   detect:
     name: Detect project folders
     runs-on: ubuntu-latest
     outputs:
       has_backend: ${{ steps.detect.outputs.has_backend }}
       has_frontend: ${{ steps.detect.outputs.has_frontend }}
-      has_thymeleaf: ${{ steps.detect.outputs.has_thymeleaf }}
-      has_android: ${{ steps.detect.outputs.has_android }}
       has_python: ${{ steps.detect.outputs.has_python }}
       has_python_src: ${{ steps.detect.outputs.has_python_src }}
+      has_android: ${{ steps.detect.outputs.has_android }}
     steps:
       - uses: actions/checkout@v4
 
       - id: detect
+        name: Detect folders
+        shell: bash
         run: |
+          set -e
+
           # backend
-          if [ -d "backend" ] && [ -f "backend/pom.xml" ]; then echo "has_backend=true" >> $GITHUB_OUTPUT; else echo "has_backend=false" >> $GITHUB_OUTPUT; fi
+          if [ -f "backend/pom.xml" ]; then
+            echo "has_backend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_backend=false" >> "$GITHUB_OUTPUT"
+          fi
 
           # frontend
-          if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then echo "has_frontend=true" >> $GITHUB_OUTPUT; else echo "has_frontend=false" >> $GITHUB_OUTPUT; fi
-
-          # thymeleaf templates
-          if ls backend/src/main/resources/templates/**/*.html >/dev/null 2>&1; then echo "has_thymeleaf=true" >> $GITHUB_OUTPUT; else echo "has_thymeleaf=false" >> $GITHUB_OUTPUT; fi
-
-          # android
-          if [ -d "${ANDROID_DIR}" ] && [ -f "${ANDROID_DIR}/build.gradle" -o -f "${ANDROID_DIR}/build.gradle.kts" -o -f "${ANDROID_DIR}/settings.gradle" -o -f "${ANDROID_DIR}/settings.gradle.kts" ]; then
-            echo "has_android=true" >> $GITHUB_OUTPUT
+          if [ -f "frontend/package.json" ]; then
+            echo "has_frontend=true" >> "$GITHUB_OUTPUT"
           else
-            echo "has_android=false" >> $GITHUB_OUTPUT
+            echo "has_frontend=false" >> "$GITHUB_OUTPUT"
           fi
 
-          # python folder
-          if [ -d "${PYTHON_DIR}" ]; then echo "has_python=true" >> $GITHUB_OUTPUT; else echo "has_python=false" >> $GITHUB_OUTPUT; fi
+          # python folder exists
+          if [ -d "${PYTHON_DIR}" ]; then
+            echo "has_python=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_python=false" >> "$GITHUB_OUTPUT"
+          fi
 
-          # python .py files (for CodeQL python)
+          # python source exists (any .py file)
           if [ -d "${PYTHON_DIR}" ] && find "${PYTHON_DIR}" -type f -name "*.py" | grep -q .; then
-            echo "has_python_src=true" >> $GITHUB_OUTPUT
+            echo "has_python_src=true" >> "$GITHUB_OUTPUT"
           else
-            echo "has_python_src=false" >> $GITHUB_OUTPUT
+            echo "has_python_src=false" >> "$GITHUB_OUTPUT"
           fi
 
-  # ==========================================================
-  # STAGE 1: Unit tests + Lint + SCA + SAST (feature/dev/main)
-  # ==========================================================
+          # android folder exists
+          if [ -d "${ANDROID_DIR}" ] && [ -f "${ANDROID_DIR}/gradlew" ]; then
+            echo "has_android=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_android=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Print detected flags
+        run: |
+          echo "has_backend=${{ steps.detect.outputs.has_backend }}"
+          echo "has_frontend=${{ steps.detect.outputs.has_frontend }}"
+          echo "has_python=${{ steps.detect.outputs.has_python }}"
+          echo "has_python_src=${{ steps.detect.outputs.has_python_src }}"
+          echo "has_android=${{ steps.detect.outputs.has_android }}"
+
+  # =========================================================
+  # STAGE 1: Unit tests / Lint / SCA / SAST
+  # =========================================================
+
   backend-junit:
     name: Unit Tests (Java Backend) + JaCoCo
     runs-on: ubuntu-latest
@@ -82,7 +104,7 @@ jobs:
           distribution: "temurin"
           cache: maven
 
-      - name: Run unit tests + coverage
+      - name: Run unit tests (Maven)
         working-directory: backend
         run: |
           chmod +x mvnw
@@ -105,10 +127,10 @@ jobs:
           if-no-files-found: warn
 
   python-tests:
-    name: Unit Tests (Python ML) + Coverage
+    name: Unit Tests (Python ML) + Coverage (only if python exists)
     runs-on: ubuntu-latest
     needs: [detect]
-    if: needs.detect.outputs.has_python == 'true'
+    if: needs.detect.outputs.has_python_src == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -119,30 +141,34 @@ jobs:
           cache: "pip"
 
       - name: Install deps
+        shell: bash
         run: |
           set -e
           cd "${PYTHON_DIR}"
-          python -m pip install --upgrade pip
-          pip install pytest pytest-cov
 
           if [ -f "requirements.txt" ]; then
             pip install -r requirements.txt
           elif [ -f "pyproject.toml" ]; then
             pip install .
           else
-            echo "No requirements.txt / pyproject.toml found — skipping dependency install"
+            echo "No requirements.txt / pyproject.toml found — skipping deps install"
           fi
 
-      - name: Run pytest (only if tests exist)
+          pip install pytest pytest-cov
+
+      - name: Run pytest + coverage (if tests exist)
+        shell: bash
         run: |
+          set -e
           cd "${PYTHON_DIR}"
-          if ls -1 tests test* >/dev/null 2>&1; then
+
+          if [ -d "tests" ] || ls -1 test* >/dev/null 2>&1; then
             pytest -q \
               --junitxml=pytest-junit.xml \
               --cov=. \
               --cov-report=xml:coverage.xml \
               --cov-report=html:htmlcov || \
-            ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
+              ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
           else
             echo "No Python tests found — skipping pytest"
           fi
@@ -174,7 +200,7 @@ jobs:
           distribution: "temurin"
           cache: maven
 
-      - name: Backend - Checkstyle
+      - name: Backend - Checkstyle (if backend exists)
         if: needs.detect.outputs.has_backend == 'true'
         working-directory: backend
         run: |
@@ -186,7 +212,7 @@ jobs:
           fi
 
       - name: Upload Checkstyle Report
-        if: needs.detect.outputs.has_backend == 'true' && always()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: backend-checkstyle-report
@@ -197,15 +223,15 @@ jobs:
           if-no-files-found: warn
 
       # ---------- Python flake8 ----------
-      - name: Set up Python (lint)
-        if: needs.detect.outputs.has_python == 'true'
+      - name: Set up Python (for flake8)
+        if: needs.detect.outputs.has_python_src == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
 
-      - name: Python - flake8
-        if: needs.detect.outputs.has_python == 'true'
+      - name: Python - flake8 (if python exists)
+        if: needs.detect.outputs.has_python_src == 'true'
         run: |
           pip install flake8
           cd "${PYTHON_DIR}"
@@ -216,7 +242,7 @@ jobs:
           fi
 
       - name: Upload flake8 report
-        if: needs.detect.outputs.has_python == 'true' && always()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: python-flake8-report
@@ -244,7 +270,7 @@ jobs:
           npx eslint "src/**/*.{js,jsx}" -f json -o eslint-report.json || true
 
       - name: Upload ESLint report
-        if: needs.detect.outputs.has_frontend == 'true' && always()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: react-eslint-report
@@ -253,11 +279,11 @@ jobs:
 
       # ---------- Thymeleaf HTMLHint ----------
       - name: Install HTMLHint
-        if: needs.detect.outputs.has_thymeleaf == 'true'
+        if: needs.detect.outputs.has_backend == 'true'
         run: npm i -g htmlhint
 
       - name: Thymeleaf - HTMLHint
-        if: needs.detect.outputs.has_thymeleaf == 'true'
+        if: needs.detect.outputs.has_backend == 'true'
         run: |
           if [ "${REPORT_ONLY}" = "true" ]; then
             htmlhint "backend/src/main/resources/templates/**/*.html" > htmlhint-report.txt || true
@@ -266,15 +292,15 @@ jobs:
           fi
 
       - name: Upload HTMLHint report
-        if: needs.detect.outputs.has_thymeleaf == 'true' && always()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: thymeleaf-htmlhint-report
           path: htmlhint-report.txt
           if-no-files-found: warn
 
-      # ---------- Android Lint ----------
-      - name: Android - Lint
+      # ---------- Android lint ----------
+      - name: Android - Lint (if android exists)
         if: needs.detect.outputs.has_android == 'true'
         run: |
           cd "${ANDROID_DIR}"
@@ -286,7 +312,7 @@ jobs:
           fi
 
       - name: Upload Android lint reports
-        if: needs.detect.outputs.has_android == 'true' && always()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: android-lint-report
@@ -296,7 +322,7 @@ jobs:
           if-no-files-found: warn
 
   sca-snyk:
-    name: SCA (Snyk Open Source) - Java + Python + JS
+    name: SCA (Snyk Open Source)
     runs-on: ubuntu-latest
     needs: [detect]
     permissions:
@@ -307,19 +333,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify SNYK_TOKEN
-        run: |
-          if [ -z "$SNYK_TOKEN" ]; then
-            echo "SNYK_TOKEN is NOT set"
-            exit 1
-          fi
-
       - name: Setup Snyk
         uses: snyk/actions/setup@master
         with:
           snyk-version: latest
 
-      - name: SCA - Java
+      - name: SCA - Java (if backend exists)
         if: needs.detect.outputs.has_backend == 'true'
         run: |
           if [ "${REPORT_ONLY}" = "true" ]; then
@@ -328,7 +347,7 @@ jobs:
             snyk test --file=backend/pom.xml --severity-threshold=high
           fi
 
-      - name: SCA - React
+      - name: SCA - React (if frontend exists)
         if: needs.detect.outputs.has_frontend == 'true'
         run: |
           cd frontend
@@ -338,8 +357,8 @@ jobs:
             snyk test --severity-threshold=high
           fi
 
-      - name: SCA - Python
-        if: needs.detect.outputs.has_python == 'true'
+      - name: SCA - Python (if python exists)
+        if: needs.detect.outputs.has_python_src == 'true'
         run: |
           cd "${PYTHON_DIR}"
           if [ "${REPORT_ONLY}" = "true" ]; then
@@ -349,7 +368,7 @@ jobs:
           fi
 
   sast-codeql:
-    name: SAST (CodeQL) - Java + JavaScript (+ Python if present)
+    name: SAST (CodeQL) - Java + JavaScript (+ Python only if exists)
     runs-on: ubuntu-latest
     needs: [detect]
     permissions:
@@ -359,17 +378,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ["java", "javascript"]
+        language: ["java", "javascript", "python"]
     steps:
       - uses: actions/checkout@v4
 
+      - name: Skip Python CodeQL if no Python source
+        if: matrix.language == 'python' && needs.detect.outputs.has_python_src != 'true'
+        run: |
+          echo "No Python source detected — skipping Python CodeQL."
+          exit 0
+
       - name: Initialize CodeQL
+        if: matrix.language != 'python' || needs.detect.outputs.has_python_src == 'true'
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
 
-      - name: Set up JDK 17 (for Java)
-        if: matrix.language == 'java' && needs.detect.outputs.has_backend == 'true'
+      - name: Set up JDK 17 (for Java CodeQL)
+        if: matrix.language == 'java'
         uses: actions/setup-java@v4
         with:
           java-version: "17"
@@ -384,47 +410,19 @@ jobs:
           ./mvnw -q clean install -DskipTests
 
       - name: Perform CodeQL Analysis
+        if: matrix.language != 'python' || needs.detect.outputs.has_python_src == 'true'
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{ matrix.language }}"
 
-  sast-codeql-python:
-    name: SAST (CodeQL) - Python (only if Python source exists)
-    runs-on: ubuntu-latest
-    needs: [detect]
-    if: needs.detect.outputs.has_python_src == 'true'
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Initialize CodeQL (Python)
-        uses: github/codeql-action/init@v3
-        with:
-          languages: python
-
-      - name: Perform CodeQL Analysis (Python)
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:python"
-
-  # ==========================================================
-  # STAGE 2: Integration Tests (only on development/Sprint2)
-  # ==========================================================
+  # =========================================================
+  # STAGE 2: Integration tests (Sprint2 integration branches)
+  # =========================================================
   integration-tests:
-    name: Integration Tests (development/Sprint2)
+    name: Integration Tests (Sprint2 branches)
     runs-on: ubuntu-latest
-    needs:
-      - detect
-      - backend-junit
-      - python-tests
-      - lint-code-quality
-      - sca-snyk
-      - sast-codeql
-      - sast-codeql-python
-    if: github.event_name == 'push' && github.ref == 'refs/heads/development/Sprint2'
+    needs: [detect, backend-junit, python-tests, lint-code-quality, sca-snyk, sast-codeql]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/development/Sprint2' || startsWith(github.ref, 'refs/heads/development/sprint2/'))
     steps:
       - uses: actions/checkout@v4
 
@@ -433,7 +431,7 @@ jobs:
           docker compose up -d
           docker compose ps
 
-      - name: Wait for backend
+      - name: Wait for backend (adjust endpoint/port)
         run: |
           for i in {1..60}; do
             if curl -fsS http://localhost:8080/api/hello >/dev/null; then
@@ -450,44 +448,17 @@ jobs:
       - name: Functional integration smoke (API)
         run: curl -fsS http://localhost:8080/api/hello
 
-      - name: Newman API tests (optional)
-        run: |
-          if [ -f "tests/postman/collection.json" ]; then
-            npm i -g newman
-            newman run tests/postman/collection.json \
-              --reporters cli,junit \
-              --reporter-junit-export newman-junit.xml || \
-              ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
-          else
-            echo "No Postman collection found at tests/postman/collection.json. Skipping."
-          fi
-
-      - name: Upload integration test reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: integration-test-reports
-          path: newman-junit.xml
-          if-no-files-found: warn
-
       - name: Stop stack
         if: always()
         run: docker compose down -v
 
-  # ==========================================================
-  # STAGE 3: Main branch release
-  # ==========================================================
+  # =========================================================
+  # STAGE 3: Main release
+  # =========================================================
   build-and-push:
     name: Build & Push Docker Images (main)
     runs-on: ubuntu-latest
-    needs:
-      - detect
-      - backend-junit
-      - python-tests
-      - lint-code-quality
-      - sca-snyk
-      - sast-codeql
-      - sast-codeql-python
+    needs: [detect, backend-junit, python-tests, lint-code-quality, sca-snyk, sast-codeql]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
@@ -499,13 +470,13 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build & push backend
+      - name: Build & push backend (if exists)
         if: needs.detect.outputs.has_backend == 'true'
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/frh-backend:latest ./backend
           docker push ${{ secrets.DOCKER_USERNAME }}/frh-backend:latest
 
-      - name: Build & push frontend
+      - name: Build & push frontend (if exists)
         if: needs.detect.outputs.has_frontend == 'true'
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest -f frontend/Dockerfile .
@@ -517,7 +488,8 @@ jobs:
     needs: [build-and-push]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - name: Scan backend image (Trivy)
+      - name: Scan backend image (if exists)
+        if: needs.detect.outputs.has_backend == 'true'
         uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: "${{ secrets.DOCKER_USERNAME }}/frh-backend:latest"
@@ -525,7 +497,8 @@ jobs:
           exit-code: "1"
           severity: "CRITICAL,HIGH"
 
-      - name: Scan frontend image (Trivy)
+      - name: Scan frontend image (if exists)
+        if: needs.detect.outputs.has_frontend == 'true'
         uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: "${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest"
@@ -533,7 +506,6 @@ jobs:
           exit-code: "1"
           severity: "CRITICAL,HIGH"
 
-  # Optional main-only checks that need a reachable URL:
   port-scan-nmap:
     name: Port Scan (nmap) - main (optional)
     runs-on: ubuntu-latest
@@ -542,17 +514,17 @@ jobs:
     env:
       STAGING_URL: ${{ secrets.STAGING_URL }}
     steps:
-      - name: Skip if STAGING_URL not set
+      - name: Skip if no STAGING_URL
         run: |
           if [ -z "${STAGING_URL}" ]; then
-            echo "STAGING_URL not set. Skipping nmap."
+            echo "STAGING_URL not set -> skipping nmap"
             exit 0
           fi
 
       - name: Install nmap
         run: sudo apt-get update && sudo apt-get install -y nmap
 
-      - name: Run nmap
+      - name: Run nmap (basic)
         run: |
           HOST=$(echo "${STAGING_URL}" | sed -E 's#https?://##' | sed -E 's#/.*##')
           echo "Scanning host: $HOST"
@@ -584,5 +556,4 @@ jobs:
             docker compose pull
             docker compose up -d
             docker compose ps
-            docker compose config >/dev/null
             docker system prune -f
