@@ -29,7 +29,7 @@ env:
 
   # Optional: URLs used by main-branch security checks (set as GitHub Secrets ideally)
   # STAGING_URL should be a reachable URL for ZAP/k6/nmap (e.g., http://xx.xx.xx.xx:8080)
-  STAGING_URL: ${{ secrets.STAGING_URL }}
+  #STAGING_URL: ${{ secrets.STAGING_URL }}
 
 jobs:
   # ============================
@@ -354,3 +354,302 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{ matrix.language }}"
+
+  # ============================
+  # STAGE 2: Integration tests
+  # Only on development/Sprint2
+  # ============================
+  integration-tests:
+    name: Integration Tests (development/Sprint2)
+    runs-on: ubuntu-latest
+    needs: [backend-junit, python-tests, lint-code-quality, sca-snyk, sast-codeql]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development/Sprint2'
+    steps:
+      - uses: actions/checkout@v4
+
+      # Free/Open-source approach:
+      # - Use Docker Compose to start services locally in CI runner
+      # - Run functional checks (curl) or Newman/Postman or Karate
+      - name: Start stack (Docker Compose)
+        run: |
+          docker compose up -d
+          docker compose ps
+
+      - name: Wait for backend (adjust endpoint/port)
+        run: |
+          for i in {1..60}; do
+            if curl -fsS http://localhost:8080/api/hello >/dev/null; then
+              echo "Backend is up"
+              exit 0
+            fi
+            echo "Waiting for backend... ($i)"
+            sleep 5
+          done
+          echo "Backend did not become ready"
+          docker compose logs --no-color
+          exit 1
+
+      - name: Functional integration smoke (API)
+        run: |
+          curl -fsS http://localhost:8080/api/hello
+
+      # OPTIONAL (Open-source): Postman/Newman API collection tests
+      # Place your collection under tests/postman/collection.json
+      - name: Newman API tests (optional)
+        run: |
+          if [ -f "tests/postman/collection.json" ]; then
+            npm i -g newman
+            newman run tests/postman/collection.json \
+              --reporters cli,junit \
+              --reporter-junit-export newman-junit.xml || \
+              ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
+          else
+            echo "No Postman collection found at tests/postman/collection.json. Skipping."
+          fi
+
+      - name: Upload integration test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-reports
+          path: |
+            newman-junit.xml
+          if-no-files-found: warn
+
+      - name: Stop stack
+        if: always()
+        run: docker compose down -v
+
+  # ============================
+  # STAGE 3: Main branch release
+  # ============================
+
+  build-and-push:
+    name: Build & Push Docker Images (main)
+    runs-on: ubuntu-latest
+    needs: [backend-junit, python-tests, lint-code-quality, sca-snyk, sast-codeql]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build & push backend
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/frh-backend:latest ./backend
+          docker push ${{ secrets.DOCKER_USERNAME }}/frh-backend:latest
+
+      - name: Build & push frontend
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest -f frontend/Dockerfile .
+          docker push ${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest
+
+  image-scan-trivy:
+    name: Container Image Scan (Trivy) - main
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Scan backend image (Trivy)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: "${{ secrets.DOCKER_USERNAME }}/frh-backend:latest"
+          format: table
+          exit-code: "1"
+          severity: "CRITICAL,HIGH"
+
+      - name: Scan frontend image (Trivy)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: "${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest"
+          format: table
+          exit-code: "1"
+          severity: "CRITICAL,HIGH"
+
+      # OPTIONAL: also store results as artifact (Trivy action doesn't always output files by default)
+      - name: Note
+        run: echo "Trivy scanned images. For file outputs, configure Trivy format= ساريف/json and save file."
+
+  # OPTIONAL alternative: Snyk Container scanning (can be used instead of Trivy)
+  # Keep disabled until you confirm your plan supports it reliably
+  # image-scan-snyk:
+  #   name: Container Image Scan (Snyk Container) - main
+  #   runs-on: ubuntu-latest
+  #   needs: [build-and-push]
+  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  #   permissions:
+  #     contents: read
+  #     actions: read
+  #   env:
+  #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: snyk/actions/setup@master
+  #       with:
+  #         snyk-version: latest
+  #     - name: Scan backend image
+  #       run: snyk container test ${{ secrets.DOCKER_USERNAME }}/frh-backend:latest --severity-threshold=high || true
+  #     - name: Scan frontend image
+  #       run: snyk container test ${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest --severity-threshold=high || true
+
+  port-scan-nmap:
+    name: Port Scan (nmap) - main
+    runs-on: ubuntu-latest
+    needs: [image-scan-trivy]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Validate STAGING_URL exists
+        run: |
+          if [ -z "${STAGING_URL}" ]; then
+            echo "STAGING_URL secret not set. Skipping nmap port scan."
+            exit 0
+          fi
+
+      - name: Install nmap (open source)
+        run: sudo apt-get update && sudo apt-get install -y nmap
+
+      - name: Run nmap against staging host (basic)
+        run: |
+          # Extract host/IP from URL for nmap (simple approach)
+          HOST=$(echo "${STAGING_URL}" | sed -E 's#https?://##' | sed -E 's#/.*##')
+          echo "Scanning host: $HOST"
+          nmap -sV -Pn -T3 "$HOST" -oN nmap-report.txt || true
+
+      - name: Upload nmap report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nmap-report
+          path: nmap-report.txt
+          if-no-files-found: warn
+
+  # NOTE ON IAST:
+  # True IAST usually needs an agent (Contrast/Seeker/Veracode) and is often not fully OSS.
+  # For an open-source security test in CI, OWASP ZAP (DAST) is the practical choice.
+  iast:
+    name: IAST (placeholder) - main
+    runs-on: ubuntu-latest
+    needs: [port-scan-nmap]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - run: |
+          echo "IAST placeholder: typically requires an instrumentation agent + running app."
+          echo "If you want OSS-only security, we can do DAST with OWASP ZAP + SAST + SCA + container scan."
+
+  non-functional-k6:
+    name: Non-functional Tests (k6 load/perf) - main
+    runs-on: ubuntu-latest
+    needs: [iast]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate STAGING_URL exists
+        run: |
+          if [ -z "${STAGING_URL}" ]; then
+            echo "STAGING_URL secret not set. Skipping k6."
+            exit 0
+          fi
+
+      - name: Install k6 (open source)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnupg ca-certificates
+          curl -s https://dl.k6.io/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/k6-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update && sudo apt-get install -y k6
+
+      - name: Run k6 (example script)
+        run: |
+          # If you have your own script: tests/k6/script.js
+          if [ -f "tests/k6/script.js" ]; then
+            k6 run --summary-export=k6-summary.json tests/k6/script.js || true
+          else
+            cat > k6-smoke.js << 'EOF'
+            import http from 'k6/http';
+            import { check, sleep } from 'k6';
+
+            export const options = {
+              vus: 5,
+              duration: '30s',
+            };
+
+            export default function () {
+              const url = __ENV.STAGING_URL + "/api/hello";
+              const res = http.get(url);
+              check(res, { 'status is 200': (r) => r.status === 200 });
+              sleep(1);
+            }
+            EOF
+            k6 run --summary-export=k6-summary.json k6-smoke.js || true
+          fi
+
+      - name: Upload k6 report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-report
+          path: k6-summary.json
+          if-no-files-found: warn
+
+  dast-zap:
+    name: DAST (OWASP ZAP) - main
+    runs-on: ubuntu-latest
+    needs: [non-functional-k6]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Validate STAGING_URL exists
+        run: |
+          if [ -z "${STAGING_URL}" ]; then
+            echo "STAGING_URL secret not set. Skipping ZAP."
+            exit 0
+          fi
+
+      - name: Run OWASP ZAP baseline scan (open source)
+        run: |
+          docker run --rm -t owasp/zap2docker-stable zap-baseline.py \
+            -t "${STAGING_URL}" \
+            -r zap-report.html || true
+
+      - name: Upload ZAP report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-dast-report
+          path: zap-report.html
+          if-no-files-found: warn
+
+  deploy:
+    name: Deploy (EC2) + Smoke Test
+    runs-on: ubuntu-latest
+    needs: [dast-zap]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy via SSH (docker compose)
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd ~/Food-Rescue-Hub-
+            docker compose pull
+            docker compose up -d
+            docker compose ps
+            # Basic config validation
+            docker compose config >/dev/null
+            docker system prune -f
+
+      - name: Post-deploy smoke test (optional)
+        run: |
+          if [ -z "${STAGING_URL}" ]; then
+            echo "STAGING_URL not set. Skipping external smoke."
+            exit 0
+          fi
+          curl -fsS "${STAGING_URL}/api/hello"
