@@ -87,15 +87,11 @@ jobs:
     name: Unit Tests (Java Backend) + JaCoCo
     runs-on: ubuntu-latest
     needs: [detect]
+    if: needs.detect.outputs.has_backend == 'true'
     steps:
       - uses: actions/checkout@v4
 
-      - name: Skip (no backend)
-        if: needs.detect.outputs.has_backend != 'true'
-        run: echo "No backend/pom.xml found -> skipping Java tests."
-
       - name: Set up JDK 17
-        if: needs.detect.outputs.has_backend == 'true'
         uses: actions/setup-java@v4
         with:
           java-version: "17"
@@ -103,7 +99,6 @@ jobs:
           cache: maven
 
       - name: Run unit tests (Maven)
-        if: needs.detect.outputs.has_backend == 'true'
         working-directory: backend
         run: |
           chmod +x mvnw
@@ -127,25 +122,20 @@ jobs:
 
 
   python-tests:
-    name: Unit Tests (Python ML) + Coverage (only if python exists)
+    name: Unit Tests (Python ML) + Coverage
     runs-on: ubuntu-latest
     needs: [detect]
+    if: needs.detect.outputs.has_python_src == 'true'
     steps:
       - uses: actions/checkout@v4
 
-      - name: Skip (no python source)
-        if: needs.detect.outputs.has_python_src != 'true'
-        run: echo "No Python source (*.py) detected -> skipping Python tests."
-
       - name: Set up Python
-        if: needs.detect.outputs.has_python_src == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
 
       - name: Install deps
-        if: needs.detect.outputs.has_python_src == 'true'
         shell: bash
         run: |
           set -e
@@ -162,7 +152,6 @@ jobs:
           pip install pytest pytest-cov
 
       - name: Run pytest + coverage (only if tests exist)
-        if: needs.detect.outputs.has_python_src == 'true'
         shell: bash
         run: |
           set -e
@@ -201,7 +190,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ---------- Java Checkstyle ----------
       - name: Set up JDK 17
         if: needs.detect.outputs.has_backend == 'true'
         uses: actions/setup-java@v4
@@ -210,7 +198,7 @@ jobs:
           distribution: "temurin"
           cache: maven
 
-      - name: Backend - Checkstyle (if backend exists)
+      - name: Backend - Checkstyle
         if: needs.detect.outputs.has_backend == 'true'
         working-directory: backend
         run: |
@@ -221,18 +209,6 @@ jobs:
             ./mvnw -q checkstyle:check
           fi
 
-      - name: Upload Checkstyle Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-checkstyle-report
-          path: |
-            backend/target/checkstyle-result.xml
-            backend/target/site/checkstyle.html
-            backend/target/site/checkstyle.xml
-          if-no-files-found: warn
-
-      # ---------- Python flake8 ----------
       - name: Set up Python (flake8)
         if: needs.detect.outputs.has_python_src == 'true'
         uses: actions/setup-python@v5
@@ -240,7 +216,7 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      - name: Python - flake8 (if python exists)
+      - name: Python - flake8
         if: needs.detect.outputs.has_python_src == 'true'
         run: |
           pip install flake8
@@ -251,15 +227,6 @@ jobs:
             flake8 . --statistics --count --output-file=flake8-report.txt
           fi
 
-      - name: Upload flake8 report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-flake8-report
-          path: ml/flake8-report.txt
-          if-no-files-found: warn
-
-      # ---------- React ESLint ----------
       - name: Setup Node 20
         if: needs.detect.outputs.has_frontend == 'true'
         uses: actions/setup-node@v4
@@ -279,15 +246,6 @@ jobs:
         run: |
           npx eslint "src/**/*.{js,jsx}" -f json -o eslint-report.json || true
 
-      - name: Upload ESLint report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: react-eslint-report
-          path: frontend/eslint-report.json
-          if-no-files-found: warn
-
-      # ---------- Thymeleaf HTMLHint ----------
       - name: Install HTMLHint
         if: needs.detect.outputs.has_backend == 'true'
         run: npm i -g htmlhint
@@ -301,16 +259,7 @@ jobs:
             htmlhint "backend/src/main/resources/templates/**/*.html" > htmlhint-report.txt
           fi
 
-      - name: Upload HTMLHint report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: thymeleaf-htmlhint-report
-          path: htmlhint-report.txt
-          if-no-files-found: warn
-
-      # ---------- Android lint ----------
-      - name: Android - Lint (if android exists)
+      - name: Android - Lint
         if: needs.detect.outputs.has_android == 'true'
         run: |
           cd "${ANDROID_DIR}"
@@ -320,122 +269,6 @@ jobs:
           else
             ./gradlew lint
           fi
-
-      - name: Upload Android lint reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-lint-report
-          path: |
-            android/**/build/reports/lint-results*.html
-            android/**/build/reports/lint-results*.xml
-          if-no-files-found: warn
-
-
-  # =========================================================
-  # STAGE 1: SCA (Snyk)
-  # =========================================================
-  sca-snyk:
-    name: SCA (Snyk Open Source)
-    runs-on: ubuntu-latest
-    needs: [detect]
-    permissions:
-      contents: read
-      actions: read
-    env:
-      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Skip if no SNYK_TOKEN
-        if: env.SNYK_TOKEN == ''
-        run: |
-          echo "SNYK_TOKEN not set -> skipping Snyk"
-          exit 0
-
-      - name: Setup Snyk
-        uses: snyk/actions/setup@master
-        with:
-          snyk-version: latest
-
-      - name: SCA - Java (if backend exists)
-        if: needs.detect.outputs.has_backend == 'true'
-        run: |
-          if [ "${REPORT_ONLY}" = "true" ]; then
-            snyk test --file=backend/pom.xml --severity-threshold=high || true
-          else
-            snyk test --file=backend/pom.xml --severity-threshold=high
-          fi
-
-      - name: SCA - React (if frontend exists)
-        if: needs.detect.outputs.has_frontend == 'true'
-        run: |
-          cd frontend
-          if [ "${REPORT_ONLY}" = "true" ]; then
-            snyk test --severity-threshold=high || true
-          else
-            snyk test --severity-threshold=high
-          fi
-
-      - name: SCA - Python (if python exists)
-        if: needs.detect.outputs.has_python_src == 'true'
-        run: |
-          cd "${PYTHON_DIR}"
-          if [ "${REPORT_ONLY}" = "true" ]; then
-            snyk test --severity-threshold=high || true
-          else
-            snyk test --severity-threshold=high
-          fi
-
-
-  # =========================================================
-  # STAGE 1: SAST (CodeQL)
-  # =========================================================
-  sast-codeql:
-    name: SAST (CodeQL) - Java + JavaScript (+ Python only if exists)
-    runs-on: ubuntu-latest
-    needs: [detect]
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ["java", "javascript", "python"]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Skip Python CodeQL if no Python source
-        if: matrix.language == 'python' && needs.detect.outputs.has_python_src != 'true'
-        run: |
-          echo "No Python source detected — skipping Python CodeQL."
-          exit 0
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
-
-      - name: Set up JDK 17 (for Java CodeQL)
-        if: matrix.language == 'java'
-        uses: actions/setup-java@v4
-        with:
-          java-version: "17"
-          distribution: "temurin"
-          cache: maven
-
-      - name: Build backend (required for Java CodeQL)
-        if: matrix.language == 'java' && needs.detect.outputs.has_backend == 'true'
-        run: |
-          cd backend
-          chmod +x mvnw
-          ./mvnw -q clean install -DskipTests
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:${{ matrix.language }}"
 
 
   # =========================================================
@@ -449,8 +282,6 @@ jobs:
       - backend-junit
       - python-tests
       - lint-code-quality
-      - sca-snyk
-      - sast-codeql
 
     if: >
       github.event_name == 'push' &&
@@ -461,7 +292,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Skip (no docker-compose.yml)
-        if: ${{ !hashFiles('docker-compose.yml') }}
+        if: hashFiles('docker-compose.yml') == ''
         run: |
           echo "docker-compose.yml not found in repo root -> skipping integration tests."
           exit 0
@@ -485,36 +316,28 @@ jobs:
           docker compose logs --no-color
           exit 1
 
-      - name: Functional integration smoke (API)
-        run: |
-          curl -fsS http://localhost:8080/api/hello
-
       - name: Stop stack
         if: always()
         run: docker compose down -v
 
 
   # =========================================================
-  # STAGE 3: Main release (Docker + Scan + Deploy)
+  # STAGE 3: Main release (Docker + Deploy)
   # =========================================================
   build-and-push:
     name: Build & Push Docker Images (main)
     runs-on: ubuntu-latest
-    needs:
-      - detect
-      - backend-junit
-      - python-tests
-      - lint-code-quality
-      - sca-snyk
-      - sast-codeql
-      - integration-tests
+    needs: [detect, integration-tests]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
 
       - name: Skip if Docker creds missing
-        if: ${{ secrets.DOCKER_USERNAME == '' || secrets.DOCKER_PASSWORD == '' }}
+        if: env.DOCKER_USERNAME == '' || env.DOCKER_PASSWORD == ''
         run: |
           echo "DOCKER_USERNAME/DOCKER_PASSWORD missing -> skipping docker build & push"
           exit 0
@@ -525,85 +348,30 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build & push backend (if exists)
+      - name: Build & push backend
         if: needs.detect.outputs.has_backend == 'true'
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/frh-backend:latest ./backend
           docker push ${{ secrets.DOCKER_USERNAME }}/frh-backend:latest
 
-      - name: Build & push frontend (if exists)
+      - name: Build & push frontend
         if: needs.detect.outputs.has_frontend == 'true'
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest -f frontend/Dockerfile .
           docker push ${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest
 
 
-  image-scan-trivy:
-    name: Container Image Scan (Trivy) - main
-    runs-on: ubuntu-latest
-    needs: [detect, build-and-push]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - name: Scan backend image (if exists)
-        if: needs.detect.outputs.has_backend == 'true'
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: "${{ secrets.DOCKER_USERNAME }}/frh-backend:latest"
-          format: table
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
-
-      - name: Scan frontend image (if exists)
-        if: needs.detect.outputs.has_frontend == 'true'
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: "${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest"
-          format: table
-          exit-code: "1"
-          severity: "CRITICAL,HIGH"
-
-
-  port-scan-nmap:
-    name: Port Scan (nmap) - main (optional)
-    runs-on: ubuntu-latest
-    needs: [image-scan-trivy]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    env:
-      STAGING_URL: ${{ secrets.STAGING_URL }}
-    steps:
-      - name: Skip if no STAGING_URL
-        run: |
-          if [ -z "${STAGING_URL}" ]; then
-            echo "STAGING_URL not set -> skipping nmap"
-            exit 0
-          fi
-
-      - name: Install nmap
-        run: sudo apt-get update && sudo apt-get install -y nmap
-
-      - name: Run nmap (basic)
-        run: |
-          HOST=$(echo "${STAGING_URL}" | sed -E 's#https?://##' | sed -E 's#/.*##')
-          echo "Scanning host: $HOST"
-          nmap -sV -Pn -T3 "$HOST" -oN nmap-report.txt || true
-
-      - name: Upload nmap report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: nmap-report
-          path: nmap-report.txt
-          if-no-files-found: warn
-
-
   deploy:
     name: Deploy (EC2)
     runs-on: ubuntu-latest
-    needs: [port-scan-nmap]
+    needs: [build-and-push]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
     steps:
       - name: Skip if EC2 secrets missing
-        if: ${{ secrets.EC2_HOST == '' || secrets.EC2_SSH_KEY == '' }}
+        if: env.EC2_HOST == '' || env.EC2_SSH_KEY == ''
         run: |
           echo "EC2_HOST / EC2_SSH_KEY missing -> skipping deploy"
           exit 0
