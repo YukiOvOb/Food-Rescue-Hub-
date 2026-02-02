@@ -8,8 +8,7 @@ on:
       - "feature/**"
       - "main"
   pull_request:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -42,35 +41,30 @@ jobs:
         run: |
           set -e
 
-          # backend
           if [ -f "backend/pom.xml" ]; then
             echo "has_backend=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_backend=false" >> "$GITHUB_OUTPUT"
           fi
 
-          # frontend
           if [ -f "frontend/package.json" ]; then
             echo "has_frontend=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_frontend=false" >> "$GITHUB_OUTPUT"
           fi
 
-          # python folder exists
           if [ -d "${PYTHON_DIR}" ]; then
             echo "has_python=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_python=false" >> "$GITHUB_OUTPUT"
           fi
 
-          # python source exists (any .py file)
           if [ -d "${PYTHON_DIR}" ] && find "${PYTHON_DIR}" -type f -name "*.py" | grep -q .; then
             echo "has_python_src=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_python_src=false" >> "$GITHUB_OUTPUT"
           fi
 
-          # android folder exists
           if [ -d "${ANDROID_DIR}" ] && [ -f "${ANDROID_DIR}/gradlew" ]; then
             echo "has_android=true" >> "$GITHUB_OUTPUT"
           else
@@ -85,19 +79,23 @@ jobs:
           echo "has_python_src=${{ steps.detect.outputs.has_python_src }}"
           echo "has_android=${{ steps.detect.outputs.has_android }}"
 
-  # =========================================================
-  # STAGE 1: Unit tests / Lint / SCA / SAST
-  # =========================================================
 
+  # =========================================================
+  # STAGE 1: Unit Tests
+  # =========================================================
   backend-junit:
     name: Unit Tests (Java Backend) + JaCoCo
     runs-on: ubuntu-latest
     needs: [detect]
-    if: needs.detect.outputs.has_backend == 'true'
     steps:
       - uses: actions/checkout@v4
 
+      - name: Skip (no backend)
+        if: needs.detect.outputs.has_backend != 'true'
+        run: echo "No backend/pom.xml found -> skipping Java tests."
+
       - name: Set up JDK 17
+        if: needs.detect.outputs.has_backend == 'true'
         uses: actions/setup-java@v4
         with:
           java-version: "17"
@@ -105,6 +103,7 @@ jobs:
           cache: maven
 
       - name: Run unit tests (Maven)
+        if: needs.detect.outputs.has_backend == 'true'
         working-directory: backend
         run: |
           chmod +x mvnw
@@ -118,7 +117,7 @@ jobs:
           path: backend/target/surefire-reports/**
           if-no-files-found: warn
 
-      - name: Upload JaCoCo report (if present)
+      - name: Upload JaCoCo report
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -126,21 +125,27 @@ jobs:
           path: backend/target/site/jacoco/**
           if-no-files-found: warn
 
+
   python-tests:
     name: Unit Tests (Python ML) + Coverage (only if python exists)
     runs-on: ubuntu-latest
     needs: [detect]
-    if: needs.detect.outputs.has_python_src == 'true'
     steps:
       - uses: actions/checkout@v4
 
+      - name: Skip (no python source)
+        if: needs.detect.outputs.has_python_src != 'true'
+        run: echo "No Python source (*.py) detected -> skipping Python tests."
+
       - name: Set up Python
+        if: needs.detect.outputs.has_python_src == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
 
       - name: Install deps
+        if: needs.detect.outputs.has_python_src == 'true'
         shell: bash
         run: |
           set -e
@@ -156,7 +161,8 @@ jobs:
 
           pip install pytest pytest-cov
 
-      - name: Run pytest + coverage (if tests exist)
+      - name: Run pytest + coverage (only if tests exist)
+        if: needs.detect.outputs.has_python_src == 'true'
         shell: bash
         run: |
           set -e
@@ -184,6 +190,10 @@ jobs:
             ml/htmlcov/**
           if-no-files-found: warn
 
+
+  # =========================================================
+  # STAGE 1: Lint & Code Quality
+  # =========================================================
   lint-code-quality:
     name: Lint & Code Quality (Java + Python + React + Thymeleaf + Android)
     runs-on: ubuntu-latest
@@ -223,7 +233,7 @@ jobs:
           if-no-files-found: warn
 
       # ---------- Python flake8 ----------
-      - name: Set up Python (for flake8)
+      - name: Set up Python (flake8)
         if: needs.detect.outputs.has_python_src == 'true'
         uses: actions/setup-python@v5
         with:
@@ -321,6 +331,10 @@ jobs:
             android/**/build/reports/lint-results*.xml
           if-no-files-found: warn
 
+
+  # =========================================================
+  # STAGE 1: SCA (Snyk)
+  # =========================================================
   sca-snyk:
     name: SCA (Snyk Open Source)
     runs-on: ubuntu-latest
@@ -332,6 +346,12 @@ jobs:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Skip if no SNYK_TOKEN
+        if: env.SNYK_TOKEN == ''
+        run: |
+          echo "SNYK_TOKEN not set -> skipping Snyk"
+          exit 0
 
       - name: Setup Snyk
         uses: snyk/actions/setup@master
@@ -367,6 +387,10 @@ jobs:
             snyk test --severity-threshold=high
           fi
 
+
+  # =========================================================
+  # STAGE 1: SAST (CodeQL)
+  # =========================================================
   sast-codeql:
     name: SAST (CodeQL) - Java + JavaScript (+ Python only if exists)
     runs-on: ubuntu-latest
@@ -389,7 +413,6 @@ jobs:
           exit 0
 
       - name: Initialize CodeQL
-        if: matrix.language != 'python' || needs.detect.outputs.has_python_src == 'true'
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
@@ -410,19 +433,19 @@ jobs:
           ./mvnw -q clean install -DskipTests
 
       - name: Perform CodeQL Analysis
-        if: matrix.language != 'python' || needs.detect.outputs.has_python_src == 'true'
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{ matrix.language }}"
 
-  # =========================================================
-  # STAGE 2: Integration tests (Sprint2 integration branches)
-  # =========================================================
 
+  # =========================================================
+  # STAGE 2: Integration tests (development/Sprint2 + main)
+  # =========================================================
   integration-tests:
     name: Integration Tests (development/Sprint2 + main)
     runs-on: ubuntu-latest
     needs:
+      - detect
       - backend-junit
       - python-tests
       - lint-code-quality
@@ -432,10 +455,16 @@ jobs:
     if: >
       github.event_name == 'push' &&
       (github.ref == 'refs/heads/development/Sprint2' ||
-      github.ref == 'refs/heads/main')
+       github.ref == 'refs/heads/main')
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Skip (no docker-compose.yml)
+        if: ${{ !hashFiles('docker-compose.yml') }}
+        run: |
+          echo "docker-compose.yml not found in repo root -> skipping integration tests."
+          exit 0
 
       - name: Start stack (Docker Compose)
         run: |
@@ -465,18 +494,30 @@ jobs:
         run: docker compose down -v
 
 
-
   # =========================================================
-  # STAGE 3: Main release
+  # STAGE 3: Main release (Docker + Scan + Deploy)
   # =========================================================
   build-and-push:
     name: Build & Push Docker Images (main)
     runs-on: ubuntu-latest
-    needs: [detect, backend-junit, python-tests, lint-code-quality, sca-snyk, sast-codeql]
+    needs:
+      - detect
+      - backend-junit
+      - python-tests
+      - lint-code-quality
+      - sca-snyk
+      - sast-codeql
+      - integration-tests
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
+
+      - name: Skip if Docker creds missing
+        if: ${{ secrets.DOCKER_USERNAME == '' || secrets.DOCKER_PASSWORD == '' }}
+        run: |
+          echo "DOCKER_USERNAME/DOCKER_PASSWORD missing -> skipping docker build & push"
+          exit 0
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -495,6 +536,7 @@ jobs:
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest -f frontend/Dockerfile .
           docker push ${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest
+
 
   image-scan-trivy:
     name: Container Image Scan (Trivy) - main
@@ -519,6 +561,7 @@ jobs:
           format: table
           exit-code: "1"
           severity: "CRITICAL,HIGH"
+
 
   port-scan-nmap:
     name: Port Scan (nmap) - main (optional)
@@ -552,12 +595,19 @@ jobs:
           path: nmap-report.txt
           if-no-files-found: warn
 
+
   deploy:
     name: Deploy (EC2)
     runs-on: ubuntu-latest
     needs: [port-scan-nmap]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
+      - name: Skip if EC2 secrets missing
+        if: ${{ secrets.EC2_HOST == '' || secrets.EC2_SSH_KEY == '' }}
+        run: |
+          echo "EC2_HOST / EC2_SSH_KEY missing -> skipping deploy"
+          exit 0
+
       - name: Deploy via SSH (docker compose)
         uses: appleboy/ssh-action@v1
         with:
