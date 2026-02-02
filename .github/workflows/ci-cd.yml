@@ -418,11 +418,22 @@ jobs:
   # =========================================================
   # STAGE 2: Integration tests (Sprint2 integration branches)
   # =========================================================
+
   integration-tests:
     name: Integration Tests (development/Sprint2 + main)
     runs-on: ubuntu-latest
-    needs: [backend-junit, python-tests, lint-code-quality, sca-snyk, sast-codeql]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/development/Sprint2' || startsWith(github.ref, 'refs/heads/development/sprint2/'))
+    needs:
+      - backend-junit
+      - python-tests
+      - lint-code-quality
+      - sca-snyk
+      - sast-codeql
+
+    if: >
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/development/Sprint2' ||
+      github.ref == 'refs/heads/main')
+
     steps:
       - uses: actions/checkout@v4
 
@@ -431,7 +442,7 @@ jobs:
           docker compose up -d
           docker compose ps
 
-      - name: Wait for backend (adjust endpoint/port)
+      - name: Wait for backend
         run: |
           for i in {1..60}; do
             if curl -fsS http://localhost:8080/api/hello >/dev/null; then
@@ -446,11 +457,14 @@ jobs:
           exit 1
 
       - name: Functional integration smoke (API)
-        run: curl -fsS http://localhost:8080/api/hello
+        run: |
+          curl -fsS http://localhost:8080/api/hello
 
       - name: Stop stack
         if: always()
         run: docker compose down -v
+
+
 
   # =========================================================
   # STAGE 3: Main release
@@ -485,7 +499,7 @@ jobs:
   image-scan-trivy:
     name: Container Image Scan (Trivy) - main
     runs-on: ubuntu-latest
-    needs: [build-and-push]
+    needs: [detect, build-and-push]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Scan backend image (if exists)
