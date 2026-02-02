@@ -1,6 +1,7 @@
 package com.frh.backend.controller;
 
 import com.frh.backend.Model.Listing;
+import com.frh.backend.Model.ListingPhoto;
 import com.frh.backend.Model.Store;
 import com.frh.backend.repository.ListingRepository;
 import com.frh.backend.repository.StoreRepository;
@@ -8,11 +9,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
 
 @RestController
 // changed to this route to avoid conflict with ConsumerListingController 
@@ -24,6 +33,14 @@ public class ListingController {
 
     @Autowired
     private StoreRepository storeRepository;
+
+    private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+    );
+    private static final long MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+    private static final Path UPLOAD_ROOT = Paths.get("uploads").resolve("listings").toAbsolutePath().normalize();
 
     // ==========================================
     // CREATE
@@ -81,6 +98,7 @@ public ResponseEntity<?> createListing(
     @GetMapping
     public ResponseEntity<List<Listing>> getAllListings() {
         List<Listing> listings = listingRepository.findAll();
+        listings.forEach(this::sortPhotos);
         return ResponseEntity.ok(listings);
     }
 
@@ -92,6 +110,7 @@ public ResponseEntity<?> createListing(
         Optional<Listing> listingOptional = listingRepository.findById(id);
 
         if (listingOptional.isPresent()) {
+            sortPhotos(listingOptional.get());
             return ResponseEntity.ok(listingOptional.get());
         } else {
             return ResponseEntity.status(404).body("Listing not found with id: " + id);
@@ -140,6 +159,59 @@ public ResponseEntity<?> createListing(
 
         listingRepository.deleteById(id);
         return ResponseEntity.ok("Listing deleted successfully");
+    }
+
+    // ==========================================
+    // PHOTO UPLOAD
+    // ==========================================
+    @PostMapping(value = "/{id}/photos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadListingPhoto(@PathVariable Long id,
+                                                @RequestPart("file") MultipartFile file,
+                                                @RequestParam(name = "sortOrder", required = false) Integer sortOrder) {
+        Optional<Listing> listingOpt = listingRepository.findById(id);
+        if (listingOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Listing not found with id: " + id);
+        }
+
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().body("File is required");
+        }
+        Listing listing = listingOpt.get();
+        if (listing.getPhotos() != null && !listing.getPhotos().isEmpty()) {
+            return ResponseEntity.badRequest().body("Only one photo is allowed per listing for now.");
+        }
+        if (file.getSize() > MAX_FILE_SIZE_BYTES) {
+            return ResponseEntity.badRequest().body("File too large. Maximum size is 5MB");
+        }
+        if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
+            return ResponseEntity.badRequest().body("Unsupported file type. Allowed: JPG, PNG, WEBP");
+        }
+
+        try {
+            Files.createDirectories(UPLOAD_ROOT);
+            String extension = getExtension(file.getOriginalFilename(), file.getContentType());
+            String filename = UUID.randomUUID() + extension;
+            Path destination = UPLOAD_ROOT.resolve(filename);
+            Files.copy(file.getInputStream(), destination);
+
+            int nextOrder = (sortOrder != null) ? sortOrder : listing.getPhotos().size() + 1;
+
+            ListingPhoto photo = new ListingPhoto();
+            photo.setListing(listing);
+            photo.setPhotoUrl("/uploads/listings/" + filename);
+            photo.setSortOrder(nextOrder);
+
+            listing.getPhotos().add(photo); // cascade saves the photo
+            listingRepository.save(listing);
+
+            return ResponseEntity.ok(photo);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(500).body("Failed to store file: " + ex.getMessage());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(500).body("Unexpected error: " + ex.getMessage());
+        }
     }
 
     // ==========================================
@@ -198,5 +270,21 @@ public ResponseEntity<?> createListing(
         }
 
         return errors;
+    }
+
+    private void sortPhotos(Listing listing) {
+        if (listing.getPhotos() != null) {
+            listing.getPhotos().sort(Comparator.comparing(ListingPhoto::getSortOrder));
+        }
+    }
+
+    private String getExtension(String originalFilename, String contentType) {
+        if (originalFilename != null && originalFilename.contains(".")) {
+            return originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+        // fallback by mime type
+        if ("image/png".equals(contentType)) return ".png";
+        if ("image/webp".equals(contentType)) return ".webp";
+        return ".jpg";
     }
 }

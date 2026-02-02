@@ -38,6 +38,7 @@ export default function ListingsPage() {
     pickupEnd: '',
     expiryAt: ''
   });
+  const [photoFiles, setPhotoFiles] = useState([]);
   const [errors, setErrors] = useState([]);
 
   // ----- helpers for datetime formatting -----
@@ -75,6 +76,30 @@ export default function ListingsPage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors([]);
+  };
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files || []).slice(0, 1); // limit to 1 file
+    const newErrors = [];
+    const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const maxSize = 5 * 1024 * 1024; // 5 MB
+
+    files.forEach((file) => {
+      if (!acceptedTypes.includes(file.type)) {
+        newErrors.push(`Unsupported file type: ${file.name}`);
+      }
+      if (file.size > maxSize) {
+        newErrors.push(`File too large (max 5MB): ${file.name}`);
+      }
+    });
+
+    if (newErrors.length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setPhotoFiles(files);
     setErrors([]);
   };
 
@@ -132,6 +157,25 @@ export default function ListingsPage() {
     return errs;
   };
 
+  const uploadListingPhotos = async (listingId) => {
+    if (!photoFiles.length) return;
+
+    const file = photoFiles[0];
+    const formDataUpload = new FormData();
+    formDataUpload.append('file', file);
+    formDataUpload.append('sortOrder', 1);
+
+    const res = await fetch(`${supplierBase}/listings/${listingId}/photos`, {
+      method: 'POST',
+      body: formDataUpload
+    });
+
+    if (!res.ok) {
+      const msg = await res.text();
+      throw new Error(msg || 'Photo upload failed');
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -185,7 +229,18 @@ export default function ListingsPage() {
         }
         return r.json();
       })
-      .then(() => {
+      .then(async (created) => {
+        const newListingId = created.listingId || created.id;
+        let uploadErrorMessage = null;
+
+        try {
+          await uploadListingPhotos(newListingId);
+        } catch (uploadErr) {
+          console.error('Upload error:', uploadErr);
+          uploadErrorMessage = `Listing saved but photo upload failed: ${uploadErr.message}`;
+          // Listing already saved; keep going so user can see it.
+        }
+
         setFormData({
           storeId: '',
           title: '',
@@ -196,7 +251,8 @@ export default function ListingsPage() {
           pickupEnd: '',
           expiryAt: ''
         });
-        setErrors([]);
+        setPhotoFiles([]);
+        setErrors(uploadErrorMessage ? [uploadErrorMessage] : []);
         setShowCreateForm(false);
         fetchListings();
       })
@@ -214,6 +270,24 @@ export default function ListingsPage() {
 
   const priceErrors = getPriceErrors();
   const timeErrors = getTimeErrors();
+
+  const resolveUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    const backendOrigin = apiBase.replace(/\/api$/, '');
+    return `${backendOrigin}${url}`;
+  };
+
+  const getPrimaryPhoto = (listing) => {
+    if (listing.photoUrls && listing.photoUrls.length > 0) {
+      return resolveUrl(listing.photoUrls[0]);
+    }
+    if (listing.photos && listing.photos.length > 0) {
+      const sorted = [...listing.photos].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+      return resolveUrl(sorted[0]?.photoUrl);
+    }
+    return null;
+  };
 
   return (
     <div style={{ fontFamily: 'Inter, "Segoe UI", sans-serif', padding: 24, maxWidth: 1200, margin: '0 auto', background: '#f5f7fb', minHeight: '100vh' }}>
@@ -303,6 +377,29 @@ export default function ListingsPage() {
                   minHeight: '80px'
                 }}
               />
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                Photos (JPG/PNG/WEBP, max 5MB each)
+              </label>
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp"
+                onChange={handleFileChange}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  borderRadius: '10px',
+                  border: '1px solid #d1d5db',
+                  boxSizing: 'border-box'
+                }}
+              />
+              {photoFiles.length > 0 && (
+                <div style={{ marginTop: 6, color: '#6b7280', fontSize: 13 }}>
+                  {photoFiles.length} file(s) selected
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
@@ -476,31 +573,45 @@ export default function ListingsPage() {
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-          {listings.map((listing) => (
-            <div key={listing.listingId || listing.id} style={{ ...cardStyle, padding: 18 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0 }}>{listing.title}</h3>
-                <span style={{ background: '#ecfdf3', color: '#166534', padding: '4px 10px', borderRadius: '999px', fontSize: 12 }}>
-                  {listing.status || 'ACTIVE'}
-                </span>
-              </div>
-              {listing.description && <p style={{ color: '#4b5563' }}>{listing.description}</p>}
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
-                <div>
-                  <div style={{ color: '#6b7280', fontSize: 12 }}>Original</div>
-                  <div style={{ fontWeight: 700 }}>${listing.originalPrice}</div>
+          {listings.map((listing) => {
+            const photoUrl = getPrimaryPhoto(listing);
+            return (
+              <div key={listing.listingId || listing.id} style={{ ...cardStyle, padding: 18 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ margin: 0 }}>{listing.title}</h3>
+                  <span style={{ background: '#ecfdf3', color: '#166534', padding: '4px 10px', borderRadius: '999px', fontSize: 12 }}>
+                    {listing.status || 'ACTIVE'}
+                  </span>
                 </div>
-                <div>
-                  <div style={{ color: '#6b7280', fontSize: 12 }}>Rescue</div>
-                  <div style={{ fontWeight: 700, color: '#16a34a' }}>${listing.rescuePrice}</div>
+
+                {photoUrl && (
+                  <div style={{ marginTop: 12, overflow: 'hidden', borderRadius: 12, border: '1px solid #e5e7eb' }}>
+                    <img
+                      src={photoUrl}
+                      alt={`${listing.title} photo`}
+                      style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }}
+                    />
+                  </div>
+                )}
+
+                {listing.description && <p style={{ color: '#4b5563' }}>{listing.description}</p>}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
+                  <div>
+                    <div style={{ color: '#6b7280', fontSize: 12 }}>Original</div>
+                    <div style={{ fontWeight: 700 }}>${listing.originalPrice}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: '#6b7280', fontSize: 12 }}>Rescue</div>
+                    <div style={{ fontWeight: 700, color: '#16a34a' }}>${listing.rescuePrice}</div>
+                  </div>
+                </div>
+                <div style={{ marginTop: 12, borderTop: '1px solid #e5e7eb', paddingTop: 10, color: '#4b5563', fontSize: 13 }}>
+                  <div>Pickup: {new Date(listing.pickupStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(listing.pickupEnd).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                  <div>Expires: {new Date(listing.expiryAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
                 </div>
               </div>
-              <div style={{ marginTop: 12, borderTop: '1px solid #e5e7eb', paddingTop: 10, color: '#4b5563', fontSize: 13 }}>
-                <div>Pickup: {new Date(listing.pickupStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(listing.pickupEnd).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                <div>Expires: {new Date(listing.expiryAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
