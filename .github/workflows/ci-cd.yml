@@ -419,9 +419,9 @@ jobs:
   # STAGE 2: Integration tests (Sprint2 integration branches)
   # =========================================================
   integration-tests:
-    name: Integration Tests (Sprint2 branches)
+    name: Integration Tests (development/Sprint2 + main)
     runs-on: ubuntu-latest
-    needs: [detect, backend-junit, python-tests, lint-code-quality, sca-snyk, sast-codeql]
+    needs: [backend-junit, python-tests, lint-code-quality, sca-snyk, sast-codeql]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/development/Sprint2' || startsWith(github.ref, 'refs/heads/development/sprint2/'))
     steps:
       - uses: actions/checkout@v4
