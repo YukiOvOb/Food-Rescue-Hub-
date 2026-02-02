@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+//@Component
 public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
@@ -26,7 +26,7 @@ public class DataInitializer implements CommandLineRunner {
                            StoreRepository storeRepository,
                            ListingRepository listingRepository,
                            InventoryRepository inventoryRepository,
-                           DietaryTagRepository dietaryTagRepository) { // 修正了这里的逗号
+                           DietaryTagRepository dietaryTagRepository) {
         this.userRepository = userRepository;
         this.supplierRepository = supplierRepository;
         this.storeRepository = storeRepository;
@@ -40,12 +40,15 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         if (userRepository.count() > 0) return;
 
+        System.out.println(">>> Starting Data Initialization...");
+
         // 1. Create User
         User user = new User();
         user.setRole("SUPPLIER");
         user.setEmail("contact@thelocalbakery.sg");
         user.setPasswordHash("encrypted_password_123");
         user.setDisplayName("Bakery Manager");
+        user.setPhone("91234567");
         user.setStatus("ACTIVE");
         userRepository.save(user);
 
@@ -55,6 +58,19 @@ public class DataInitializer implements CommandLineRunner {
         supplier.setBusinessName("The Local Bakery SG");
         supplier.setBusinessType("Bakery & Cafe");
         supplier.setVerificationStatus("VERIFIED");
+
+
+        supplier.setRole("SUPPLIER");
+        supplier.setStatus("ACTIVE");
+        supplier.setEmail(user.getEmail());
+        supplier.setPassword(user.getPasswordHash());
+
+
+        supplier.setPhone("91234567");
+        supplier.setDisplayName(user.getDisplayName());
+        supplier.setCompanyName("The Local Bakery Pte Ltd");
+        supplier.setUenNumber("202312345K");
+
         supplierRepository.save(supplier);
 
         // 3. Create Store
@@ -68,7 +84,7 @@ public class DataInitializer implements CommandLineRunner {
         store.setActive(true);
         storeRepository.save(store);
 
-        // --- NEW: Create Dietary Tag FIRST ---
+        // --- Create Dietary Tag ---
         DietaryTag halalTag = new DietaryTag();
         halalTag.setTagName("Halal Certified");
         dietaryTagRepository.save(halalTag);
@@ -77,7 +93,7 @@ public class DataInitializer implements CommandLineRunner {
         Listing listing = new Listing();
         listing.setStore(store);
         listing.setTitle("Assorted Croissants Surprise Box");
-        listing.setDescription("A surprise box containing 4 fresh butter and almond croissants from today's batch.");
+        listing.setDescription("A surprise box containing 4 fresh butter and almond croissants.");
         listing.setOriginalPrice(new BigDecimal("18.00"));
         listing.setRescuePrice(new BigDecimal("6.50"));
         listing.setPickupStart(LocalDateTime.now().plusHours(2));
@@ -85,7 +101,6 @@ public class DataInitializer implements CommandLineRunner {
         listing.setExpiryAt(LocalDateTime.now().plusDays(1));
         listing.setStatus("ACTIVE");
 
-        // --- NEW: Link Tag to Listing BEFORE saving listing ---
         List<DietaryTag> tags = new ArrayList<>();
         tags.add(halalTag);
         listing.setDietaryTags(tags);
@@ -99,6 +114,6 @@ public class DataInitializer implements CommandLineRunner {
         inventory.setQtyReserved(0);
         inventoryRepository.save(inventory);
 
-        System.out.println(">>> Database initialized with Singaporean Halal data! Ready for CRUD API testing.");
+        System.out.println(">>> Database initialized successfully!");
     }
 }

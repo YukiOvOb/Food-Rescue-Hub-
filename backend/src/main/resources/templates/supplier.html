@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Rescue Hub - Supplier Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+
+        /* 表格样式 */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background-color: #4CAF50; color: white; font-weight: 600; }
+        tr:hover { background-color: #f9f9f9; }
+
+        /* 按钮样式 */
+        .btn { padding: 10px 20px; border: none; cursor: pointer; border-radius: 6px; font-weight: bold; transition: opacity 0.3s; }
+        .btn:hover { opacity: 0.9; }
+        .btn-confirm { background-color: #2196F3; color: white; }
+        .btn-mock { background-color: #ff9800; color: white; }
+        .btn-refresh { background-color: #607d8b; color: white; }
+
+        /* 状态标签 */
+        .status-badge { padding: 5px 10px; border-radius: 15px; font-size: 0.85em; font-weight: bold; }
+        .status-paid { background-color: #fff3e0; color: #ef6c00; border: 1px solid #ffe0b2; }
+        .status-completed { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+
+        /* 控制面板 */
+        .controls { margin-bottom: 20px; padding: 20px; background: #e3f2fd; border-radius: 8px; display: flex; align-items: center; gap: 15px; }
+        input[type="number"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 60px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🏪 Supplier Settlement Dashboard (供应商结算后台)</h2>
+
+    <div class="controls">
+        <label>Store ID: <input type="number" id="storeIdInput" value="1"></label>
+
+        <button onclick="loadOrders()" class="btn btn-refresh">🔄 Refresh List</button>
+
+        <div style="flex-grow: 1;"></div> <button onclick="createMockOrder()" class="btn btn-mock">🛠 Create Test Order (模拟下单)</button>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Amount (SGD)</th>
+            <th>Status</th>
+            <th>Created At</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody id="orderTableBody">
+        <tr><td colspan="5" style="text-align:center;">Loading...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // 后端 API 地址
+    const API_BASE = "http://localhost:8080/api/orders";
+
+    // 1. 加载订单列表
+    async function loadOrders() {
+        const storeId = document.getElementById('storeIdInput').value;
+        const tbody = document.getElementById('orderTableBody');
+
+        try {
+            const response = await fetch(`${API_BASE}/store/${storeId}`);
+
+            if (!response.ok) {
+                throw new Error("API Connection Failed");
+            }
+
+            const orders = await response.json();
+            tbody.innerHTML = "";
+
+            if (orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: #888;">No orders found for Store #${storeId}</td></tr>`;
+                return;
+            }
+
+            // 按 ID 倒序排列，新的在上面
+            orders.sort((a, b) => b.orderId - a.orderId);
+
+            orders.forEach(order => {
+                const isPaid = order.status === 'PAID';
+                const statusClass = isPaid ? 'status-paid' : 'status-completed';
+
+                const row = `
+                    <tr>
+                        <td>#${order.orderId}</td>
+                        <td>$${order.totalAmount.toFixed(2)}</td>
+                        <td><span class="status-badge ${statusClass}">${order.status}</span></td>
+                        <td>${new Date(order.createdAt).toLocaleString()}</td>
+                        <td>
+                            ${isPaid
+                                ? `<button class="btn btn-confirm" onclick="settleOrder(${order.orderId})">✅ Confirm Pickup</button>`
+                                : '<span style="color: green;">✔ Completed</span>'}
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        } catch (error) {
+            console.error("Error loading orders:", error);
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: red;">Failed to load orders. Is Backend running on port 8080?</td></tr>`;
+        }
+    }
+
+    // 2. 结算订单 (确认取货)
+    async function settleOrder(orderId) {
+        if(!confirm(`Confirm pickup for Order #${orderId}?`)) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/${orderId}/complete`, {
+                method: 'PUT'
+            });
+
+            if (response.ok) {
+                alert("Settlement Successful! 交易完成，库存已扣除 (逻辑上)");
+                loadOrders(); // 刷新列表
+            } else {
+                const msg = await response.text();
+                alert("Failed: " + msg);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Network Error");
+        }
+    }
+
+    // 3. 造假数据 (方便测试)
+    async function createMockOrder() {
+        const storeId = document.getElementById('storeIdInput').value;
+        const userId = 1; // 假设你的 DataInitializer 创建了 ID 为 1 的 User
+        const randomPrice = (Math.random() * 20 + 5).toFixed(2);
+
+        try {
+            const res = await fetch(`${API_BASE}/mock?storeId=${storeId}&userId=${userId}&amount=${randomPrice}`, {
+                method: 'POST'
+            });
+
+            if (res.ok) {
+                const msg = await res.text();
+                console.log(msg);
+                loadOrders(); // 自动刷新列表看新订单
+            } else {
+                alert("Mock creation failed. Check console.");
+            }
+        } catch (e) {
+            alert("Backend not reachable.");
+        }
+    }
+
+    // 页面加载时自动运行一次
+    loadOrders();
+</script>
+
+</body>
+</html>
