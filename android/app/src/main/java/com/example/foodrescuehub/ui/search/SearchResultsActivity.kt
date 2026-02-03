@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.foodrescuehub.R
 import com.example.foodrescuehub.data.api.RetrofitClient
 import com.example.foodrescuehub.data.model.StoreRecommendation
+import com.example.foodrescuehub.data.model.UserInteractionRequest
 import com.example.foodrescuehub.data.repository.AuthManager
 import com.example.foodrescuehub.ui.home.RecommendationAdapter
 import kotlinx.coroutines.launch
@@ -63,8 +64,16 @@ class SearchResultsActivity : AppCompatActivity() {
 
         // Setup RecyclerView
         adapter = RecommendationAdapter { recommendation ->
+            // Record CLICK interaction
+            recordInteraction(recommendation, "CLICK")
+
             // Handle item click - navigate to detail page
             Toast.makeText(this, "Clicked: ${recommendation.title}", Toast.LENGTH_SHORT).show()
+
+            // TODO: Navigate to detail page when implemented
+            // val intent = Intent(this, ListingDetailActivity::class.java)
+            // intent.putExtra("listingId", recommendation.listingId)
+            // startActivity(intent)
         }
         rvResults.layoutManager = LinearLayoutManager(this)
         rvResults.adapter = adapter
@@ -245,6 +254,9 @@ class SearchResultsActivity : AppCompatActivity() {
             rvResults.visibility = View.VISIBLE
             adapter.submitList(results)
             tvResultsCount.text = "${results.size} results"
+
+            // Record VIEW interactions for displayed results
+            recordViewInteractions(results)
         }
     }
 
@@ -257,5 +269,56 @@ class SearchResultsActivity : AppCompatActivity() {
         layoutEmptyState.visibility = View.VISIBLE
         tvResultsCount.text = "0 results"
         findViewById<TextView>(R.id.tvEmptyMessage).text = message
+    }
+
+    /**
+     * Record user interaction (CLICK, VIEW, etc.)
+     */
+    private fun recordInteraction(recommendation: StoreRecommendation, interactionType: String) {
+        if (currentUserId == null) return
+
+        lifecycleScope.launch {
+            try {
+                val request = UserInteractionRequest(
+                    consumerId = currentUserId!!,
+                    listingId = recommendation.listingId,
+                    interactionType = interactionType,
+                    sessionId = null,  // Could generate a session ID if needed
+                    deviceType = "Android"
+                )
+
+                val response = RetrofitClient.apiService.recordInteraction(request)
+
+                if (response.isSuccessful) {
+                    // Interaction recorded successfully (silent, no UI feedback needed)
+                } else {
+                    // Log error but don't show to user (non-critical)
+                    println("[WARN] Failed to record interaction: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                // Log error but don't show to user (non-critical)
+                println("[WARN] Failed to record interaction: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Record VIEW interactions for all displayed results
+     * Only records for the first 10 results to avoid excessive API calls
+     */
+    private fun recordViewInteractions(results: List<StoreRecommendation>) {
+        if (currentUserId == null) return
+
+        lifecycleScope.launch {
+            try {
+                // Record VIEW for up to first 10 results
+                val viewLimit = minOf(results.size, 10)
+                for (i in 0 until viewLimit) {
+                    recordInteraction(results[i], "VIEW")
+                }
+            } catch (e: Exception) {
+                println("[WARN] Failed to record view interactions: ${e.message}")
+            }
+        }
     }
 }

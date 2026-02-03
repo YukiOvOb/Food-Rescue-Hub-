@@ -1,11 +1,15 @@
 package com.example.foodrescuehub.data.api
 
 import com.example.foodrescuehub.data.model.ConsumerProfile
+import com.example.foodrescuehub.data.model.InteractionResponse
 import com.example.foodrescuehub.data.model.Listing
 import com.example.foodrescuehub.data.model.RecommendationResponse
 import com.example.foodrescuehub.data.model.StoreRecommendation
+import com.example.foodrescuehub.data.model.UserInteractionRequest
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -84,4 +88,13 @@ interface ApiService {
     suspend fun getConsumerProfileByEmail(
         @Query("email") email: String
     ): Response<ConsumerProfile>
+
+    /**
+     * Record user interaction (VIEW, CLICK, SEARCH, ADD_TO_CART)
+     * POST /api/interactions/record
+     */
+    @POST("api/interactions/record")
+    suspend fun recordInteraction(
+        @Body request: UserInteractionRequest
+    ): Response<InteractionResponse>
 }
