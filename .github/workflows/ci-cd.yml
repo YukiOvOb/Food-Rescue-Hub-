@@ -415,9 +415,9 @@ jobs:
           category: "/language:${{ matrix.language }}"
 
 
-  # =========================================================
-  # STAGE 1: SCA / Secrets / Misconfig (OSS) - Trivy FS scan
-  # =========================================================
+   # =========================================================
+   # STAGE 1: SCA / Secrets / Misconfig (OSS) - Trivy FS scan
+   # =========================================================
   sca-trivy-fs:
     name: SCA + Secrets + Misconfig (Trivy FS)
     runs-on: ubuntu-latest
@@ -428,34 +428,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 1) Produce SARIF report (always)
       - name: Trivy FS scan -> SARIF
-        shell: bash
-        run: |
-          set -e
-          # Install Trivy
-          sudo apt-get update -y
-          sudo apt-get install -y wget
-          wget -qO- https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.57.1_Linux-64bit.tar.gz | tar zx
-          sudo mv trivy /usr/local/bin/trivy
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-fs.sarif
+          severity: HIGH,CRITICAL
+          scanners: vuln,secret,config
+          ignore-unfixed: true
 
-          # Scan repository for vulnerabilities/secrets/misconfig
-          trivy fs \
-            --scanners vuln,secret,misconfig \
-            --format sarif \
-            --output trivy-fs.sarif \
-            --severity HIGH,CRITICAL \
-            .
-
-          # Gate only if REPORT_ONLY=false
-          if [ "${REPORT_ONLY}" != "true" ]; then
-            trivy fs --scanners vuln,secret,misconfig --exit-code 1 --severity HIGH,CRITICAL .
-          fi
-
+      # 2) Upload SARIF into GitHub Security tab
       - name: Upload Trivy SARIF to Security tab
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-fs.sarif
 
+      # 3) Upload SARIF as artifact too
       - name: Upload Trivy report artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -463,6 +454,20 @@ jobs:
           name: trivy-fs-sarif
           path: trivy-fs.sarif
           if-no-files-found: warn
+
+      # 4) Optional gate (fail pipeline only when REPORT_ONLY != true)
+      - name: Gate on HIGH/CRITICAL (optional)
+        if: env.REPORT_ONLY != 'true'
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+          severity: HIGH,CRITICAL
+          scanners: vuln,secret,config
+          ignore-unfixed: true
+          exit-code: "1"
+
 
 
   # =========================================================
