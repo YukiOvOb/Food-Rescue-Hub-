@@ -758,27 +758,31 @@ jobs:
           echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
           sudo apt-get update && sudo apt-get install -y k6
 
-      - name: Run k6 (smoke)
-        shell: bash
-        run: |
-          set -e
-          if [ -f "tests/k6/script.js" ]; then
-            k6 run --summary-export=k6-summary.json tests/k6/script.js || true
-          else
-            cat > k6-smoke.js << 'EOF'
-            import http from 'k6/http';
-            import { check, sleep } from 'k6';
+          - name: Run k6 (smoke)
+            run: |
+              if [ -f "tests/k6/script.js" ]; then
+                k6 run --summary-export=k6-summary.json tests/k6/script.js || true
+              else
+                cat > k6-smoke.js <<'EOF'
+          import http from 'k6/http';
+          import { check, sleep } from 'k6';
 
-            export const options = { vus: 5, duration: '30s' };
+          export const options = {
+            vus: 5,
+            duration: '30s',
+          };
 
-            export default function () {
-              const res = http.get(__ENV.STAGING_URL + "/api/hello");
-              check(res, { 'status is 200': (r) => r.status === 200 });
-              sleep(1);
-            }
-            EOF
-            k6 run --summary-export=k6-summary.json k6-smoke.js || true
-          fi
+          export default function () {
+            const url = __ENV.STAGING_URL + "/api/hello";
+            const res = http.get(url);
+            check(res, { 'status is 200': r => r.status === 200 });
+            sleep(1);
+          }
+          EOF
+
+                k6 run --summary-export=k6-summary.json k6-smoke.js || true
+              fi
+
 
       - name: Upload k6 report
         if: always()
