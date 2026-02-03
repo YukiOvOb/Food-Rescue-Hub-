@@ -306,70 +306,88 @@ public class RecommendationService {
 
         // 基本信息
         Long storeId = ((Number) rec.get("store_id")).longValue();
+        Long listingId = ((Number) rec.get("listing_id")).longValue();
+
         dto.setStoreId(storeId);
         dto.setStoreName((String) rec.get("store_name"));
-        dto.setStoreType((String) rec.get("store_type"));
-        dto.setListingId(((Number) rec.get("listing_id")).longValue());
-        dto.setListingTitle((String) rec.get("listing_title"));
+        dto.setListingId(listingId);
+        dto.setTitle((String) rec.get("listing_title"));
 
         // 价格
-        dto.setRescuePrice(BigDecimal.valueOf(((Number) rec.get("rescue_price")).doubleValue()));
-        dto.setOriginalPrice(BigDecimal.valueOf(((Number) rec.get("original_price")).doubleValue()));
-        dto.setDiscountRate(((Number) rec.get("discount_rate")).doubleValue());
+        Double rescuePrice = ((Number) rec.get("rescue_price")).doubleValue();
+        Double originalPrice = ((Number) rec.get("original_price")).doubleValue();
+        dto.setRescuePrice(rescuePrice);
+        dto.setOriginalPrice(originalPrice);
+
+        // 计算折扣百分比: (originalPrice - rescuePrice) / originalPrice * 100
+        int savingsPercentage = 0;
+        if (originalPrice != null && originalPrice > 0 && rescuePrice != null) {
+            savingsPercentage = (int) Math.round((originalPrice - rescuePrice) / originalPrice * 100);
+        }
+        dto.setSavingsPercentage(savingsPercentage);
 
         // 距离
         dto.setDistance(((Number) rec.get("distance")).doubleValue());
 
         // 评分
-        dto.setAvgRating(BigDecimal.valueOf(((Number) rec.get("store_avg_rating")).doubleValue()));
+        Double avgRating = ((Number) rec.get("store_avg_rating")).doubleValue();
+        dto.setAvgRating(avgRating);
 
         // 推荐分数
         dto.setPredictedScore(((Number) rec.get("predicted_score")).doubleValue());
-        dto.setRank(rank);
 
         // 图片
         dto.setPhotoUrl((String) rec.get("photo_url"));
 
-        // 从数据库获取Store的完整信息(address, lat, lng)
+        // 从推荐服务返回的数据中获取字段（避免从实体类获取不存在的字段）
+        dto.setCategory((String) rec.get("store_type"));
+
+        // qty_available可能在Python服务返回的数据中不存在，使用null安全处理
+        Object qtyObj = rec.get("qty_available");
+        if (qtyObj != null) {
+            dto.setQtyAvailable(((Number) qtyObj).intValue());
+        } else {
+            dto.setQtyAvailable(0);  // 默认值
+        }
+
+        // 从数据库获取Store的地址和坐标信息
         try {
             Store store = storeRepository.findById(storeId).orElse(null);
             if (store != null) {
-                dto.setAddress(store.getAddressLine());
+                dto.setAddressLine(store.getAddressLine());
                 dto.setLat(store.getLat() != null ? store.getLat().doubleValue() : null);
                 dto.setLng(store.getLng() != null ? store.getLng().doubleValue() : null);
+            }
 
-                // 从store_stats获取更多信息
-                StoreStats storeStats = storeStatsRepository.findByStoreId(storeId).orElse(null);
-                if (storeStats != null) {
-                    dto.setTotalOrders(storeStats.getTotalOrders());
-                    dto.setCompletionRate(storeStats.getCompletionRate() != null
-                        ? storeStats.getCompletionRate()
-                        : null);
-                }
+            // 从数据库获取Listing的pickup时间
+            Listing listing = listingRepository.findById(listingId).orElse(null);
+            if (listing != null) {
+                dto.setPickupStart(listing.getPickupStart() != null ? listing.getPickupStart().toString() : null);
+                dto.setPickupEnd(listing.getPickupEnd() != null ? listing.getPickupEnd().toString() : null);
             }
         } catch (Exception e) {
             // 查询失败时忽略,使用已有信息
-            System.err.println("[WARN] 获取Store详细信息失败: " + e.getMessage());
+            System.err.println("[WARN] 获取详细信息失败: " + e.getMessage());
         }
 
-        // 生成标签
-        dto.setTag(generateTag(dto));
+        // 生成推荐原因
+        dto.setRecommendationReason(generateRecommendationReason(dto, avgRating, savingsPercentage));
 
         return dto;
     }
 
     /**
-     * 生成显示标签
+     * 生成推荐原因
      */
-    private String generateTag(StoreRecommendationDTO dto) {
-        if (dto.getAvgRating().compareTo(BigDecimal.valueOf(4.5)) >= 0) {
-            return "高评分";
+    private String generateRecommendationReason(StoreRecommendationDTO dto, Double avgRating, int savingsPercentage) {
+        if (avgRating != null && avgRating >= 4.5) {
+            return "High rating store";
         } else if (dto.getDistance() != null && dto.getDistance() <= 2.0) {
-            return "附近";
-        } else if (dto.getDiscountRate() >= 0.6) {
-            return "超值";
+            return "Nearby location";
+        } else if (savingsPercentage >= 60) {
+            return "Great discount available";
         }
-        return "推荐";
+        return "Recommended for you";
     }
 
     /**
