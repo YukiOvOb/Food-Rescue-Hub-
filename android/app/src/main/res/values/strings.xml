@@ -28,4 +28,18 @@
     <string name="help_support">Help &amp; Support</string>
     <string name="feature_coming_soon">This feature is coming soon</string>
     <string name="guest_message">Login to access personalized features</string>
+
+    <!-- Recommendations -->
+    <string name="recommendations_section">Recommended for You</string>
+    <string name="recommendations_subtitle">Curated based on your preferences</string>
+    <string name="listing_image">Listing Image</string>
+    <string name="banner_image">Banner Image</string>
+    <string name="tag_high_rating">Top Rated</string>
+    <string name="tag_nearby">Nearby</string>
+    <string name="tag_discount">Great Deal</string>
+    <string name="tag_recommended">Recommended</string>
+    <string name="empty_recommendations">No recommendations available</string>
+    <string name="error_loading_recommendations">Failed to load recommendations</string>
+    <string name="retry">Retry</string>
+    <string name="loading">Loading...</string>
 </resources>

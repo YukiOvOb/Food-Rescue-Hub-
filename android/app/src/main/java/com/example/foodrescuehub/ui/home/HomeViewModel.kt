@@ -6,7 +6,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.foodrescuehub.data.api.RetrofitClient
 import com.example.foodrescuehub.data.model.Listing
+import com.example.foodrescuehub.data.model.StoreRecommendation
 import com.example.foodrescuehub.data.repository.ListingRepository
+import com.example.foodrescuehub.data.repository.RecommendationRepository
 import kotlinx.coroutines.launch
 
 /**
@@ -28,6 +30,7 @@ enum class SortOption {
 class HomeViewModel : ViewModel() {
 
     private val repository = ListingRepository(RetrofitClient.apiService)
+    private val recommendationRepository = RecommendationRepository(RetrofitClient.apiService)
 
     // LiveData for listings
     private val _listings = MutableLiveData<List<Listing>>()
@@ -36,6 +39,10 @@ class HomeViewModel : ViewModel() {
     // LiveData for filtered listings (after category or search filter)
     private val _filteredListings = MutableLiveData<List<Listing>>()
     val filteredListings: LiveData<List<Listing>> = _filteredListings
+
+    // LiveData for recommendations
+    private val _recommendations = MutableLiveData<List<StoreRecommendation>>()
+    val recommendations: LiveData<List<StoreRecommendation>> = _recommendations
 
     // LiveData for loading state
     private val _isLoading = MutableLiveData<Boolean>()
@@ -273,5 +280,31 @@ class HomeViewModel : ViewModel() {
      */
     fun refresh() {
         loadNearbyListings()
+    }
+
+    /**
+     * Load personalized recommendations
+     */
+    fun loadRecommendations(consumerId: Long, topK: Int = 5, lat: Double? = null, lng: Double? = null) {
+        android.util.Log.d("HomeViewModel", "📍 Loading recommendations for user $consumerId with location: lat=$lat, lng=$lng")
+
+        viewModelScope.launch {
+            try {
+                val result = recommendationRepository.getHomePageRecommendations(consumerId, topK, lat, lng)
+                result.onSuccess { recommendations ->
+                    android.util.Log.d("HomeViewModel", "✅ Successfully loaded ${recommendations.size} recommendations")
+                    recommendations.forEachIndexed { index, rec ->
+                        android.util.Log.d("HomeViewModel", "  #${index+1}: ${rec.storeName} - distance: ${rec.distance} km")
+                    }
+                    _recommendations.value = recommendations
+                }.onFailure { exception ->
+                    android.util.Log.e("HomeViewModel", "❌ Failed to load recommendations: ${exception.message}", exception)
+                    _recommendations.value = emptyList()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("HomeViewModel", "❌ Exception loading recommendations: ${e.message}", e)
+                _recommendations.value = emptyList()
+            }
+        }
     }
 }

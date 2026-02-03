@@ -4,16 +4,21 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
 import com.example.foodrescuehub.R
+import com.example.foodrescuehub.data.model.BannerItem
 import com.example.foodrescuehub.data.model.Listing
+import com.example.foodrescuehub.data.model.StoreRecommendation
 import com.example.foodrescuehub.data.repository.AuthManager
 import com.example.foodrescuehub.data.repository.CartManager
 import com.example.foodrescuehub.ui.cart.CartActivity
@@ -22,6 +27,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.tabs.TabLayout
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -34,11 +40,17 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var viewModel: HomeViewModel
     private lateinit var listingAdapter: ListingAdapter
+    private lateinit var bannerAdapter: BannerAdapter
+    private lateinit var recommendationAdapter: RecommendationAdapter
 
     // UI components
     private lateinit var tvGreeting: TextView
     private lateinit var searchView: SearchView
-    private lateinit var tabLayout: TabLayout
+    private lateinit var bannerViewPager: ViewPager2
+    private lateinit var recommendationsSection: LinearLayout
+    private lateinit var rvRecommendations: RecyclerView
+    private lateinit var recommendationsProgressBar: android.widget.ProgressBar
+    // private lateinit var tabLayout: TabLayout  // Removed
     private lateinit var chipGroupCategories: ChipGroup
     private lateinit var rvListings: RecyclerView
     private lateinit var progressBar: ProgressBar
@@ -47,6 +59,14 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var btnSortFilter: ImageButton
     private lateinit var btnCart: ImageButton
     private lateinit var tvCartBadge: TextView
+
+    // User location from database (will be fetched from backend)
+    private var userLat: Double? = null
+    private var userLng: Double? = null
+
+    // User ID (will be fetched from backend based on email)
+    private var currentUserId: Long? = null
+    private var currentUserEmail: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,10 +80,12 @@ class HomeActivity : AppCompatActivity() {
 
         // Initialize UI components
         initViews()
+        setupBanner()
+        setupRecommendations()
         setupRecyclerView()
         setupGreeting()
         setupSearchView()
-        setupTabLayout()
+        // setupTabLayout()  // Removed
         setupCategoryChips()
         setupSortFilterButton()
         setupBottomNavigation()
@@ -72,6 +94,36 @@ class HomeActivity : AppCompatActivity() {
         // Observe ViewModel LiveData
         observeViewModel()
         observeCart()
+
+        // Get current user email from AuthManager
+        val currentUser = AuthManager.getCurrentUser()
+        currentUserEmail = currentUser?.email
+
+        if (currentUserEmail != null) {
+            // Fetch user profile and load recommendations
+            fetchUserProfileAndLoadRecommendations()
+        } else {
+            android.util.Log.e("HomeActivity", "❌ No user logged in")
+            // Redirect to login or show error
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        // Check if user has changed
+        val currentUser = AuthManager.getCurrentUser()
+        val newEmail = currentUser?.email
+
+        android.util.Log.d("HomeActivity", "onResume - current email: $currentUserEmail, new email: $newEmail")
+
+        if (newEmail != null && newEmail != currentUserEmail) {
+            // User has changed, reload everything
+            android.util.Log.d("HomeActivity", "🔄 User changed! Reloading recommendations...")
+            currentUserEmail = newEmail
+            currentUserId = null  // Reset user ID
+            fetchUserProfileAndLoadRecommendations()
+        }
     }
 
     /**
@@ -80,7 +132,11 @@ class HomeActivity : AppCompatActivity() {
     private fun initViews() {
         tvGreeting = findViewById(R.id.tvGreeting)
         searchView = findViewById(R.id.searchView)
-        tabLayout = findViewById(R.id.tabLayout)
+        bannerViewPager = findViewById(R.id.bannerViewPager)
+        recommendationsSection = findViewById(R.id.recommendationsSection)
+        rvRecommendations = findViewById(R.id.rvRecommendations)
+        recommendationsProgressBar = findViewById(R.id.recommendationsProgressBar)
+        // tabLayout = findViewById(R.id.tabLayout)  // Removed
         chipGroupCategories = findViewById(R.id.chipGroupCategories)
         rvListings = findViewById(R.id.rvListings)
         progressBar = findViewById(R.id.progressBar)
@@ -89,6 +145,129 @@ class HomeActivity : AppCompatActivity() {
         btnSortFilter = findViewById(R.id.btnSortFilter)
         btnCart = findViewById(R.id.btnCart)
         tvCartBadge = findViewById(R.id.tvCartBadge)
+    }
+
+    /**
+     * Setup banner carousel
+     */
+    private fun setupBanner() {
+        val bannerItems = listOf(
+            BannerItem(
+                "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800",
+                "Save Food, Save Planet"
+            ),
+            BannerItem(
+                "https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=800",
+                "Rescue Delicious Food"
+            ),
+            BannerItem(
+                "https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=800",
+                "Reduce Food Waste Together"
+            )
+        )
+
+        bannerAdapter = BannerAdapter(bannerItems)
+        bannerViewPager.adapter = bannerAdapter
+    }
+
+    /**
+     * Setup recommendations RecyclerView
+     */
+    private fun setupRecommendations() {
+        recommendationAdapter = RecommendationAdapter { recommendation ->
+            onRecommendationClicked(recommendation)
+        }
+
+        rvRecommendations.apply {
+            layoutManager = LinearLayoutManager(this@HomeActivity, LinearLayoutManager.HORIZONTAL, false)
+            adapter = recommendationAdapter
+            setHasFixedSize(true)
+            // Disable nested scrolling to allow parent scroll
+            isNestedScrollingEnabled = false
+        }
+    }
+
+    /**
+     * Fetch user profile from backend and load recommendations with user location
+     */
+    private fun fetchUserProfileAndLoadRecommendations() {
+        recommendationsSection.visibility = View.VISIBLE
+        recommendationsProgressBar.visibility = View.VISIBLE
+        rvRecommendations.visibility = View.GONE
+
+        if (currentUserEmail == null) {
+            android.util.Log.e("HomeActivity", "❌ User email is null")
+            return
+        }
+
+        // Fetch user profile in background
+        lifecycleScope.launch {
+            try {
+                android.util.Log.d("HomeActivity", "🔍 Fetching user profile for email: $currentUserEmail")
+
+                // Get consumer profile by email
+                val response = com.example.foodrescuehub.data.api.RetrofitClient.apiService
+                    .getConsumerProfileByEmail(currentUserEmail!!)
+
+                android.util.Log.d("HomeActivity", "Profile response code: ${response.code()}")
+
+                if (response.isSuccessful && response.body() != null) {
+                    val profile = response.body()!!
+
+                    // Save user ID and location
+                    currentUserId = profile.consumerId
+                    userLat = profile.defaultLat
+                    userLng = profile.defaultLng
+
+                    android.util.Log.d("HomeActivity", "✅ User profile loaded:")
+                    android.util.Log.d("HomeActivity", "   consumerId: $currentUserId")
+                    android.util.Log.d("HomeActivity", "   email: ${profile.email}")
+                    android.util.Log.d("HomeActivity", "   location: lat=$userLat, lng=$userLng")
+                    android.util.Log.d("HomeActivity", "📍 Loading recommendations...")
+
+                    // Load recommendations with user location
+                    viewModel.loadRecommendations(currentUserId!!, 5, userLat, userLng)
+                } else {
+                    android.util.Log.e("HomeActivity", "❌ Failed to fetch user profile: ${response.code()}, body=${response.errorBody()?.string()}")
+                    // Load recommendations without location (fallback)
+                    if (currentUserId != null) {
+                        viewModel.loadRecommendations(currentUserId!!, 5, null, null)
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("HomeActivity", "❌ Error fetching user profile: ${e.message}", e)
+                // Load recommendations without location (fallback)
+                if (currentUserId != null) {
+                    viewModel.loadRecommendations(currentUserId!!, 5, null, null)
+                }
+            }
+        }
+    }
+
+    /**
+     * Handle recommendation item click
+     */
+    private fun onRecommendationClicked(recommendation: StoreRecommendation) {
+        val intent = Intent(this, com.example.foodrescuehub.ui.detail.ProductDetailActivity::class.java).apply {
+            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_ID, recommendation.listingId)
+            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_TITLE, recommendation.title)
+            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_STORE_NAME, "🏪 ${recommendation.storeName}")
+            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_CATEGORY, recommendation.category)
+            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_DISTANCE, "📍 ${recommendation.getDistanceText()}")
+            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_PRICE, recommendation.rescuePrice)
+            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_ORIGINAL_PRICE, recommendation.originalPrice)
+            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_SAVINGS_LABEL, "${recommendation.savingsPercentage}% OFF")
+            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_PICKUP_START, recommendation.pickupStart)
+            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_PICKUP_END, recommendation.pickupEnd)
+            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_DESCRIPTION, "")
+            putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_QTY_AVAILABLE, recommendation.qtyAvailable)
+
+            // Pass photo URL if available
+            if (recommendation.photoUrl != null) {
+                putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_PHOTO_URL, recommendation.photoUrl)
+            }
+        }
+        startActivity(intent)
     }
 
     /**
@@ -145,6 +324,7 @@ class HomeActivity : AppCompatActivity() {
     /**
      * Setup tab layout for Mystery Boxes / Regular Items
      */
+    /*
     private fun setupTabLayout() {
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
@@ -157,6 +337,7 @@ class HomeActivity : AppCompatActivity() {
             override fun onTabReselected(tab: TabLayout.Tab?) {}
         })
     }
+    */
 
     /**
      * Setup category filter chips
@@ -273,6 +454,24 @@ class HomeActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 android.util.Log.e("HomeActivity", "Error displaying listings", e)
                 Toast.makeText(this, "Error displaying listings: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+
+        // Observe recommendations
+        viewModel.recommendations.observe(this) { recommendations ->
+            android.util.Log.d("HomeActivity", "Received ${recommendations?.size ?: 0} recommendations")
+
+            // Hide progress bar
+            recommendationsProgressBar.visibility = View.GONE
+
+            if (recommendations != null && recommendations.isNotEmpty()) {
+                recommendationAdapter.submitList(recommendations)
+                recommendationsSection.visibility = View.VISIBLE
+                rvRecommendations.visibility = View.VISIBLE
+                android.util.Log.d("HomeActivity", "Showing recommendations")
+            } else {
+                recommendationsSection.visibility = View.GONE
+                android.util.Log.d("HomeActivity", "No recommendations, hiding section")
             }
         }
 

@@ -1,6 +1,9 @@
 package com.example.foodrescuehub.data.api
 
+import com.example.foodrescuehub.data.model.ConsumerProfile
 import com.example.foodrescuehub.data.model.Listing
+import com.example.foodrescuehub.data.model.RecommendationResponse
+import com.example.foodrescuehub.data.model.StoreRecommendation
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -38,4 +41,34 @@ interface ApiService {
     suspend fun getListingsByCategory(
         @Path("category") category: String
     ): Response<List<Listing>>
+
+    /**
+     * Get personalized store recommendations for homepage
+     * GET /api/recommendations/homepage?consumerId={consumerId}&topK={topK}&lat={lat}&lng={lng}
+     */
+    @GET("api/recommendations/homepage")
+    suspend fun getHomePageRecommendations(
+        @Query("consumerId") consumerId: Long,
+        @Query("topK") topK: Int = 5,
+        @Query("lat") latitude: Double? = null,
+        @Query("lng") longitude: Double? = null
+    ): Response<RecommendationResponse>
+
+    /**
+     * Get consumer profile by ID
+     * GET /api/consumer/{consumerId}
+     */
+    @GET("api/consumer/{consumerId}")
+    suspend fun getConsumerProfile(
+        @Path("consumerId") consumerId: Long
+    ): Response<ConsumerProfile>
+
+    /**
+     * Get consumer profile by email
+     * GET /api/consumer/by-email?email={email}
+     */
+    @GET("api/consumer/by-email")
+    suspend fun getConsumerProfileByEmail(
+        @Query("email") email: String
+    ): Response<ConsumerProfile>
 }
