@@ -3,7 +3,9 @@ package com.frh.backend.service;
 import com.frh.backend.Model.Order;
 import com.frh.backend.Model.Store;
 import com.frh.backend.Model.ConsumerProfile;
+import com.frh.backend.Model.PickupToken;
 import com.frh.backend.repository.OrderRepository;
+import com.frh.backend.repository.PickupTokenRepository;
 import com.frh.backend.repository.StoreRepository;
 import com.frh.backend.repository.ConsumerProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +27,11 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final StoreRepository storeRepository;
     private final ConsumerProfileRepository consumerRepository;
+    private final PickupTokenRepository pickupTokenRepository;
+
+    private static final String TOKEN_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final int TOKEN_LENGTH = 6;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     /**
      * Create a new order
@@ -137,8 +145,37 @@ public class OrderService {
         
         order.setStatus(status);
         Order updatedOrder = orderRepository.save(order);
+        if ("COMPLETED".equalsIgnoreCase(status)) {
+            pickupTokenRepository.findByOrderId(orderId).orElseGet(() -> {
+                PickupToken token = new PickupToken();
+                token.setOrder(order);
+                token.setOrderId(order.getOrderId());
+                token.setQrTokenHash(generateUniqueToken());
+                token.setExpiresAt(LocalDateTime.now().plusDays(1));
+                return pickupTokenRepository.save(token);
+            });
+        }
         log.info("Order status updated to {} for order ID: {}", status, orderId);
         return updatedOrder;
+    }
+
+    private String generateUniqueToken() {
+        for (int i = 0; i < 10; i++) {
+            String token = generateTokenValue();
+            if (pickupTokenRepository.findByQrTokenHash(token).isEmpty()) {
+                return token;
+            }
+        }
+        throw new RuntimeException("Failed to generate unique pickup token");
+    }
+
+    private String generateTokenValue() {
+        StringBuilder sb = new StringBuilder(TOKEN_LENGTH);
+        for (int i = 0; i < TOKEN_LENGTH; i++) {
+            int idx = SECURE_RANDOM.nextInt(TOKEN_CHARS.length());
+            sb.append(TOKEN_CHARS.charAt(idx));
+        }
+        return sb.toString();
     }
 
     /**

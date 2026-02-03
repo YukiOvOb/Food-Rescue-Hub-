@@ -1,5 +1,7 @@
 package com.frh.backend.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -23,6 +25,7 @@ public class ConsumerProfile {
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
+    @JsonIgnore
     @Column(name = "password", nullable = false, length = 255)
     private String password;
 
@@ -53,6 +56,7 @@ public class ConsumerProfile {
     private Map<String, Object> preferences;
 
     // --- Relationships ---
+    @JsonIgnoreProperties({"consumer", "transactions"})
     @OneToOne(mappedBy = "consumer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Wallet wallet;
 }

@@ -53,7 +53,7 @@ public class Order {
     private PickupToken pickupToken;
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("order")
+    @JsonIgnoreProperties({"order", "supplier"})
     private CommissionLedger commission;
 
     // --- Order Details ---

@@ -55,7 +55,7 @@ export default function ListingsPage() {
   const normalizeDateTimeLocal = (dt) =>
     dt && dt.length === 16 ? `${dt}:00` : dt; // "yyyy-MM-ddTHH:MM" -> "yyyy-MM-ddTHH:MM:00"
 
-  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8081/api';
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
   const supplierBase = `${apiBase}/supplier`;
 
   useEffect(() => {

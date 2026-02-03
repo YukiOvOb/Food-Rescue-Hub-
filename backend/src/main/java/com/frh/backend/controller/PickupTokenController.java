@@ -4,7 +4,9 @@ import com.frh.backend.Model.PickupToken;
 import com.frh.backend.repository.PickupTokenRepository;
 import com.frh.backend.util.QRCodeGenerator;
 import com.google.zxing.BinaryBitmap;
+import com.google.zxing.DecodeHintType;
 import com.google.zxing.MultiFormatReader;
+import com.google.zxing.NotFoundException;
 import com.google.zxing.Result;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
@@ -34,7 +36,7 @@ public class PickupTokenController {
                 .orElse(ResponseEntity.notFound().build());
     }
     
-// http://172.26.235.205:8081/api/pickup-tokens/1/generate-qrcode
+// http://172.26.235.205:8080/api/pickup-tokens/1/generate-qrcode
     @PostMapping("/{orderId}/generate-qrcode")
     public ResponseEntity<Map<String, String>> generateQRCode(@PathVariable Long orderId) {
         return pickupTokenRepository.findByOrderId(orderId)
@@ -81,11 +83,19 @@ public class PickupTokenController {
             BinaryBitmap bitmap = new BinaryBitmap(
                     new HybridBinarizer(new BufferedImageLuminanceSource(image))
             );
-            Result result = new MultiFormatReader().decode(bitmap);
+            Map<DecodeHintType, Object> hints = new HashMap<>();
+            hints.put(DecodeHintType.TRY_HARDER, Boolean.TRUE);
+            hints.put(DecodeHintType.CHARACTER_SET, "UTF-8");
+
+            Result result = new MultiFormatReader().decode(bitmap, hints);
 
             Map<String, String> response = new HashMap<>();
             response.put("content", result.getText());
             return ResponseEntity.ok(response);
+        } catch (NotFoundException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "No QR code found in the image");
+            return ResponseEntity.badRequest().body(error);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("error", "Failed to decode QR code: " + e.getMessage());

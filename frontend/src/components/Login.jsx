@@ -56,8 +56,16 @@ const Login = () => {
       const response = await authService.login(formData);
       console.log('Login successful:', response);
       
-      // Redirect to dashboard after successful login
-      navigate('/dashboard');
+      // Verify user data is saved
+      const savedUser = localStorage.getItem('user');
+      const isLoggedIn = localStorage.getItem('isLoggedIn');
+      console.log('Saved user:', savedUser);
+      console.log('Is logged in:', isLoggedIn);
+      
+      // Small delay to ensure localStorage is persisted before navigation
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 100);
     } catch (error) {
       console.error('Login failed:', error);
       

@@ -1,19 +1,51 @@
 import React, { useEffect, useState } from 'react';
 import axios from '../services/axiosConfig';
+import authService from '../services/authService';
 import './OrdersPage.css';
 
 const OrdersPage = () => {
   const [orders, setOrders] = useState([]);
+  const [stores, setStores] = useState([]);
+  const [selectedStoreId, setSelectedStoreId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [storeLoading, setStoreLoading] = useState(true);
 
-  const fetchOrders = async () => {
+  const normalizeOrders = (payload) => {
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.data)) return payload.data;
+    if (Array.isArray(payload?.orders)) return payload.orders;
+    return [];
+  };
+
+  const sortOrders = (items) => {
+    return [...items].sort((a, b) => (b?.orderId || 0) - (a?.orderId || 0));
+  };
+
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const response = await axios.patch(`/orders/${orderId}/status`, null, {
+        params: { status: newStatus }
+      });
+      console.log(`Order ${orderId} updated to ${newStatus}`);
+      fetchOrders(selectedStoreId);
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to update order status');
+    }
+  };
+
+  const fetchOrders = async (storeId) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await axios.get('/orders');
-      setOrders(response.data || []);
+      if (!storeId) {
+        setOrders([]);
+        return;
+      }
+      const response = await axios.get(`/orders/store/${storeId}`);
+      const normalizedOrders = normalizeOrders(response?.data);
+      setOrders(sortOrders(normalizedOrders));
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Failed to load orders');
     } finally {
@@ -21,18 +53,83 @@ const OrdersPage = () => {
     }
   };
 
+  const fetchStores = async () => {
+    setStoreLoading(true);
+    setError(null);
+    try {
+      const storedUser = authService.getStoredUser();
+      const supplierIdFromStorage = storedUser?.supplierId;
+      let supplierId = supplierIdFromStorage;
+
+      if (!supplierId) {
+        const meResponse = await axios.get('/auth/me');
+        supplierId = meResponse?.data?.supplierId;
+      }
+      if (!supplierId) {
+        setStores([]);
+        setSelectedStoreId(null);
+        return;
+      }
+      const storesResponse = await axios.get(`/stores/supplier/${supplierId}`);
+      const list = Array.isArray(storesResponse?.data) ? storesResponse.data : [];
+      setStores(list);
+      if (list.length === 1) {
+        setSelectedStoreId(list[0].storeId);
+        fetchOrders(list[0].storeId);
+      } else {
+        setSelectedStoreId(null);
+        setOrders([]);
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || 'Failed to load stores');
+    } finally {
+      setStoreLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetchOrders();
+    fetchStores();
   }, []);
 
   return (
     <div className="orders-page">
       <div className="orders-header">
         <h2>Orders</h2>
-        <button className="orders-refresh" onClick={fetchOrders} disabled={loading}>
+        <button
+          className="orders-refresh"
+          onClick={() => fetchOrders(selectedStoreId)}
+          disabled={loading || !selectedStoreId}
+        >
           {loading ? 'Loading...' : 'Refresh'}
         </button>
       </div>
+
+      {!storeLoading && stores.length > 1 && (
+        <div className="orders-store-selector">
+          {stores.map((store) => (
+            <button
+              key={store.storeId}
+              className={`store-chip ${selectedStoreId === store.storeId ? 'active' : ''}`}
+              onClick={() => {
+                setSelectedStoreId(store.storeId);
+                fetchOrders(store.storeId);
+              }}
+            >
+              {store.storeName}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {!storeLoading && stores.length === 1 && (
+        <div className="orders-store-single">
+          店铺：{stores[0].storeName}
+        </div>
+      )}
+
+      {!storeLoading && stores.length === 0 && (
+        <div className="orders-empty">No stores found for this supplier.</div>
+      )}
 
       {error && <div className="orders-error">❌ {error}</div>}
 
@@ -44,26 +141,58 @@ const OrdersPage = () => {
           <div>Currency</div>
           <div>Store</div>
           <div>Consumer</div>
+          <div>Pickup Token</div>
           <div>Pickup Slot</div>
           <div>Created</div>
+          <div>Actions</div>
         </div>
 
-        {!loading && orders.length === 0 && (
+        {!loading && selectedStoreId && (!Array.isArray(orders) || orders.length === 0) && (
           <div className="orders-empty">No orders found.</div>
         )}
 
-        {orders.map((order) => (
+        {Array.isArray(orders) && orders.map((order) => (
           <div className="orders-row" key={order.orderId}>
             <div>{order.orderId}</div>
-            <div>{order.status}</div>
+            <div>
+              <span className={`status-badge status-${order.status?.toLowerCase()}`}>
+                {order.status}
+              </span>
+            </div>
             <div>{order.totalAmount}</div>
             <div>{order.currency}</div>
             <div>{order.store?.storeId ?? '-'}</div>
             <div>{order.consumer?.consumerId ?? '-'}</div>
+            <div className="pickup-token">
+              {order.pickupToken?.qrTokenHash ? (
+                <span title={`Expires: ${order.pickupToken.expiresAt}`}>
+                  {order.pickupToken.qrTokenHash}
+                </span>
+              ) : (
+                <span className="token-none">No token</span>
+              )}
+            </div>
             <div>
               {order.pickupSlotStart ? `${order.pickupSlotStart} - ${order.pickupSlotEnd || ''}` : '-'}
             </div>
             <div>{order.createdAt || '-'}</div>
+            <div className="actions-col">
+              {order.status === 'PENDING' && (
+                <button
+                  className="btn-complete"
+                  onClick={() => updateOrderStatus(order.orderId, 'COMPLETED')}
+                  title="Mark as completed"
+                >
+                  ✓ Complete
+                </button>
+              )}
+              {order.status === 'COMPLETED' && (
+                <span className="status-text">Done</span>
+              )}
+              {order.status !== 'PENDING' && order.status !== 'COMPLETED' && (
+                <span className="status-text">{order.status}</span>
+              )}
+            </div>
           </div>
         ))}
       </div>

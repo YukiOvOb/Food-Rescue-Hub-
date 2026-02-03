@@ -10,6 +10,29 @@ const QRCodeDecoder = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
+  const parseResponseData = async (response) => {
+    const contentType = response.headers.get('content-type') || '';
+    const text = await response.text();
+
+    if (!text) {
+      return null;
+    }
+
+    if (contentType.includes('application/json')) {
+      try {
+        return JSON.parse(text);
+      } catch (err) {
+        return { error: text };
+      }
+    }
+
+    try {
+      return JSON.parse(text);
+    } catch (err) {
+      return { error: text };
+    }
+  };
+
   // 启动摄像头
   const startCamera = async () => {
     try {
@@ -59,14 +82,14 @@ const QRCodeDecoder = () => {
           body: formData,
         });
 
+        const data = await parseResponseData(response);
+
         if (!response.ok) {
-          const errorData = await response.json();
-          setError(errorData.error || 'Failed to decode QR code');
+          setError(data?.error || data?.message || 'Failed to decode QR code');
           return;
         }
 
-        const data = await response.json();
-        setResult(data.content);
+        setResult(data?.content || '');
         stopCamera();
       } catch (err) {
         setError('Network error: ' + err.message);
@@ -104,14 +127,14 @@ const QRCodeDecoder = () => {
         body: formData,
       });
 
+      const data = await parseResponseData(response);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to decode QR code');
+        setError(data?.error || data?.message || 'Failed to decode QR code');
         return;
       }
 
-      const data = await response.json();
-      setResult(data.content);
+      setResult(data?.content || '');
       setFile(null);
     } catch (err) {
       setError('Network error: ' + err.message);

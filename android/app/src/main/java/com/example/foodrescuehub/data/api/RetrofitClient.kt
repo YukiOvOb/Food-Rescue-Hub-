@@ -14,9 +14,9 @@ import java.util.concurrent.TimeUnit
 object RetrofitClient {
 
     // Backend server URL
-    // For Android emulator connecting to localhost: "http://10.0.2.2:8081/"
-    // For remote EC2 server: "http://47.129.223.141:8081/"
-    private const val BASE_URL = "http://10.0.2.2:8081/"
+    // For Android emulator connecting to localhost: "http://10.0.2.2:8080/"
+    // For remote EC2 server: "http://47.129.223.141:8080/"
+    private const val BASE_URL = "http://10.0.2.2:8080/"
 
     // Logging interceptor for debugging API calls
     private val loggingInterceptor = HttpLoggingInterceptor().apply {

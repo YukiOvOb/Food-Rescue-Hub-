@@ -9,9 +9,17 @@ const ProtectedRoute = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const auth = await authService.isAuthenticated();
-        console.log('Authentication status:', auth);
-        setIsAuth(auth);
+       
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        if (isLoggedIn) {
+          console.log('User authenticated via localStorage');
+          setIsAuth(true);
+        } else {
+         
+          const auth = await authService.isAuthenticated();
+          console.log('Authentication status from server:', auth);
+          setIsAuth(auth);
+        }
       } catch (error) {
         console.error('Auth check failed:', error);
         setIsAuth(false);
