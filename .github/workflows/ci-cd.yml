@@ -835,11 +835,23 @@ jobs:
 
             docker system prune -f
 
-      - name: Post-deploy smoke test (optional)
+      - name: Post-deploy smoke test (wait & verify)
         shell: bash
         run: |
           if [ -z "${PROD_URL}" ]; then
             echo "PROD_URL not set -> skipping smoke test"
             exit 0
           fi
-          curl -fsS "${PROD_URL}${SMOKE_PATH}"
+
+          for i in {1..30}; do
+            if curl -fsS "${PROD_URL}${SMOKE_PATH}"; then
+              echo "App is up!"
+              exit 0
+            fi
+            echo "Waiting for app... ($i)"
+            sleep 5
+          done
+
+          echo "App never became ready"
+          exit 1
+
