@@ -75,7 +75,7 @@ public class RecommendationController {
      *
      * @param consumerId User ID
      * @param query      Search keyword
-     * @param topK       Number of results to return (default 10)
+     * @param topK       Maximum number of results (optional, null = return all)
      * @param lat        User latitude (optional)
      * @param lng        User longitude (optional)
      * @return ML-sorted search results
@@ -84,7 +84,7 @@ public class RecommendationController {
     public ResponseEntity<Map<String, Object>> searchWithRecommendations(
             @RequestParam Long consumerId,
             @RequestParam String query,
-            @RequestParam(required = false, defaultValue = "10") Integer topK,
+            @RequestParam(required = false) Integer topK,
             @RequestParam(required = false) Double lat,
             @RequestParam(required = false) Double lng
     ) {

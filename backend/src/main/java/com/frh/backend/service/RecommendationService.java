@@ -381,7 +381,7 @@ public class RecommendationService {
      *
      * @param consumerId User ID
      * @param query      Search keyword
-     * @param topK       Number of results to return (default 10)
+     * @param topK       Maximum number of results to return (null = return all)
      * @param userLat    User latitude (optional)
      * @param userLng    User longitude (optional)
      * @return ML-sorted search results
@@ -393,10 +393,6 @@ public class RecommendationService {
             Double userLat,
             Double userLng
     ) {
-        if (topK == null) {
-            topK = 10;
-        }
-
         if (query == null || query.trim().isEmpty()) {
             return Collections.emptyList();
         }
@@ -423,14 +419,15 @@ public class RecommendationService {
                 .findByConsumerId(consumerId)
                 .orElse(null);
 
-        // 4. Build recommendation request (using matched listings as candidates)
+        // 4. Build recommendation request (using all matched listings as candidates)
+        // Set topK to null to get all results sorted by ML model
         Map<String, Object> requestBody = buildRecommendationRequest(
                 consumerId,
                 matchedListings,
                 consumerStats,
                 userLat,
                 userLng,
-                topK
+                matchedListings.size()  // Request all matched listings
         );
 
         // 5. Call Python recommendation service for sorting
@@ -444,6 +441,11 @@ public class RecommendationService {
             if (dto != null) {
                 result.add(dto);
             }
+        }
+
+        // 7. If topK is specified, limit the results
+        if (topK != null && topK > 0 && topK < result.size()) {
+            return result.subList(0, topK);
         }
 
         return result;
