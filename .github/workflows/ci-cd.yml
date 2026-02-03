@@ -343,12 +343,12 @@ jobs:
         with:
           category: "/language:${{ matrix.language }}"
 
-  # =========================================================
-  # STAGE 2: Integration Tests (robust + tool-based)
-  # Runs on:
-  #  - push to development/Sprint2 or main
-  #  - PRs to main
-  # =========================================================
+# =========================================================
+# STAGE 2: Integration Tests (robust + tool-based)
+# Runs on:
+#  - push to development/Sprint2 or main
+#  - PRs to main
+# =========================================================
   integration-tests:
     name: Integration Tests (API + DB + Optional UI)
     runs-on: ubuntu-latest
