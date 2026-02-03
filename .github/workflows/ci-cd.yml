@@ -8,23 +8,29 @@ on:
       - "feature/**"
       - "main"
   pull_request:
-    branches: [main]
+    branches: ["main"]
   workflow_dispatch:
+
+concurrency:
+  group: frh-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
-  security-events: write
 
 env:
-  REPORT_ONLY: "true"        # if "false", fail on lint/security issues
+  REPORT_ONLY: "true"          # true = don’t fail pipeline on lint/scans; false = strict gate
   PYTHON_DIR: "ml"
   ANDROID_DIR: "android"
-  FRONTEND_DIR: "frontend"
-  BACKEND_DIR: "backend"
+
+  # Local integration endpoints inside GitHub runner:
+  BACKEND_LOCAL_URL: "http://localhost:8080"
+  OPENAPI_PATH: "/v3/api-docs" # Swagger/OpenAPI (Spring Boot default)
+  SMOKE_PATH: "/api/hello"     # change to a real endpoint you have
 
 jobs:
   # =========================================================
-  # STAGE 0: Detect structure so jobs don't fail if missing
+  # STAGE 0: Detect project parts (safe skipping)
   # =========================================================
   detect:
     name: Detect project folders
@@ -35,10 +41,7 @@ jobs:
       has_python_src: ${{ steps.detect.outputs.has_python_src }}
       has_android: ${{ steps.detect.outputs.has_android }}
       has_compose: ${{ steps.detect.outputs.has_compose }}
-      has_postman: ${{ steps.detect.outputs.has_postman }}
       has_playwright: ${{ steps.detect.outputs.has_playwright }}
-      has_cypress: ${{ steps.detect.outputs.has_cypress }}
-      has_py_integration: ${{ steps.detect.outputs.has_py_integration }}
     steps:
       - uses: actions/checkout@v4
 
@@ -48,68 +51,45 @@ jobs:
           set -e
 
           # backend
-          if [ -f "${BACKEND_DIR}/pom.xml" ]; then
+          if [ -f "backend/pom.xml" ]; then
             echo "has_backend=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_backend=false" >> "$GITHUB_OUTPUT"
           fi
 
           # frontend
-          if [ -f "${FRONTEND_DIR}/package.json" ]; then
+          if [ -f "frontend/package.json" ]; then
             echo "has_frontend=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_frontend=false" >> "$GITHUB_OUTPUT"
           fi
 
-          # python: folder exists AND at least one .py file
+          # python source exists (any .py)
           if [ -d "${PYTHON_DIR}" ] && find "${PYTHON_DIR}" -type f -name "*.py" | grep -q .; then
             echo "has_python_src=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_python_src=false" >> "$GITHUB_OUTPUT"
           fi
 
-          # android
+          # android gradlew exists
           if [ -d "${ANDROID_DIR}" ] && [ -f "${ANDROID_DIR}/gradlew" ]; then
             echo "has_android=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_android=false" >> "$GITHUB_OUTPUT"
           fi
 
-          # docker compose (support docker-compose.yml OR compose.yaml)
-          if [ -f "docker-compose.yml" ] || [ -f "compose.yaml" ] || [ -f "compose.yml" ]; then
+          # docker compose exists in repo root
+          if [ -f "docker-compose.yml" ] || [ -f "compose.yml" ]; then
             echo "has_compose=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_compose=false" >> "$GITHUB_OUTPUT"
           fi
 
-          # Postman/Newman collection (optional)
-          if [ -f "tests/postman/collection.json" ]; then
-            echo "has_postman=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_postman=false" >> "$GITHUB_OUTPUT"
-          fi
-
-          # Python integration tests (optional convention)
-          # Example: ml/tests/integration or tests/integration under ml
-          if [ -d "${PYTHON_DIR}/tests/integration" ] || [ -d "${PYTHON_DIR}/integration_tests" ]; then
-            echo "has_py_integration=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_py_integration=false" >> "$GITHUB_OUTPUT"
-          fi
-
-          # Playwright UI tests (optional convention)
-          # Example: frontend/playwright.config.* or frontend/tests/e2e
-          if [ -f "${FRONTEND_DIR}/playwright.config.ts" ] || [ -f "${FRONTEND_DIR}/playwright.config.js" ]; then
+          # playwright config exists
+          if [ -f "frontend/playwright.config.ts" ] || [ -f "frontend/playwright.config.js" ]; then
             echo "has_playwright=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_playwright=false" >> "$GITHUB_OUTPUT"
-          fi
-
-          # Cypress UI tests (optional convention)
-          if [ -f "${FRONTEND_DIR}/cypress.config.ts" ] || [ -f "${FRONTEND_DIR}/cypress.config.js" ]; then
-            echo "has_cypress=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_cypress=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Print detected flags
@@ -119,13 +99,11 @@ jobs:
           echo "has_python_src=${{ steps.detect.outputs.has_python_src }}"
           echo "has_android=${{ steps.detect.outputs.has_android }}"
           echo "has_compose=${{ steps.detect.outputs.has_compose }}"
-          echo "has_postman=${{ steps.detect.outputs.has_postman }}"
-          echo "has_py_integration=${{ steps.detect.outputs.has_py_integration }}"
           echo "has_playwright=${{ steps.detect.outputs.has_playwright }}"
-          echo "has_cypress=${{ steps.detect.outputs.has_cypress }}"
+
 
   # =========================================================
-  # STAGE 1: Unit Tests
+  # STAGE 1: Unit Tests (Java)
   # =========================================================
   backend-junit:
     name: Unit Tests (Java Backend) + JaCoCo
@@ -136,7 +114,7 @@ jobs:
 
       - name: Skip (no backend)
         if: needs.detect.outputs.has_backend != 'true'
-        run: echo "No backend/pom.xml found -> skipping Java unit tests."
+        run: echo "No backend/pom.xml found -> skipping Java tests."
 
       - name: Set up JDK 17
         if: needs.detect.outputs.has_backend == 'true'
@@ -146,14 +124,16 @@ jobs:
           distribution: "temurin"
           cache: maven
 
-      - name: Run unit tests (Maven)
+      - name: Run unit tests + coverage (Maven)
         if: needs.detect.outputs.has_backend == 'true'
         working-directory: backend
+        shell: bash
         run: |
+          set -e
           chmod +x mvnw
           ./mvnw -q clean test
 
-      - name: Upload Maven test reports
+      - name: Upload Maven surefire reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -169,16 +149,20 @@ jobs:
           path: backend/target/site/jacoco/**
           if-no-files-found: warn
 
+
+  # =========================================================
+  # STAGE 1: Unit Tests (Python) - only if python exists
+  # =========================================================
   python-tests:
-    name: Unit Tests (Python) + Coverage
+    name: Unit Tests (Python ML) + Coverage
     runs-on: ubuntu-latest
     needs: [detect]
     steps:
       - uses: actions/checkout@v4
 
-      - name: Skip (no python source)
+      - name: Skip (no python)
         if: needs.detect.outputs.has_python_src != 'true'
-        run: echo "No Python source detected -> skipping Python unit tests."
+        run: echo "No Python source detected -> skipping Python tests."
 
       - name: Set up Python
         if: needs.detect.outputs.has_python_src == 'true'
@@ -187,7 +171,7 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      - name: Install deps
+      - name: Install Python deps
         if: needs.detect.outputs.has_python_src == 'true'
         shell: bash
         run: |
@@ -199,12 +183,12 @@ jobs:
           elif [ -f "pyproject.toml" ]; then
             pip install .
           else
-            echo "No requirements.txt / pyproject.toml found — skipping deps install"
+            echo "No requirements.txt / pyproject.toml found -> installing only test tools"
           fi
 
           pip install pytest pytest-cov
 
-      - name: Run pytest (only if tests exist)
+      - name: Run pytest + coverage (if tests exist)
         if: needs.detect.outputs.has_python_src == 'true'
         shell: bash
         run: |
@@ -219,7 +203,7 @@ jobs:
               --cov-report=html:htmlcov || \
               ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
           else
-            echo "No Python tests folder found — skipping pytest"
+            echo "No Python tests found -> skipping pytest"
           fi
 
       - name: Upload pytest reports
@@ -233,72 +217,158 @@ jobs:
             ml/htmlcov/**
           if-no-files-found: warn
 
+
   # =========================================================
-  # STAGE 1: SCA (Snyk) + SAST (CodeQL)
+  # STAGE 1: Lint & Code Quality (reports)
   # =========================================================
-  sca-snyk:
-    name: SCA (Snyk Open Source)
+  lint-code-quality:
+    name: Lint & Code Quality (Java + Python + React + Thymeleaf + Android)
     runs-on: ubuntu-latest
     needs: [detect]
-    permissions:
-      contents: read
-      actions: read
-    env:
-      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check SNYK_TOKEN
-        id: snykcheck
+      # ---- Java Checkstyle ----
+      - name: Set up JDK 17
+        if: needs.detect.outputs.has_backend == 'true'
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Java Checkstyle
+        if: needs.detect.outputs.has_backend == 'true'
+        working-directory: backend
         shell: bash
         run: |
-          if [ -z "$SNYK_TOKEN" ]; then
-            echo "ok=false" >> $GITHUB_OUTPUT
+          chmod +x mvnw
+          if [ "${REPORT_ONLY}" = "true" ]; then
+            ./mvnw -q checkstyle:check || true
           else
-            echo "ok=true" >> $GITHUB_OUTPUT
+            ./mvnw -q checkstyle:check
           fi
 
-      - name: Skip if no SNYK_TOKEN
-        if: steps.snykcheck.outputs.ok != 'true'
-        run: echo "SNYK_TOKEN missing -> skipping Snyk SCA."
-
-      - name: Setup Snyk
-        if: steps.snykcheck.outputs.ok == 'true'
-        uses: snyk/actions/setup@master
+      - name: Upload Checkstyle report
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          snyk-version: latest
+          name: backend-checkstyle-report
+          path: |
+            backend/target/checkstyle-result.xml
+            backend/target/site/checkstyle.*
+          if-no-files-found: warn
 
-      - name: SCA - Java
-        if: steps.snykcheck.outputs.ok == 'true' && needs.detect.outputs.has_backend == 'true'
-        run: |
-          if [ "${REPORT_ONLY}" = "true" ]; then
-            snyk test --file=backend/pom.xml --severity-threshold=high || true
-          else
-            snyk test --file=backend/pom.xml --severity-threshold=high
-          fi
+      # ---- Python lint (Ruff recommended, falls back to flake8 if you prefer) ----
+      - name: Set up Python (lint)
+        if: needs.detect.outputs.has_python_src == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
 
-      - name: SCA - React
-        if: steps.snykcheck.outputs.ok == 'true' && needs.detect.outputs.has_frontend == 'true'
+      - name: Python Ruff lint
+        if: needs.detect.outputs.has_python_src == 'true'
+        shell: bash
         run: |
-          cd frontend
-          if [ "${REPORT_ONLY}" = "true" ]; then
-            snyk test --severity-threshold=high || true
-          else
-            snyk test --severity-threshold=high
-          fi
-
-      - name: SCA - Python
-        if: steps.snykcheck.outputs.ok == 'true' && needs.detect.outputs.has_python_src == 'true'
-        run: |
+          set -e
+          pip install ruff
           cd "${PYTHON_DIR}"
           if [ "${REPORT_ONLY}" = "true" ]; then
-            snyk test --severity-threshold=high || true
+            ruff check . --output-format=full > ruff-report.txt || true
           else
-            snyk test --severity-threshold=high
+            ruff check . --output-format=full > ruff-report.txt
           fi
 
+      - name: Upload Ruff report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-ruff-report
+          path: ml/ruff-report.txt
+          if-no-files-found: warn
+
+      # ---- React ESLint ----
+      - name: Setup Node 20
+        if: needs.detect.outputs.has_frontend == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Frontend install deps
+        if: needs.detect.outputs.has_frontend == 'true'
+        working-directory: frontend
+        run: npm ci
+
+      - name: Frontend ESLint report
+        if: needs.detect.outputs.has_frontend == 'true'
+        working-directory: frontend
+        shell: bash
+        run: |
+          npx eslint "src/**/*.{js,jsx}" -f json -o eslint-report.json || true
+
+      - name: Upload ESLint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-eslint-report
+          path: frontend/eslint-report.json
+          if-no-files-found: warn
+
+      # ---- Thymeleaf HTMLHint ----
+      - name: Install HTMLHint
+        if: needs.detect.outputs.has_backend == 'true'
+        run: npm i -g htmlhint
+
+      - name: Thymeleaf HTMLHint
+        if: needs.detect.outputs.has_backend == 'true'
+        shell: bash
+        run: |
+          if [ "${REPORT_ONLY}" = "true" ]; then
+            htmlhint "backend/src/main/resources/templates/**/*.html" > htmlhint-report.txt || true
+          else
+            htmlhint "backend/src/main/resources/templates/**/*.html" > htmlhint-report.txt
+          fi
+
+      - name: Upload HTMLHint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: thymeleaf-htmlhint-report
+          path: htmlhint-report.txt
+          if-no-files-found: warn
+
+      # ---- Android Lint ----
+      - name: Android lint
+        if: needs.detect.outputs.has_android == 'true'
+        shell: bash
+        run: |
+          cd "${ANDROID_DIR}"
+          chmod +x gradlew
+          if [ "${REPORT_ONLY}" = "true" ]; then
+            ./gradlew lint || true
+          else
+            ./gradlew lint
+          fi
+
+      - name: Upload Android lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-lint-report
+          path: |
+            android/**/build/reports/lint-results*.html
+            android/**/build/reports/lint-results*.xml
+          if-no-files-found: warn
+
+
+  # =========================================================
+  # STAGE 1: SAST (CodeQL) - reports to Security tab
+  # =========================================================
   sast-codeql:
-    name: SAST (CodeQL)
+    name: SAST (CodeQL) - Java + JavaScript (+ Python if present)
     runs-on: ubuntu-latest
     needs: [detect]
     permissions:
@@ -312,9 +382,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Skip python CodeQL if no python source
+      - name: Skip python language if no python src
         if: matrix.language == 'python' && needs.detect.outputs.has_python_src != 'true'
-        run: echo "No Python source -> skipping Python CodeQL."
+        run: echo "No python source -> skipping CodeQL python."
 
       - name: Initialize CodeQL
         if: matrix.language != 'python' || needs.detect.outputs.has_python_src == 'true'
@@ -322,7 +392,7 @@ jobs:
         with:
           languages: ${{ matrix.language }}
 
-      - name: Set up JDK 17 (Java CodeQL)
+      - name: Set up JDK 17 (for Java CodeQL)
         if: matrix.language == 'java' && needs.detect.outputs.has_backend == 'true'
         uses: actions/setup-java@v4
         with:
@@ -330,8 +400,9 @@ jobs:
           distribution: "temurin"
           cache: maven
 
-      - name: Build backend (needed for Java CodeQL)
+      - name: Build backend (required for Java CodeQL)
         if: matrix.language == 'java' && needs.detect.outputs.has_backend == 'true'
+        shell: bash
         run: |
           cd backend
           chmod +x mvnw
@@ -343,135 +414,151 @@ jobs:
         with:
           category: "/language:${{ matrix.language }}"
 
-# =========================================================
-# STAGE 2: Integration Tests (robust + tool-based)
-# Runs on:
-#  - push to development/Sprint2 or main
-#  - PRs to main
-# =========================================================
-  integration-tests:
-    name: Integration Tests (API + DB + Optional UI)
+
+  # =========================================================
+  # STAGE 1: SCA / Secrets / Misconfig (OSS) - Trivy FS scan
+  # =========================================================
+  sca-trivy-fs:
+    name: SCA + Secrets + Misconfig (Trivy FS)
     runs-on: ubuntu-latest
-    needs: [detect, backend-junit, python-tests, sca-snyk, sast-codeql]
+    needs: [detect]
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy FS scan -> SARIF
+        shell: bash
+        run: |
+          set -e
+          # Install Trivy
+          sudo apt-get update -y
+          sudo apt-get install -y wget
+          wget -qO- https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.57.1_Linux-64bit.tar.gz | tar zx
+          sudo mv trivy /usr/local/bin/trivy
+
+          # Scan repository for vulnerabilities/secrets/misconfig
+          trivy fs \
+            --scanners vuln,secret,misconfig \
+            --format sarif \
+            --output trivy-fs.sarif \
+            --severity HIGH,CRITICAL \
+            .
+
+          # Gate only if REPORT_ONLY=false
+          if [ "${REPORT_ONLY}" != "true" ]; then
+            trivy fs --scanners vuln,secret,misconfig --exit-code 1 --severity HIGH,CRITICAL .
+          fi
+
+      - name: Upload Trivy SARIF to Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-fs.sarif
+
+      - name: Upload Trivy report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-fs-sarif
+          path: trivy-fs.sarif
+          if-no-files-found: warn
+
+
+  # =========================================================
+  # STAGE 2: Integration Tests (development/Sprint2 + main + PR->main)
+  # Tools: docker compose + Schemathesis (+ Playwright optional)
+  # =========================================================
+  integration-tests:
+    name: Integration Tests (Compose + Schemathesis + optional Playwright)
+    runs-on: ubuntu-latest
+    needs:
+      - detect
+      - backend-junit
+      - python-tests
+      - lint-code-quality
+      - sast-codeql
+      - sca-trivy-fs
+
     if: >
-      needs.detect.outputs.has_compose == 'true' &&
-      (
-        (github.event_name == 'push' && (github.ref == 'refs/heads/development/Sprint2' || github.ref == 'refs/heads/main')) ||
-        (github.event_name == 'pull_request' && github.base_ref == 'main')
-      )
+      (github.event_name == 'push' && (github.ref == 'refs/heads/development/Sprint2' || github.ref == 'refs/heads/main')) ||
+      (github.event_name == 'pull_request' && github.base_ref == 'main')
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Show compose file used
-        shell: bash
-        run: |
-          if [ -f docker-compose.yml ]; then echo "Using docker-compose.yml"; fi
-          if [ -f compose.yml ]; then echo "Using compose.yml"; fi
-          if [ -f compose.yaml ]; then echo "Using compose.yaml"; fi
+      - name: Skip (no compose file)
+        if: needs.detect.outputs.has_compose != 'true'
+        run: echo "No docker-compose.yml/compose.yml found -> skipping integration."
 
-      # ---- Start services
       - name: Start stack (Docker Compose)
-        run: |
-          docker compose up -d
-          docker compose ps
-
-      # ---- Wait for backend (robust readiness)
-      - name: Wait for backend readiness
+        if: needs.detect.outputs.has_compose == 'true'
         shell: bash
         run: |
           set -e
-          URL="http://localhost:8080/api/hello"
-          echo "Waiting for: $URL"
+          if [ -f "docker-compose.yml" ]; then
+            docker compose -f docker-compose.yml up -d
+            docker compose -f docker-compose.yml ps
+          else
+            docker compose -f compose.yml up -d
+            docker compose -f compose.yml ps
+          fi
 
+      - name: Wait for backend (health)
+        if: needs.detect.outputs.has_compose == 'true'
+        shell: bash
+        run: |
+          set -e
           for i in {1..60}; do
-            if curl -fsS "$URL" >/dev/null 2>&1; then
-              echo "Backend is ready."
+            if curl -fsS "${BACKEND_LOCAL_URL}${SMOKE_PATH}" >/dev/null 2>&1; then
+              echo "Backend is up"
               exit 0
             fi
-            echo "Still waiting... attempt=$i"
+            echo "Waiting for backend... ($i)"
             sleep 5
           done
-
-          echo "Backend never became ready. Dumping logs:"
-          docker compose logs --no-color
+          echo "Backend did not become ready"
+          if [ -f "docker-compose.yml" ]; then
+            docker compose -f docker-compose.yml logs --no-color
+          else
+            docker compose -f compose.yml logs --no-color
+          fi
           exit 1
 
-      # ---- API Integration Tool #1: curl assertions (quick)
-      - name: API smoke assertions (curl)
-        shell: bash
-        run: |
-          set -e
-          curl -fsS http://localhost:8080/api/hello
-          # Add more endpoints if you have them:
-          # curl -fsS http://localhost:8080/api/health
-          # curl -fsS http://localhost:8080/api/version
-
-      # ---- API Integration Tool #2: Postman/Newman (recommended)
-      - name: Newman API tests (Postman collection)
-        if: needs.detect.outputs.has_postman == 'true'
-        shell: bash
-        run: |
-          set -e
-          npm i -g newman
-          newman run tests/postman/collection.json \
-            --env-var baseUrl=http://localhost:8080 \
-            --reporters cli,junit \
-            --reporter-junit-export newman-junit.xml || \
-            ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
-
-      - name: Upload Newman report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: newman-integration-report
-          path: newman-junit.xml
-          if-no-files-found: warn
-
-      # ---- Python Integration Tool: pytest integration suite (optional)
-      - name: Run Python integration suite (pytest)
-        if: needs.detect.outputs.has_python_src == 'true' && needs.detect.outputs.has_py_integration == 'true'
+      # ---------- Schemathesis (Swagger/OpenAPI automated API calls) ----------
+      - name: Setup Python (Schemathesis)
+        if: needs.detect.outputs.has_compose == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"
 
-      - name: Python integration tests
-        if: needs.detect.outputs.has_python_src == 'true' && needs.detect.outputs.has_py_integration == 'true'
+      - name: Schemathesis API tests (auto from Swagger)
+        if: needs.detect.outputs.has_compose == 'true'
         shell: bash
         run: |
           set -e
-          cd "${PYTHON_DIR}"
-          if [ -f "requirements.txt" ]; then
-            pip install -r requirements.txt
-          elif [ -f "pyproject.toml" ]; then
-            pip install .
-          fi
-          pip install pytest
+          pip install schemathesis==3.* junitparser
 
-          # Example: run only integration tests
-          # If you tag them: pytest -m integration
-          # Else: point to folder:
-          if [ -d "tests/integration" ]; then
-            pytest -q tests/integration --junitxml=pytest-integration.xml || \
-              ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
-          elif [ -d "integration_tests" ]; then
-            pytest -q integration_tests --junitxml=pytest-integration.xml || \
-              ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
-          else
-            echo "No python integration folder found - skipping."
-          fi
+          OPENAPI_URL="${BACKEND_LOCAL_URL}${OPENAPI_PATH}"
+          echo "OpenAPI: ${OPENAPI_URL}"
 
-      - name: Upload Python integration report
+          # Run, produce JUnit XML
+          schemathesis run "${OPENAPI_URL}" \
+            --base-url "${BACKEND_LOCAL_URL}" \
+            --checks all \
+            --junit-xml schemathesis-junit.xml || \
+            ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
+
+      - name: Upload Schemathesis report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pytest-integration-report
-          path: ml/pytest-integration.xml
+          name: schemathesis-report
+          path: schemathesis-junit.xml
           if-no-files-found: warn
 
-      # ---- Frontend UI Integration/E2E Tool: Playwright (optional, best)
-      - name: Setup Node (for UI tests)
+      # ---------- Playwright (optional UI E2E) ----------
+      - name: Setup Node 20 (Playwright)
         if: needs.detect.outputs.has_frontend == 'true' && needs.detect.outputs.has_playwright == 'true'
         uses: actions/setup-node@v4
         with:
@@ -479,92 +566,316 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Playwright UI tests
+      - name: Playwright E2E (optional)
         if: needs.detect.outputs.has_frontend == 'true' && needs.detect.outputs.has_playwright == 'true'
+        working-directory: frontend
         shell: bash
         run: |
           set -e
-          cd frontend
           npm ci
           npx playwright install --with-deps
-          # You should use baseURL in playwright config or env:
-          BASE_URL="http://localhost:8081"
-          echo "Running UI tests against $BASE_URL"
-          BASE_URL=$BASE_URL npx playwright test || \
-            ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
+          # You can pass baseURL via env if your config reads it
+          BASE_URL="${BACKEND_LOCAL_URL}"
+          echo "BASE_URL=${BASE_URL}"
+          npx playwright test || ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
 
-      - name: Upload Playwright report
+      - name: Upload Playwright report (optional)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: frontend/playwright-report/**
-          if-no-files-found: warn
-
-      # ---- Capture logs always (super helpful)
-      - name: Collect docker logs
-        if: always()
-        shell: bash
-        run: |
-          mkdir -p artifacts
-          docker compose ps > artifacts/docker-compose-ps.txt || true
-          docker compose logs --no-color > artifacts/docker-compose-logs.txt || true
-
-      - name: Upload compose logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: integration-compose-logs
-          path: artifacts/**
+          path: |
+            frontend/playwright-report/**
+            frontend/test-results/**
           if-no-files-found: warn
 
       - name: Stop stack
-        if: always()
-        run: docker compose down -v
+        if: always() && needs.detect.outputs.has_compose == 'true'
+        shell: bash
+        run: |
+          if [ -f "docker-compose.yml" ]; then
+            docker compose -f docker-compose.yml down -v
+          else
+            docker compose -f compose.yml down -v
+          fi
+
 
   # =========================================================
-  # STAGE 3: Main Release (Docker build/push after Integration)
+  # STAGE 3: Build & Push Docker Images (main only)
   # =========================================================
   build-and-push:
     name: Build & Push Docker Images (main)
     runs-on: ubuntu-latest
-    needs: [detect, backend-junit, python-tests, sca-snyk, sast-codeql, integration-tests]
+    needs: [detect, integration-tests]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
 
-      - name: Check Docker secrets
-        id: dockercheck
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Skip if Docker credentials missing
+        shell: bash
         run: |
-          if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
-            echo "ok=false" >> $GITHUB_OUTPUT
-          else
-            echo "ok=true" >> $GITHUB_OUTPUT
+          if [ -z "${DOCKER_USERNAME}" ] || [ -z "${DOCKER_PASSWORD}" ]; then
+            echo "DOCKER_USERNAME/DOCKER_PASSWORD missing -> skipping build & push"
+            exit 0
           fi
 
-      - name: Skip build (missing Docker creds)
-        if: steps.dockercheck.outputs.ok != 'true'
-        run: echo "Docker secrets missing -> skipping build & push."
-
       - name: Login to Docker Hub
-        if: steps.dockercheck.outputs.ok == 'true'
+        if: env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build & push backend
-        if: steps.dockercheck.outputs.ok == 'true' && needs.detect.outputs.has_backend == 'true'
+      - name: Build & push backend image
+        if: needs.detect.outputs.has_backend == 'true' && env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
+        shell: bash
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/frh-backend:latest ./backend
-          docker push ${{ secrets.DOCKER_USERNAME }}/frh-backend:latest
+          set -e
+          docker build -t "${DOCKER_USERNAME}/frh-backend:latest" ./backend
+          docker push "${DOCKER_USERNAME}/frh-backend:latest"
 
-      - name: Build & push frontend
-        if: steps.dockercheck.outputs.ok == 'true' && needs.detect.outputs.has_frontend == 'true'
+      - name: Build & push frontend image
+        if: needs.detect.outputs.has_frontend == 'true' && env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
+        shell: bash
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest -f frontend/Dockerfile .
-          docker push ${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest
+          set -e
+          docker build -t "${DOCKER_USERNAME}/frh-frontend:latest" -f frontend/Dockerfile .
+          docker push "${DOCKER_USERNAME}/frh-frontend:latest"
+
+
+  # =========================================================
+  # STAGE 3: Container Image Scan (Trivy) - main only
+  # =========================================================
+  image-scan-trivy:
+    name: Container Image Scan (Trivy) - main
+    runs-on: ubuntu-latest
+    needs: [detect, build-and-push]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+    steps:
+      - name: Skip if DOCKER_USERNAME missing
+        shell: bash
+        run: |
+          if [ -z "${DOCKER_USERNAME}" ]; then
+            echo "DOCKER_USERNAME missing -> skipping image scan"
+            exit 0
+          fi
+
+      - name: Scan backend image (if exists)
+        if: needs.detect.outputs.has_backend == 'true' && env.DOCKER_USERNAME != ''
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: "${{ secrets.DOCKER_USERNAME }}/frh-backend:latest"
+          format: table
+          exit-code: "0"
+          severity: "CRITICAL,HIGH"
+
+      - name: Scan frontend image (if exists)
+        if: needs.detect.outputs.has_frontend == 'true' && env.DOCKER_USERNAME != ''
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: "${{ secrets.DOCKER_USERNAME }}/frh-frontend:latest"
+          format: table
+          exit-code: "0"
+          severity: "CRITICAL,HIGH"
+
+
+  # =========================================================
+  # STAGE 3: Port Scan (nmap) - optional (main only)
+  # =========================================================
+  port-scan-nmap:
+    name: Port Scan (nmap) - optional
+    runs-on: ubuntu-latest
+    needs: [image-scan-trivy]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      NMAP_TARGET: ${{ secrets.NMAP_TARGET }}     # e.g. 47.129.223.141 (IP) OR staging domain
+    steps:
+      - name: Skip if NMAP_TARGET not set
+        shell: bash
+        run: |
+          if [ -z "${NMAP_TARGET}" ]; then
+            echo "NMAP_TARGET not set -> skipping nmap"
+            exit 0
+          fi
+
+      - name: Install nmap
+        run: sudo apt-get update && sudo apt-get install -y nmap
+
+      - name: Run nmap
+        shell: bash
+        run: |
+          set -e
+          echo "Scanning: ${NMAP_TARGET}"
+          nmap -sV -Pn -T3 "${NMAP_TARGET}" -oN nmap-report.txt || true
+
+      - name: Upload nmap report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nmap-report
+          path: nmap-report.txt
+          if-no-files-found: warn
+
+
+  # =========================================================
+  # STAGE 3: Non-functional tests (k6) - optional (main only)
+  # =========================================================
+  perf-k6:
+    name: Performance (k6) - optional
+    runs-on: ubuntu-latest
+    needs: [port-scan-nmap]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      STAGING_URL: ${{ secrets.STAGING_URL }}   # e.g. http://47.129.223.141:8080
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Skip if STAGING_URL not set
+        shell: bash
+        run: |
+          if [ -z "${STAGING_URL}" ]; then
+            echo "STAGING_URL not set -> skipping k6"
+            exit 0
+          fi
+
+      - name: Install k6
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnupg ca-certificates
+          curl -s https://dl.k6.io/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/k6-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update && sudo apt-get install -y k6
+
+      - name: Run k6 (smoke)
+        shell: bash
+        run: |
+          set -e
+          if [ -f "tests/k6/script.js" ]; then
+            k6 run --summary-export=k6-summary.json tests/k6/script.js || true
+          else
+            cat > k6-smoke.js << 'EOF'
+            import http from 'k6/http';
+            import { check, sleep } from 'k6';
+
+            export const options = { vus: 5, duration: '30s' };
+
+            export default function () {
+              const res = http.get(__ENV.STAGING_URL + "/api/hello");
+              check(res, { 'status is 200': (r) => r.status === 200 });
+              sleep(1);
+            }
+            EOF
+            k6 run --summary-export=k6-summary.json k6-smoke.js || true
+          fi
+
+      - name: Upload k6 report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-report
+          path: k6-summary.json
+          if-no-files-found: warn
+
+
+  # =========================================================
+  # STAGE 3: DAST (OWASP ZAP) - optional (main only)
+  # =========================================================
+  dast-zap:
+    name: DAST (OWASP ZAP) - optional
+    runs-on: ubuntu-latest
+    needs: [perf-k6]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      STAGING_URL: ${{ secrets.STAGING_URL }}
+    steps:
+      - name: Skip if STAGING_URL not set
+        shell: bash
+        run: |
+          if [ -z "${STAGING_URL}" ]; then
+            echo "STAGING_URL not set -> skipping ZAP"
+            exit 0
+          fi
+
+      - name: Run ZAP baseline scan
+        shell: bash
+        run: |
+          set -e
+          docker run --rm -t owasp/zap2docker-stable zap-baseline.py \
+            -t "${STAGING_URL}" \
+            -r zap-report.html || true
+
+      - name: Upload ZAP report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-dast-report
+          path: zap-report.html
+          if-no-files-found: warn
+
+
+  # =========================================================
+  # STAGE 4: Deploy to AWS EC2 (main only)
+  # Uses docker compose on server
+  # =========================================================
+  deploy:
+    name: Deploy to AWS EC2 (docker compose)
+    runs-on: ubuntu-latest
+    needs: [dast-zap]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+      PROD_URL: ${{ secrets.PROD_URL }}     # optional for smoke test, e.g. http://47.129.223.141:8080
+    steps:
+      - name: Skip if EC2 secrets missing
+        shell: bash
+        run: |
+          if [ -z "${EC2_HOST}" ] || [ -z "${EC2_SSH_KEY}" ]; then
+            echo "EC2_HOST / EC2_SSH_KEY missing -> skipping deploy"
+            exit 0
+          fi
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd ~/Food-Rescue-Hub-
+
+            # Validate compose files
+            if [ -f docker-compose.yml ]; then
+              docker compose -f docker-compose.yml config >/dev/null
+              docker compose -f docker-compose.yml pull
+              docker compose -f docker-compose.yml up -d
+              docker compose -f docker-compose.yml ps
+            elif [ -f compose.yml ]; then
+              docker compose -f compose.yml config >/dev/null
+              docker compose -f compose.yml pull
+              docker compose -f compose.yml up -d
+              docker compose -f compose.yml ps
+            else
+              echo "No compose file on server in ~/Food-Rescue-Hub-"
+              exit 1
+            fi
+
+            # Optional cleanup
+            docker system prune -f
+
+      - name: Post-deploy smoke test (optional)
+        shell: bash
+        run: |
+          if [ -z "${PROD_URL}" ]; then
+            echo "PROD_URL not set -> skipping smoke test"
+            exit 0
+          fi
+          curl -fsS "${PROD_URL}${SMOKE_PATH}"
