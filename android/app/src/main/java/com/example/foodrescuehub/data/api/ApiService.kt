@@ -55,6 +55,19 @@ interface ApiService {
     ): Response<RecommendationResponse>
 
     /**
+     * Search with ML-powered recommendations
+     * GET /api/recommendations/search?consumerId={consumerId}&query={query}&topK={topK}&lat={lat}&lng={lng}
+     */
+    @GET("api/recommendations/search")
+    suspend fun searchWithRecommendations(
+        @Query("consumerId") consumerId: Long,
+        @Query("query") query: String,
+        @Query("topK") topK: Int = 10,
+        @Query("lat") latitude: Double? = null,
+        @Query("lng") longitude: Double? = null
+    ): Response<RecommendationResponse>
+
+    /**
      * Get consumer profile by ID
      * GET /api/consumer/{consumerId}
      */

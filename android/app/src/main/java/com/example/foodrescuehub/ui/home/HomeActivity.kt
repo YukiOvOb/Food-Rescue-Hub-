@@ -307,15 +307,17 @@ class HomeActivity : AppCompatActivity() {
     private fun setupSearchView() {
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
-                query?.let { viewModel.searchListings(it) }
+                query?.let {
+                    // Navigate to SearchResultsActivity
+                    val intent = Intent(this@HomeActivity, com.example.foodrescuehub.ui.search.SearchResultsActivity::class.java)
+                    intent.putExtra("query", it)
+                    startActivity(intent)
+                }
                 return true
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
-                if (newText.isNullOrBlank()) {
-                    // Reset to filtered listings when search is cleared
-                    viewModel.searchListings("")
-                }
+                // Optional: implement real-time search suggestion
                 return true
             }
         })

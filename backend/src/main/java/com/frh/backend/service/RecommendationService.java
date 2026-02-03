@@ -377,6 +377,79 @@ public class RecommendationService {
     }
 
     /**
+     * Search with recommendations - Recommend products based on search keywords
+     *
+     * @param consumerId User ID
+     * @param query      Search keyword
+     * @param topK       Number of results to return (default 10)
+     * @param userLat    User latitude (optional)
+     * @param userLng    User longitude (optional)
+     * @return ML-sorted search results
+     */
+    public List<StoreRecommendationDTO> searchWithRecommendations(
+            Long consumerId,
+            String query,
+            Integer topK,
+            Double userLat,
+            Double userLng
+    ) {
+        if (topK == null) {
+            topK = 10;
+        }
+
+        if (query == null || query.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 1. Get all active listings
+        List<Listing> activeListings = listingRepository.findByStatus("ACTIVE");
+
+        // 2. Filter listings by keyword (title or description contains keyword)
+        String searchQuery = query.toLowerCase().trim();
+        List<Listing> matchedListings = activeListings.stream()
+                .filter(listing -> {
+                    String title = listing.getTitle() != null ? listing.getTitle().toLowerCase() : "";
+                    String description = listing.getDescription() != null ? listing.getDescription().toLowerCase() : "";
+                    return title.contains(searchQuery) || description.contains(searchQuery);
+                })
+                .collect(Collectors.toList());
+
+        if (matchedListings.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 3. Get user statistics
+        ConsumerStats consumerStats = consumerStatsRepository
+                .findByConsumerId(consumerId)
+                .orElse(null);
+
+        // 4. Build recommendation request (using matched listings as candidates)
+        Map<String, Object> requestBody = buildRecommendationRequest(
+                consumerId,
+                matchedListings,
+                consumerStats,
+                userLat,
+                userLng,
+                topK
+        );
+
+        // 5. Call Python recommendation service for sorting
+        List<Map<String, Object>> recommendations = callRecommendationService(requestBody);
+
+        // 6. Convert to DTO
+        List<StoreRecommendationDTO> result = new ArrayList<>();
+        int rank = 1;
+        for (Map<String, Object> rec : recommendations) {
+            StoreRecommendationDTO dto = convertToDTO(rec, rank++, userLat, userLng);
+            if (dto != null) {
+                result.add(dto);
+            }
+        }
+
+        return result;
+    }
+
+    /**
      * 生成推荐原因
      */
     private String generateRecommendationReason(StoreRecommendationDTO dto, Double avgRating, int savingsPercentage) {

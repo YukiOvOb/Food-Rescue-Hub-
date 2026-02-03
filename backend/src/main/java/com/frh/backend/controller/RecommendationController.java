@@ -69,6 +69,56 @@ public class RecommendationController {
     }
 
     /**
+     * Search with recommendations - Recommend products based on search keywords
+     *
+     * GET /api/recommendations/search?consumerId=1&query=bread&topK=10&lat=1.3521&lng=103.8198
+     *
+     * @param consumerId User ID
+     * @param query      Search keyword
+     * @param topK       Number of results to return (default 10)
+     * @param lat        User latitude (optional)
+     * @param lng        User longitude (optional)
+     * @return ML-sorted search results
+     */
+    @GetMapping("/search")
+    public ResponseEntity<Map<String, Object>> searchWithRecommendations(
+            @RequestParam Long consumerId,
+            @RequestParam String query,
+            @RequestParam(required = false, defaultValue = "10") Integer topK,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng
+    ) {
+        try {
+            List<StoreRecommendationDTO> recommendations =
+                    recommendationService.searchWithRecommendations(
+                            consumerId,
+                            query,
+                            topK,
+                            lat,
+                            lng
+                    );
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("consumerId", consumerId);
+            response.put("query", query);
+            response.put("recommendations", recommendations);
+            response.put("count", recommendations.size());
+            response.put("message", "Search recommendations retrieved successfully");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", e.getMessage());
+            errorResponse.put("message", "Failed to retrieve search recommendations");
+
+            return ResponseEntity.status(500).body(errorResponse);
+        }
+    }
+
+    /**
      * 健康检查
      *
      * GET /api/recommendations/health

@@ -49,6 +49,11 @@
             android:theme="@style/Theme.FoodRescueHub"
             android:parentActivityName=".ui.home.HomeActivity" />
         <activity
+            android:name=".ui.search.SearchResultsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.FoodRescueHub"
+            android:parentActivityName=".ui.home.HomeActivity" />
+        <activity
             android:name=".MainActivity"
             android:exported="false" />
     </application>
