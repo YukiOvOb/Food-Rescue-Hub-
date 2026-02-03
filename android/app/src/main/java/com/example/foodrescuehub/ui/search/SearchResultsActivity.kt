@@ -24,6 +24,7 @@ class SearchResultsActivity : AppCompatActivity() {
     private lateinit var searchView: SearchView
     private lateinit var rvResults: RecyclerView
     private lateinit var progressBar: ProgressBar
+    private lateinit var progressLayout: LinearLayout
     private lateinit var layoutEmptyState: LinearLayout
     private lateinit var tvResultsCount: TextView
     private lateinit var spinnerSort: Spinner
@@ -54,6 +55,7 @@ class SearchResultsActivity : AppCompatActivity() {
         searchView = findViewById(R.id.searchView)
         rvResults = findViewById(R.id.rvResults)
         progressBar = findViewById(R.id.progressBar)
+        progressLayout = findViewById(R.id.progressLayout)
         layoutEmptyState = findViewById(R.id.layoutEmptyState)
         tvResultsCount = findViewById(R.id.tvResultsCount)
         spinnerSort = findViewById(R.id.spinnerSort)
@@ -177,7 +179,8 @@ class SearchResultsActivity : AppCompatActivity() {
      * Search with ML-powered recommendations
      */
     private fun searchWithMLRecommendations(query: String) {
-        progressBar.visibility = View.VISIBLE
+        progressLayout.visibility = View.VISIBLE
+        rvResults.visibility = View.GONE
         layoutEmptyState.visibility = View.GONE
 
         lifecycleScope.launch {
@@ -190,7 +193,7 @@ class SearchResultsActivity : AppCompatActivity() {
                     longitude = userLng
                 )
 
-                progressBar.visibility = View.GONE
+                progressLayout.visibility = View.GONE
 
                 if (response.isSuccessful && response.body() != null) {
                     val recommendations = response.body()!!.recommendations
@@ -200,7 +203,7 @@ class SearchResultsActivity : AppCompatActivity() {
                     showEmptyState("No results found for \"$query\"")
                 }
             } catch (e: Exception) {
-                progressBar.visibility = View.GONE
+                progressLayout.visibility = View.GONE
                 showEmptyState("Error: ${e.message}")
             }
         }
@@ -237,6 +240,7 @@ class SearchResultsActivity : AppCompatActivity() {
         if (results.isEmpty()) {
             showEmptyState("No results found")
         } else {
+            progressLayout.visibility = View.GONE
             layoutEmptyState.visibility = View.GONE
             rvResults.visibility = View.VISIBLE
             adapter.submitList(results)
@@ -248,8 +252,9 @@ class SearchResultsActivity : AppCompatActivity() {
      * Show empty state
      */
     private fun showEmptyState(message: String) {
-        layoutEmptyState.visibility = View.VISIBLE
+        progressLayout.visibility = View.GONE
         rvResults.visibility = View.GONE
+        layoutEmptyState.visibility = View.VISIBLE
         tvResultsCount.text = "0 results"
         findViewById<TextView>(R.id.tvEmptyMessage).text = message
     }
