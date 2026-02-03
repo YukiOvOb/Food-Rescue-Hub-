@@ -168,15 +168,12 @@ class CheckoutActivity : AppCompatActivity() {
         val startMinutes = startCal.get(Calendar.HOUR_OF_DAY) * 60 + startCal.get(Calendar.MINUTE)
         val endMinutes = endCal.get(Calendar.HOUR_OF_DAY) * 60 + endCal.get(Calendar.MINUTE)
 
-        // Handle overnight window (e.g., 8 PM - 5 AM)
         return if (startMinutes > endMinutes) {
             selectedMinutes >= startMinutes || selectedMinutes <= endMinutes
         } else {
-            // Same-day window (e.g., 9 AM - 5 PM)
             selectedMinutes in startMinutes..endMinutes
         }
     }
-
 
     private fun placeOrder() {
         val start = selectedStartTime ?: return
@@ -187,6 +184,7 @@ class CheckoutActivity : AppCompatActivity() {
         val endTimeStr = isoFormat.format(end.time)
 
         binding.loadingOverlay.visibility = View.VISIBLE
+        binding.btnPlaceOrder.isEnabled = false
 
         lifecycleScope.launch {
             try {
@@ -205,11 +203,18 @@ class CheckoutActivity : AppCompatActivity() {
                     }
                     startActivity(intent)
                     finish()
+                } else if (response.code() == 409) {
+                    // Handle stock conflict
+                    Toast.makeText(this@CheckoutActivity, "Some items just sold out. Your cart has been updated.", Toast.LENGTH_LONG).show()
+                    CartManager.fetchCart() // Refresh cart data
+                    finish() // Go back to cart to see changes
                 } else {
-                    Toast.makeText(this@CheckoutActivity, "Failed to place order: ${response.code()}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@CheckoutActivity, "Failed to place order: ${response.message()}", Toast.LENGTH_SHORT).show()
+                    binding.btnPlaceOrder.isEnabled = true
                 }
             } catch (e: Exception) {
                 Toast.makeText(this@CheckoutActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                binding.btnPlaceOrder.isEnabled = true
             } finally {
                 binding.loadingOverlay.visibility = View.GONE
             }

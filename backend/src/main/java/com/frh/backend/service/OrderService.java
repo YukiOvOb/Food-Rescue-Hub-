@@ -1,20 +1,25 @@
 package com.frh.backend.service;
 
 import com.frh.backend.Model.*;
+import com.frh.backend.exception.InsufficientStockException;
 import com.frh.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -62,14 +67,25 @@ public class OrderService {
         order.setPickupSlotStart(pickupSlotStart);
         order.setPickupSlotEnd(pickupSlotEnd);
 
+        // Sort by listingId to reduce deadlock risk
+        List<CartItem> sortedItems = items.stream()
+                .sorted(Comparator.comparing(i -> i.getListing().getListingId()))
+                .collect(Collectors.toList());
+
         BigDecimal totalAmount = BigDecimal.ZERO;
-        for (CartItem item : items) {
-            Listing listing = item.getListing();
-            if (listing.getAvailableQty() < item.getQuantity()) {
-                throw new RuntimeException("Insufficient stock for listing: " + listing.getListingId());
+        for (CartItem item : sortedItems) {
+            Long listingId = item.getListing().getListingId();
+            Listing listing = listingRepository.findByIdForUpdate(listingId);
+            if (listing == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found");
             }
 
-            listing.setAvailableQty(listing.getAvailableQty() - item.getQuantity());
+            int availableQty = listing.getAvailableQty();
+            if (availableQty < item.getQuantity()) {
+                throw new InsufficientStockException(listingId, item.getQuantity(), availableQty);
+            }
+
+            listing.setAvailableQty(availableQty - item.getQuantity());
             listingRepository.save(listing);
 
             OrderItem orderItem = new OrderItem();

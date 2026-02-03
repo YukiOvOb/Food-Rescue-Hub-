@@ -29,7 +29,11 @@ class CartActivity : AppCompatActivity() {
         setupRecyclerView()
         setupClickListeners()
         observeCart()
+    }
 
+    override fun onResume() {
+        super.onResume()
+        // Always fetch the latest cart state when returning to this screen
         CartManager.fetchCart()
     }
 
@@ -127,7 +131,6 @@ class CartActivity : AppCompatActivity() {
         val firstItem = items.first()
         val total = CartManager.totalPrice.value ?: 0.0
 
-        // Use data directly from CartItem as the backend now provides these fields in the cart DTO
         val intent = Intent(this, CheckoutActivity::class.java).apply {
             putExtra(CheckoutActivity.EXTRA_TOTAL_AMOUNT, total)
             putExtra(CheckoutActivity.EXTRA_STORE_NAME, firstItem.storeName)

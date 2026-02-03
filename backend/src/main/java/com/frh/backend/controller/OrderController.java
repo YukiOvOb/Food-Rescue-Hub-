@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpSession;
 
 import com.frh.backend.dto.CreateOrderResponseDto;
 import com.frh.backend.dto.ErrorResponse;
+import com.frh.backend.exception.InsufficientStockException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -57,6 +58,8 @@ public class OrderController {
             response.setTotalAmount(order.getTotalAmount());
             response.setPickupToken(pickupToken);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (InsufficientStockException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error creating order", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
