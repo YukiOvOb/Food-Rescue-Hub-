@@ -115,12 +115,6 @@ data class OrderListingInfo(
     val title: String
 )
 
-// CreateOrderRequest.kt
-data class CreateOrderRequest(
-    val pickupSlotStart: String, // ISO 8601 format: "2026-02-03T10:00:00"
-    val pickupSlotEnd: String
-)
-
 // CreateOrderResponseDto.kt
 data class CreateOrderResponseDto(
     val orderId: Long,

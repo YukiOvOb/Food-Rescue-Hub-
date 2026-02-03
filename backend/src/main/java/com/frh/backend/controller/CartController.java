@@ -1,6 +1,6 @@
 package com.frh.backend.controller;
 
-import com.frh.backend.Model.Cart;
+import com.frh.backend.dto.CartResponseDto;
 import com.frh.backend.service.CartService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -20,46 +20,46 @@ public class CartController {
     private final CartService cartService;
 
     @GetMapping
-    public ResponseEntity<Cart> getCart(HttpSession session) {
-        Cart cart = cartService.getOrCreateActiveCart(session);
+    public ResponseEntity<CartResponseDto> getCart(HttpSession session) {
+        CartResponseDto cart = cartService.getOrCreateActiveCart(session);
         return ResponseEntity.ok(cart);
     }
 
     @PostMapping("/items")
-    public ResponseEntity<Cart> addItem(
+    public ResponseEntity<CartResponseDto> addItem(
             HttpSession session,
             @RequestBody Map<String, Object> request) {
-        
+
         Long listingId = Long.valueOf(request.get("listingId").toString());
         Integer qty = Integer.valueOf(request.get("qty").toString());
-        
-        Cart updatedCart = cartService.addItem(session, listingId, qty);
+
+        CartResponseDto updatedCart = cartService.addItem(session, listingId, qty);
         return ResponseEntity.ok(updatedCart);
     }
 
     @PatchMapping("/items/{listingId}")
-    public ResponseEntity<Cart> updateQuantity(
+    public ResponseEntity<CartResponseDto> updateQuantity(
             HttpSession session,
             @PathVariable Long listingId,
             @RequestBody Map<String, Object> request) {
-        
+
         Integer qty = Integer.valueOf(request.get("qty").toString());
-        Cart updatedCart = cartService.updateQuantity(session, listingId, qty);
+        CartResponseDto updatedCart = cartService.updateQuantity(session, listingId, qty);
         return ResponseEntity.ok(updatedCart);
     }
 
     @DeleteMapping("/items/{listingId}")
-    public ResponseEntity<Cart> removeItem(
+    public ResponseEntity<CartResponseDto> removeItem(
             HttpSession session,
             @PathVariable Long listingId) {
-        
-        Cart cart = cartService.removeItem(session, listingId);
+
+        CartResponseDto cart = cartService.removeItem(session, listingId);
         return ResponseEntity.ok(cart);
     }
 
     @DeleteMapping("/items")
-    public ResponseEntity<Cart> clearCart(HttpSession session) {
-        Cart cart = cartService.clearCart(session);
+    public ResponseEntity<CartResponseDto> clearCart(HttpSession session) {
+        CartResponseDto cart = cartService.clearCart(session);
         return ResponseEntity.ok(cart);
     }
 }

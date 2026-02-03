@@ -12,6 +12,7 @@ public class CartResponseDto {
     private List<CartItemDto> items;
     private BigDecimal subtotal;
     private BigDecimal total;
+    private BigDecimal totalSavings;
 
     @Data
     public static class CartItemDto {
@@ -21,5 +22,10 @@ public class CartResponseDto {
         private BigDecimal unitPrice;
         private int qty;
         private BigDecimal lineTotal;
+        private String pickupStart;
+        private String pickupEnd;
+        private String storeName;
+        private BigDecimal originalPrice;
+        private String savingsLabel;
     }
 }

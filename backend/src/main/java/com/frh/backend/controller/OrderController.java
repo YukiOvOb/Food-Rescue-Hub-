@@ -2,9 +2,15 @@ package com.frh.backend.controller;
 
 import com.frh.backend.Model.Order;
 import com.frh.backend.service.OrderService;
+
+import jakarta.servlet.http.HttpSession;
+
+import com.frh.backend.dto.CreateOrderResponseDto;
 import com.frh.backend.dto.ErrorResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,46 +26,7 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class OrderController {
 
-
-    /**
-     * 下面是验证各接口的curl（把172.26.235.205替换成你的WSL IP即可）：
-
-创建订单（CREATE）
-curl -X POST "http://172.26.235.205:8081/api/orders?storeId=1&consumerId=1&totalAmount=12.50&pickupSlotStart=2026-01-31T10:00:00&pickupSlotEnd=2026-01-31T11:00:00"
-
-查询所有订单（READ ALL）
-curl "http://172.26.235.205:8081/api/orders"
-
-按ID查询（READ BY ID）
-curl "http://172.26.235.205:8081/api/orders/1"
-
-按消费者查询
-curl "http://172.26.235.205:8081/api/orders/consumer/1"
-
-按店铺查询
-curl "http://172.26.235.205:8081/api/orders/store/1"
-
-按状态查询
-curl "http://172.26.235.205:8081/api/orders/status/PENDING"
-
-按店铺+状态查询
-curl "http://172.26.235.205:8081/api/orders/store/1/status/PENDING"
-
-更新订单（UPDATE）
-curl -X PUT "http://172.26.235.205:8081/api/orders/1"
--H "Content-Type: application/json"
--d '{"status":"CONFIRMED","totalAmount":15.00,"cancelReason":null}'
-
-更新订单状态
-curl -X PATCH "http://172.26.235.205:8081/api/orders/1/status?status=COMPLETED"
-
-取消订单
-curl -X PATCH "http://172.26.235.205:8081/api/orders/1/cancel?cancelReason=Customer%20requested"
-
-删除订单（DELETE）
-curl -X DELETE "http://172.26.235.205:8081/api/orders/1"
-     */
-
+    @Autowired
     private final OrderService orderService;
 
     /**
@@ -68,17 +35,28 @@ curl -X DELETE "http://172.26.235.205:8081/api/orders/1"
      */
     @PostMapping
     public ResponseEntity<?> createOrder(
-            @RequestParam Long storeId,
-            @RequestParam Long consumerId,
-            @RequestParam BigDecimal totalAmount,
+            HttpSession session,
             @RequestParam(required = false) LocalDateTime pickupSlotStart,
             @RequestParam(required = false) LocalDateTime pickupSlotEnd) {
         
         try {
-            Order order = orderService.createOrder(storeId, consumerId, totalAmount, 
+            // Get consumerId from session
+            Long consumerId = (Long) session.getAttribute("USER_ID");
+            String user_role = (String) session.getAttribute("USER_ROLE");
+            if (consumerId == null || !user_role.equals("CONSUMER")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "User not authorised"));
+            }
+            
+            Order order = orderService.createOrderFromCart(consumerId, 
                                                    pickupSlotStart, pickupSlotEnd);
             log.info("Order created successfully with ID: {}", order.getOrderId());
-            return ResponseEntity.status(HttpStatus.CREATED).body(order);
+            String pickupToken = order.getPickupToken() != null ? order.getPickupToken().getQrTokenHash() : null;
+            CreateOrderResponseDto response = new CreateOrderResponseDto();
+            response.setOrderId(order.getOrderId());
+            response.setTotalAmount(order.getTotalAmount());
+            response.setPickupToken(pickupToken);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
             log.error("Error creating order", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -120,11 +98,18 @@ curl -X DELETE "http://172.26.235.205:8081/api/orders/1"
     }
 
     /**
-     * Get orders by consumer ID
-     * GET /api/orders/consumer/{consumerId}
+     * Get orders by SESSION id
      */
-    @GetMapping("/consumer/{consumerId}")
-    public ResponseEntity<?> getOrdersByConsumer(@PathVariable Long consumerId) {
+    @GetMapping("/consumer")
+    public ResponseEntity<?> getOrdersByConsumer(HttpSession session) {
+        Long consumerId = (Long) session.getAttribute("USER_ID");
+        String user_role = (String) session.getAttribute("USER_ROLE");
+
+        if (!user_role.equals("CONSUMER"))   {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Only accessible to consumers"));
+        }
+
         try {
             List<Order> orders = orderService.getOrdersByConsumer(consumerId);
             return ResponseEntity.ok(orders);
@@ -243,7 +228,7 @@ curl -X DELETE "http://172.26.235.205:8081/api/orders/1"
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Failed to cancel order"));
         }
-    }
+    }   
 
     /**
      * Delete order

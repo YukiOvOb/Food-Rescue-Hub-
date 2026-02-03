@@ -23,6 +23,9 @@ interface ApiService {
     @GET("api/listings")
     suspend fun getAllListings(): Response<List<Listing>>
 
+    @GET("api/listings/{listingId}")
+    suspend fun getListingById(@Path("listingId") listingId: Long): Response<Listing>
+
     @GET("api/listings/nearby")
     suspend fun getNearbyListings(
         @Query("lat") latitude: Double,
@@ -57,23 +60,33 @@ interface ApiService {
 
     // ==================== ORDERS ====================
 
-    @POST("api/orders")
-    suspend fun createOrder(@Body request: CreateOrderRequest): Response<CreateOrderResponseDto>
-
     /**
-     * Get all orders for current user (session-based)
+     * Create order
+     * Updated to return the compact CreateOrderResponseDto as per latest backend contract.
      */
-    @GET("api/orders")
+    @POST("api/orders")
+    suspend fun createOrder(
+        @Query("pickupSlotStart") pickupSlotStart: String,
+        @Query("pickupSlotEnd") pickupSlotEnd: String,
+    ): Response<CreateOrderResponseDto>
+
+    @GET("api/orders/consumer")
     suspend fun getMyOrders(): Response<List<Order>>
 
-    /**
-     * Get specific order by ID for current user (session-based)
-     */
     @GET("api/orders/{orderId}")
     suspend fun getOrderById(@Path("orderId") orderId: Long): Response<Order>
 
-    @POST("api/orders/{orderId}/cancel")
-    suspend fun cancelOrder(@Path("orderId") orderId: Long, @Body request: CancelOrderRequest): Response<Order>
+    @PATCH("api/orders/{orderId}/cancel")
+    suspend fun cancelOrder(
+        @Path("orderId") orderId: Long,
+        @Query("cancelReason") cancelReason: String? = null
+    ): Response<Order>
+
+    @PATCH("api/orders/{orderId}/status")
+    suspend fun updateOrderStatus(
+        @Path("orderId") orderId: Long,
+        @Query("status") status: String
+    ): Response<Order>
 
     // ==================== CONSUMER PROFILE ====================
 

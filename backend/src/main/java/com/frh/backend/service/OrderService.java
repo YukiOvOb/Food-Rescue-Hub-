@@ -8,9 +8,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -24,31 +28,14 @@ public class OrderService {
     private final CartItemRepository cartItemRepository;
     private final ListingRepository listingRepository;
 
-    /**
-     * Create a new order
-     */
-    @Transactional
-    public Order createOrder(Long storeId, Long consumerId, BigDecimal totalAmount, 
-                            LocalDateTime pickupSlotStart, LocalDateTime pickupSlotEnd) {
-        
-        Store store = storeRepository.findById(storeId)
-            .orElseThrow(() -> new RuntimeException("Store not found with id: " + storeId));
-        
-        ConsumerProfile consumer = consumerRepository.findById(consumerId)
-            .orElseThrow(() -> new RuntimeException("Consumer not found with id: " + consumerId));
-        
-        Order order = new Order();
-        order.setStore(store);
-        order.setConsumer(consumer);
-        order.setTotalAmount(totalAmount);
-        order.setStatus("PENDING");
-        order.setCurrency("SGD");
-        order.setPickupSlotStart(pickupSlotStart);
-        order.setPickupSlotEnd(pickupSlotEnd);
-        
-        Order savedOrder = orderRepository.save(order);
-        log.info("Order created successfully with ID: {}", savedOrder.getOrderId());
-        return savedOrder;
+    private String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(token.getBytes());
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Error hashing token", e);
+        }
     }
 
     /**
@@ -56,7 +43,7 @@ public class OrderService {
      */
     @Transactional
     public Order createOrderFromCart(Long consumerId, LocalDateTime pickupSlotStart, LocalDateTime pickupSlotEnd) {
-        Cart cart = cartRepository.findByConsumer_ConsumerIdAndStatus(consumerId, "ACTIVE")
+        Cart cart = cartRepository.findFirstByConsumer_ConsumerIdAndStatusOrderByCreatedAtDesc(consumerId, "ACTIVE")
                 .orElseThrow(() -> new RuntimeException("No active cart found"));
 
         List<CartItem> items = cartItemRepository.findByCart_CartId(cart.getCartId());
@@ -97,15 +84,31 @@ public class OrderService {
         }
 
         order.setTotalAmount(totalAmount);
-        orderRepository.save(order);
+        
+        // Save order first to generate orderId
+        Order savedOrder = orderRepository.save(order);
 
+        // Generate pickup token
+        String rawToken = UUID.randomUUID().toString().replace("-", "");
+        String qrTokenHash = hashToken(rawToken);
+        LocalDateTime expiresAt = LocalDateTime.now().plusHours(24);
+
+        PickupToken pickupToken = new PickupToken();
+        pickupToken.setOrder(savedOrder); // This sets the orderId via @MapsId
+        pickupToken.setQrTokenHash(qrTokenHash);
+        pickupToken.setExpiresAt(expiresAt);
+        
+        savedOrder.setPickupToken(pickupToken);
+
+        // Clear cart
         cartItemRepository.deleteByCart_CartId(cart.getCartId());
         cart.setStore(null);
         cartRepository.save(cart);
 
-        return order;
+        log.info("Order created from cart with ID: {} and pickup token generated", savedOrder.getOrderId());
+        return savedOrder;
     }
-
+    
     /**
      * Get order by ID
      */

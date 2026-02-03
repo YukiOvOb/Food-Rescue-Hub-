@@ -78,6 +78,16 @@
             android:exported="false"
             android:label="Pickup Code"
             android:parentActivityName=".ui.orders.OrderDetailActivity" />
+        <activity
+            android:name=".ui.checkout.CheckoutActivity"
+            android:exported="false"
+            android:label="Checkout"
+            android:parentActivityName=".ui.cart.CartActivity" />
+        <activity
+            android:name=".ui.checkout.OrderConfirmationActivity"
+            android:exported="false"
+            android:label="Confirmation"
+            android:parentActivityName=".ui.home.HomeActivity"/>
     </application>
 
 </manifest>

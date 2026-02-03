@@ -63,6 +63,9 @@ object AuthManager {
                 _currentUser.postValue(user)
                 _isLoggedIn.postValue(true)
                 
+                // Synchronize cart state after successful login
+                CartManager.fetchCart()
+                
                 true
             } else {
                 false

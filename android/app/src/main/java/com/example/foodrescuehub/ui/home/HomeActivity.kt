@@ -3,28 +3,21 @@ package com.example.foodrescuehub.ui.home
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.ImageButton
-import android.widget.ProgressBar
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.foodrescuehub.R
 import com.example.foodrescuehub.data.model.Listing
 import com.example.foodrescuehub.data.repository.AuthManager
 import com.example.foodrescuehub.data.repository.CartManager
+import com.example.foodrescuehub.databinding.ActivityHomeBinding
 import com.example.foodrescuehub.ui.cart.CartActivity
+import com.example.foodrescuehub.ui.orders.OrdersActivity
 import com.example.foodrescuehub.ui.profile.ProfileActivity
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.android.material.chip.Chip
-import com.google.android.material.chip.ChipGroup
 import com.google.android.material.tabs.TabLayout
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Locale
 
 /**
  * Home Activity - Main screen for consumer homepage
@@ -32,25 +25,14 @@ import java.util.Locale
  */
 class HomeActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityHomeBinding
     private lateinit var viewModel: HomeViewModel
     private lateinit var listingAdapter: ListingAdapter
 
-    // UI components
-    private lateinit var tvGreeting: TextView
-    private lateinit var searchView: SearchView
-    private lateinit var tabLayout: TabLayout
-    private lateinit var chipGroupCategories: ChipGroup
-    private lateinit var rvListings: RecyclerView
-    private lateinit var progressBar: ProgressBar
-    private lateinit var tvEmptyState: TextView
-    private lateinit var bottomNavigation: BottomNavigationView
-    private lateinit var btnSortFilter: ImageButton
-    private lateinit var btnCart: ImageButton
-    private lateinit var tvCartBadge: TextView
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_home)
+        binding = ActivityHomeBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         // Initialize AuthManager
         AuthManager.initialize(applicationContext)
@@ -58,8 +40,7 @@ class HomeActivity : AppCompatActivity() {
         // Initialize ViewModel
         viewModel = ViewModelProvider(this)[HomeViewModel::class.java]
 
-        // Initialize UI components
-        initViews()
+        // Setup UI components
         setupRecyclerView()
         setupGreeting()
         setupSearchView()
@@ -75,23 +56,6 @@ class HomeActivity : AppCompatActivity() {
     }
 
     /**
-     * Initialize all view references
-     */
-    private fun initViews() {
-        tvGreeting = findViewById(R.id.tvGreeting)
-        searchView = findViewById(R.id.searchView)
-        tabLayout = findViewById(R.id.tabLayout)
-        chipGroupCategories = findViewById(R.id.chipGroupCategories)
-        rvListings = findViewById(R.id.rvListings)
-        progressBar = findViewById(R.id.progressBar)
-        tvEmptyState = findViewById(R.id.tvEmptyState)
-        bottomNavigation = findViewById(R.id.bottomNavigation)
-        btnSortFilter = findViewById(R.id.btnSortFilter)
-        btnCart = findViewById(R.id.btnCart)
-        tvCartBadge = findViewById(R.id.tvCartBadge)
-    }
-
-    /**
      * Setup RecyclerView with adapter
      */
     private fun setupRecyclerView() {
@@ -99,7 +63,7 @@ class HomeActivity : AppCompatActivity() {
             onBuyClicked(listing)
         }
 
-        rvListings.apply {
+        binding.rvListings.apply {
             layoutManager = LinearLayoutManager(this@HomeActivity)
             adapter = listingAdapter
             setHasFixedSize(true)
@@ -119,14 +83,14 @@ class HomeActivity : AppCompatActivity() {
             else -> "Good evening"
         }
 
-        tvGreeting.text = greeting
+        binding.tvGreeting.text = greeting
     }
 
     /**
      * Setup search functionality
      */
     private fun setupSearchView() {
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 query?.let { viewModel.searchListings(it) }
                 return true
@@ -146,7 +110,7 @@ class HomeActivity : AppCompatActivity() {
      * Setup tab layout for Mystery Boxes / Regular Items
      */
     private fun setupTabLayout() {
-        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+        binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
                 tab?.let {
                     viewModel.selectTab(it.position)
@@ -170,7 +134,7 @@ class HomeActivity : AppCompatActivity() {
             R.id.chipAll to "All"
         )
 
-        chipGroupCategories.setOnCheckedStateChangeListener { _, checkedIds ->
+        binding.chipGroupCategories.setOnCheckedStateChangeListener { _, checkedIds ->
             if (checkedIds.isNotEmpty()) {
                 val selectedChipId = checkedIds[0]
                 val category = chipMap[selectedChipId] ?: "All"
@@ -183,7 +147,7 @@ class HomeActivity : AppCompatActivity() {
      * Setup sort and filter button
      */
     private fun setupSortFilterButton() {
-        btnSortFilter.setOnClickListener {
+        binding.btnSortFilter.setOnClickListener {
             val currentSort = viewModel.sortOption.value ?: SortOption.NAME_ASC
             val bottomSheet = SortFilterBottomSheet(currentSort) { sortOption, minPrice, maxPrice ->
                 // Apply sort and filter
@@ -218,26 +182,25 @@ class HomeActivity : AppCompatActivity() {
      * Setup bottom navigation
      */
     private fun setupBottomNavigation() {
-        bottomNavigation.selectedItemId = R.id.nav_home
+        binding.bottomNavigation.selectedItemId = R.id.nav_home
 
-        bottomNavigation.setOnItemSelectedListener { item ->
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> {
                     // Already on home
                     true
                 }
+                R.id.nav_orders -> {
+                    startActivity(Intent(this, OrdersActivity::class.java))
+                    false
+                }
+
                 R.id.nav_location -> {
                     // Navigate to LocationActivity
                     val intent = Intent(this, com.example.foodrescuehub.ui.location.LocationActivity::class.java)
                     startActivity(intent)
                     false
                 }
-//                R.id.nav_orders -> {
-//                    // Navigate to OrdersActivity
-//                    val intent = Intent(this, com.example.foodrescuehub.ui.orders.OrdersActivity::class.java)
-//                    startActivity(intent)
-//                    false
-//                }
                 R.id.nav_profile -> {
                     // Navigate to ProfileActivity
                     val intent = Intent(this, ProfileActivity::class.java)
@@ -264,15 +227,15 @@ class HomeActivity : AppCompatActivity() {
 
                 // Show/hide empty state
                 if (listings.isEmpty()) {
-                    tvEmptyState.visibility = View.VISIBLE
-                    rvListings.visibility = View.GONE
+                    binding.tvEmptyState.visibility = View.VISIBLE
+                    binding.rvListings.visibility = View.GONE
                     android.util.Log.d("HomeActivity", "Showing empty state")
                 } else {
-                    tvEmptyState.visibility = View.GONE
-                    rvListings.visibility = View.VISIBLE
+                    binding.tvEmptyState.visibility = View.GONE
+                    binding.rvListings.visibility = View.VISIBLE
                     // Force RecyclerView to request layout
-                    rvListings.requestLayout()
-                    android.util.Log.d("HomeActivity", "Showing listings - RecyclerView visibility: ${rvListings.visibility}, height: ${rvListings.height}")
+                    binding.rvListings.requestLayout()
+                    android.util.Log.d("HomeActivity", "Showing listings - RecyclerView visibility: ${binding.rvListings.visibility}")
                 }
             } catch (e: Exception) {
                 android.util.Log.e("HomeActivity", "Error displaying listings", e)
@@ -283,7 +246,7 @@ class HomeActivity : AppCompatActivity() {
         // Observe loading state
         viewModel.isLoading.observe(this) { isLoading ->
             android.util.Log.d("HomeActivity", "Loading state: $isLoading")
-            progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         }
 
         // Observe errors
@@ -328,7 +291,7 @@ class HomeActivity : AppCompatActivity() {
      * Setup cart button
      */
     private fun setupCartButton() {
-        btnCart.setOnClickListener {
+        binding.btnCart.setOnClickListener {
             val intent = Intent(this, CartActivity::class.java)
             startActivity(intent)
         }
@@ -340,10 +303,10 @@ class HomeActivity : AppCompatActivity() {
     private fun observeCart() {
         CartManager.itemCount.observe(this) { count ->
             if (count > 0) {
-                tvCartBadge.visibility = View.VISIBLE
-                tvCartBadge.text = count.toString()
+                binding.tvCartBadge.visibility = View.VISIBLE
+                binding.tvCartBadge.text = count.toString()
             } else {
-                tvCartBadge.visibility = View.GONE
+                binding.tvCartBadge.visibility = View.GONE
             }
         }
     }

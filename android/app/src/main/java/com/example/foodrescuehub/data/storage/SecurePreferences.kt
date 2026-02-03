@@ -49,6 +49,13 @@ class SecurePreferences(context: Context) {
     }
 
     /**
+     * Get the current user's ID
+     */
+    fun getUserId(): Long {
+        return getUser()?.userId ?: 0L
+    }
+
+    /**
      * Clear user data and session from encrypted storage
      */
     fun clearUser() {
