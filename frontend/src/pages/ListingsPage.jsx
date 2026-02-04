@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const cardStyle = {
   backgroundColor: '#fff',
@@ -42,6 +42,14 @@ export default function ListingsPage() {
   const [photoFiles, setPhotoFiles] = useState([]);
   const [errors, setErrors] = useState([]);
   const [toast, setToast] = useState(null); // { type: 'success' | 'error', message: string }
+  const clearToast = () => setToast(null);
+  const toastRef = useRef(null);
+
+  useEffect(() => {
+    if (toast && toastRef.current) {
+      toastRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [toast]);
 
   // ----- helpers for datetime formatting -----
   // Local date string (avoids UTC shift from toISOString)
@@ -97,6 +105,7 @@ export default function ListingsPage() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setErrors([]);
+    clearToast();
   };
 
   const handleFileChange = (e) => {
@@ -300,6 +309,7 @@ export default function ListingsPage() {
   };
 
   const startEdit = (listing) => {
+    clearToast();
     setShowCreateForm(true);
     setEditingId(listing.listingId || listing.id);
     setErrors([]);
@@ -317,6 +327,7 @@ export default function ListingsPage() {
   };
 
   const cancelEdit = () => {
+    clearToast();
     setEditingId(null);
     setShowCreateForm(false);
     setErrors([]);
@@ -381,7 +392,13 @@ export default function ListingsPage() {
           <h1 style={{ margin: 0, color: '#0f172a' }}>Listings</h1>
         </div>
         {!showCreateForm && (
-          <button style={pillPrimary} onClick={() => setShowCreateForm(true)}>
+          <button
+            style={pillPrimary}
+            onClick={() => {
+              clearToast();
+              setShowCreateForm(true);
+            }}
+          >
             + Create Listing
           </button>
         )}
@@ -389,6 +406,7 @@ export default function ListingsPage() {
 
       {toast && (
         <div
+          ref={toastRef}
           style={{
             marginBottom: 16,
             padding: '12px 14px',
