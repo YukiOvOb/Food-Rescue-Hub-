@@ -3,6 +3,7 @@ package com.frh.backend.controller;
 import com.frh.backend.Model.Store;
 import com.frh.backend.Model.SupplierProfile;
 import com.frh.backend.repository.ListingRepository;
+import com.frh.backend.repository.OrderRepository;
 import com.frh.backend.repository.StoreRepository;
 import com.frh.backend.repository.SupplierProfileRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +32,9 @@ class ListingControllerTest {
     private ListingRepository listingRepository;
 
     @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
     private SupplierProfileRepository supplierProfileRepository;
 
     @Autowired
@@ -41,7 +45,9 @@ class ListingControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        listingRepository.deleteAll(); // keep DB clean for each test
+        // keep DB clean for each test (clear orders before listings to avoid FK violations)
+        orderRepository.deleteAll();
+        listingRepository.deleteAll();
       storeRepository.deleteAll();
       supplierProfileRepository.deleteAll();
 
