@@ -134,7 +134,7 @@ const Dashboard = () => {
             <div className="card-icon">🧺</div>
             <h3>Listings</h3>
             <p>Create and manage rescue listings</p>
-            <button className="btn-card" onClick={goToListings}>Create Listing</button>
+            <button className="btn-card" onClick={goToListings}>Manage Listings</button>
           </div>
         </div>
 
