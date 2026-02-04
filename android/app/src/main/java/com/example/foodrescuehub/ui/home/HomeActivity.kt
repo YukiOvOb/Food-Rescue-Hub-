@@ -25,6 +25,8 @@ import com.example.foodrescuehub.databinding.ActivityHomeBinding
 import com.example.foodrescuehub.ui.cart.CartActivity
 import com.example.foodrescuehub.ui.orders.OrdersActivity
 import com.example.foodrescuehub.ui.profile.ProfileActivity
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.chip.ChipGroup
 import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.launch
 import java.util.Calendar
