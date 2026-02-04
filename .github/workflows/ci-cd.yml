@@ -98,6 +98,8 @@ jobs:
       - name: Run unit tests + coverage (Maven)
         if: needs.detect.outputs.has_backend == 'true'
         working-directory: backend
+        env:
+            SPRING_PROFILES_ACTIVE: test
         shell: bash
         run: |
           set -e
