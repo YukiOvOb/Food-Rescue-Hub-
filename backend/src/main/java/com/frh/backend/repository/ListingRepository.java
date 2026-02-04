@@ -52,9 +52,6 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT l FROM Listing l WHERE l.listingId = :id")
     Listing findByIdForUpdate(@Param("id") Long id);
-            @Param("lat") Double lat,
-            @Param("lng") Double lng,
-            @Param("radius") Double radius);
 
     List<Listing> findByStoreStoreId(Long storeId); // this returns every listifng
 }
