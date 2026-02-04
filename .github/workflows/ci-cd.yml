@@ -833,7 +833,43 @@ jobs:
             exit 0
           fi
 
+      - name: Check SSH connectivity
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Write SSH key to a temporary file and restrict permissions
+          KEYFILE="${RUNNER_TEMP}/ec2_deploy_key"
+          echo "Writing SSH key to ${KEYFILE}"
+          printf '%s' "${EC2_SSH_KEY}" > "${KEYFILE}"
+          chmod 600 "${KEYFILE}"
+
+          # Preflight SSH check with retries to provide clearer failure messages
+          ATTEMPTS=3
+          SLEEP=5
+          for i in $(seq 1 ${ATTEMPTS}); do
+            echo "Preflight SSH attempt ${i}/${ATTEMPTS}..."
+            ssh -o BatchMode=yes -o StrictHostKeyChecking=no -i "${KEYFILE}" -o ConnectTimeout=10 ubuntu@"${EC2_HOST}" "echo connected" && FOUND=1 || FOUND=0
+            if [ "${FOUND}" -eq 1 ]; then
+              echo "SSH preflight succeeded"
+              rm -f "${KEYFILE}"
+              exit 0
+            fi
+            echo "Preflight SSH failed, sleeping ${SLEEP}s"
+            sleep ${SLEEP}
+            SLEEP=$((SLEEP * 2))
+          done
+
+          echo "SSH preflight failed after ${ATTEMPTS} attempts"
+          echo "Check: EC2 instance running, Security Group allows TCP/22 from GitHub Actions or your IP, and the correct key is in GitHub secrets."
+          # dump basic network diagnostic (non-sensitive)
+          echo "Runner public IP fetch (for SG allowlist):"
+          curl -s https://ifconfig.me || true
+          rm -f "${KEYFILE}"
+          exit 1
+
       - name: Deploy via SSH
+        if: env.EC2_HOST != '' && env.EC2_SSH_KEY != ''
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ env.EC2_HOST }}
