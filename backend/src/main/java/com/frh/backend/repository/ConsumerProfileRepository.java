@@ -8,9 +8,16 @@ import java.util.Optional;
 
 @Repository
 public interface ConsumerProfileRepository extends JpaRepository<ConsumerProfile, Long> {
-    
-    // Find consumer by email
+
+    /**
+     * Find consumer by email
+     */
     Optional<ConsumerProfile> findByEmail(String email);
+
+    /**
+     * Check if email exists
+     */
+    boolean existsByEmail(String email);
     
     // Find consumer by phone
     Optional<ConsumerProfile> findByPhone(String phone);

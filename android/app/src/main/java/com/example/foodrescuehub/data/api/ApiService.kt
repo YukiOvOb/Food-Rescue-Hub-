@@ -100,4 +100,56 @@ interface ApiService {
 
     @POST("api/pickup-tokens/{orderId}/generate-qrcode")
     suspend fun generatePickupQRCode(@Path("orderId") orderId: Long): Response<Map<String, String>>
+
+    /**
+     * Get personalized store recommendations for homepage
+     * GET /api/recommendations/homepage?consumerId={consumerId}&topK={topK}&lat={lat}&lng={lng}
+     */
+    @GET("api/recommendations/homepage")
+    suspend fun getHomePageRecommendations(
+        @Query("consumerId") consumerId: Long,
+        @Query("topK") topK: Int = 5,
+        @Query("lat") latitude: Double? = null,
+        @Query("lng") longitude: Double? = null
+    ): Response<RecommendationResponse>
+
+    /**
+     * Search with ML-powered recommendations
+     * GET /api/recommendations/search?consumerId={consumerId}&query={query}&topK={topK}&lat={lat}&lng={lng}
+     */
+    @GET("api/recommendations/search")
+    suspend fun searchWithRecommendations(
+        @Query("consumerId") consumerId: Long,
+        @Query("query") query: String,
+        @Query("topK") topK: Int = 10,
+        @Query("lat") latitude: Double? = null,
+        @Query("lng") longitude: Double? = null
+    ): Response<RecommendationResponse>
+
+    /**
+     * Get consumer profile by ID
+     * GET /api/consumer/{consumerId}
+     */
+    @GET("api/consumer/{consumerId}")
+    suspend fun getConsumerProfile(
+        @Path("consumerId") consumerId: Long
+    ): Response<ConsumerProfile>
+
+    /**
+     * Get consumer profile by email
+     * GET /api/consumer/by-email?email={email}
+     */
+    @GET("api/consumer/by-email")
+    suspend fun getConsumerProfileByEmail(
+        @Query("email") email: String
+    ): Response<ConsumerProfile>
+
+    /**
+     * Record user interaction (VIEW, CLICK, SEARCH, ADD_TO_CART)
+     * POST /api/interactions/record
+     */
+    @POST("api/interactions/record")
+    suspend fun recordInteraction(
+        @Body request: UserInteractionRequest
+    ): Response<InteractionResponse>
 }
