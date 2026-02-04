@@ -17,20 +17,20 @@ services:
       - frh-net
 
   backend:
-    image: bhava0807/frh-backend:latest
-    container_name: frh-backend
-    restart: unless-stopped
-    environment:
-      SPRING_PROFILES_ACTIVE: prod #Production
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Singapore
-      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
-      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
-    ports:
-      - "8081:8080"
-    depends_on:
-      - mysql
-    networks:
-      - frh-net
+  image: "bhava0807/frh-backend:latest"
+  container_name: frh-backend
+  restart: unless-stopped
+  environment:
+    SPRING_PROFILES_ACTIVE: "prod" # Production
+    SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Singapore"
+    SPRING_DATASOURCE_USERNAME: "${MYSQL_USER}"
+    SPRING_DATASOURCE_PASSWORD: "${MYSQL_PASSWORD}"
+  ports:
+    - "8081:8080"
+  depends_on:
+    - mysql
+  networks:
+    - frh-net
 
 
  # 构建 Vite 前端产物到 volume，nginx 直接读取
