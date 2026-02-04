@@ -29,7 +29,7 @@ public class SupplierOrderController {
    * POST /api/orders
    * Body: { listingId, consumerId, quantity, pickupSlotStart?, pickupSlotEnd? }
    */
-  @PostMapping("/api/orders")
+  @PostMapping("/api/consumer/orders")
   public ResponseEntity<Order> createOrder(@Valid @RequestBody CreateOrderRequest request) {
     Order order = orderService.createOrder(request);
     return ResponseEntity.status(HttpStatus.CREATED).body(order);

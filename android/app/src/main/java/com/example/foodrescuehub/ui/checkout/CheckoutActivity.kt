@@ -188,7 +188,7 @@ class CheckoutActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                val response = apiService.createOrder(startTimeStr, endTimeStr)
+                val response = apiService.createOrderFromCart(startTimeStr, endTimeStr)
 
                 if (response.isSuccessful && response.body() != null) {
                     val orderResponse = response.body()!!

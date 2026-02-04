@@ -118,20 +118,17 @@ data class OrderListingInfo(
 // CreateOrderResponseDto.kt
 data class CreateOrderResponseDto(
     val orderId: Long,
-    val status: String,
     val totalAmount: Double,
-    val pickupToken: String,
-    val pickupSlotStart: String,
-    val pickupSlotEnd: String,
-    val items: List<OrderItemDto>
+    val pickupToken: String?
 )
 
-data class OrderItemDto(
+// CreateOrderRequest.kt
+data class CreateOrderRequest(
     val listingId: Long,
-    val title: String,
-    val unitPrice: Double,
-    val qty: Int,
-    val lineTotal: Double
+    val consumerId: Long,
+    val quantity: Int,
+    val pickupSlotStart: String? = null,
+    val pickupSlotEnd: String? = null
 )
 
 // CancelOrderRequest.kt

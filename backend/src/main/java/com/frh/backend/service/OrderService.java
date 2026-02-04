@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.PageRequest;
 
 /**
  * This service handles everything that happens around an Order lifecycle.
@@ -419,5 +420,12 @@ public class OrderService {
      */
     public long countPendingOrdersForStore(Long storeId) {
         return getOrdersByStoreAndStatus(storeId, "PENDING").size();
+    }
+
+    /**
+     * Return top selling items for a supplier and status limited by `limit`.
+     */
+    public List<com.frh.backend.dto.TopSellingItemDto> getTopSellingItems(Long supplierId, String status, int limit) {
+        return orderRepository.findTopSellingItemsBySupplierAndStatus(supplierId, status, PageRequest.of(0, Math.max(1, limit)));
     }
 }

@@ -61,14 +61,22 @@ interface ApiService {
     // ==================== ORDERS ====================
 
     /**
-     * Create order
+     * Create order from active cart (session-based)
      * Updated to return the compact CreateOrderResponseDto as per latest backend contract.
      */
     @POST("api/orders")
-    suspend fun createOrder(
+    suspend fun createOrderFromCart(
         @Query("pickupSlotStart") pickupSlotStart: String,
         @Query("pickupSlotEnd") pickupSlotEnd: String,
     ): Response<CreateOrderResponseDto>
+
+    /**
+     * Create order for a single listing (body-based)
+     */
+    @POST("api/consumer/orders")
+    suspend fun createOrderFromListing(
+        @Body request: CreateOrderRequest
+    ): Response<Order>
 
     @GET("api/orders/consumer")
     suspend fun getMyOrders(): Response<List<Order>>
