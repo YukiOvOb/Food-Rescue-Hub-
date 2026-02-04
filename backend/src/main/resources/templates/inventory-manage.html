@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inventory – Food Rescue Hub</title>
+    <style>
+      /* Reset & base  */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: #f0f4f8;
+        color: #1e293b;
+        min-height: 100vh;
+        padding: 24px 16px;
+      }
+
+      /*  Layout  */
+      .page-wrapper {
+        max-width: 960px;
+        margin: 0 auto;
+      }
+
+      /*  Header  */
+      .page-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .page-header h1 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #0f172a;
+      }
+      .badge-store {
+        background: #e0e7ff;
+        color: #3730a3;
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 12px;
+      }
+
+      /*  Flash messages  */
+      .flash {
+        padding: 10px 16px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 0.9rem;
+      }
+      .flash-success {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+      }
+      .flash-error {
+        background: #fef2f2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+      }
+
+      /*  Stock indicator  */
+      .stock-ok {
+        color: #16a34a;
+        font-weight: 700;
+      }
+      .stock-low {
+        color: #ea580c;
+        font-weight: 700;
+      }
+      .stock-zero {
+        color: #dc2626;
+        font-weight: 700;
+      }
+
+      /*  Table  */
+      .table-scroll {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e2e8f0;
+      }
+      thead {
+        background: #1e293b;
+        color: #fff;
+      }
+      thead th {
+        padding: 12px 16px;
+        text-align: left;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      tbody tr {
+        border-bottom: 1px solid #f1f5f9;
+      }
+      tbody tr:last-child {
+        border-bottom: none;
+      }
+      tbody tr:hover {
+        background: #f8fafc;
+      }
+      tbody td {
+        padding: 14px 16px;
+        font-size: 0.88rem;
+        vertical-align: middle;
+      }
+
+      /*  Adjust controls  */
+      .adjust-row {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .adjust-row input[type="number"] {
+        width: 64px;
+        padding: 6px 8px;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        font-size: 0.85rem;
+        text-align: center;
+        outline: none;
+      }
+      .adjust-row input[type="number"]:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px #bfdbfe;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition:
+          filter 0.15s,
+          transform 0.1s;
+      }
+      .btn:active {
+        transform: scale(0.96);
+      }
+      .btn-restock {
+        background: #22c55e;
+        color: #fff;
+      }
+      .btn-restock:hover {
+        filter: brightness(0.9);
+      }
+      .btn-remove {
+        background: #ef4444;
+        color: #fff;
+      }
+      .btn-remove:hover {
+        filter: brightness(0.9);
+      }
+
+      /*  Empty state  */
+      .empty-state {
+        text-align: center;
+        padding: 48px;
+        color: #94a3b8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <!-- Header -->
+      <div class="page-header">
+        <h1>📊 Inventory Management</h1>
+        <span class="badge-store"
+          >Store ID: <th:block th:text="${storeId}"
+        /></span>
+      </div>
+
+      <!-- Flash messages -->
+      <div
+        th:if="${successMsg}"
+        class="flash flash-success"
+        th:text="${successMsg}"
+      ></div>
+      <div
+        th:if="${errorMsg}"
+        class="flash flash-error"
+        th:text="${errorMsg}"
+      ></div>
+
+      <!-- Legend -->
+      <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 12px">
+        Stock colours: <span class="stock-ok">green ≥ 5</span> ·
+        <span class="stock-low">orange 1–4</span> ·
+        <span class="stock-zero">red = 0 (sold out)</span>
+      </p>
+
+      <!-- Inventory table -->
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Listing ID</th>
+              <th>Title</th>
+              <th>Original $</th>
+              <th>Rescue $</th>
+              <th>Status</th>
+              <th>Available</th>
+              <th>Reserved</th>
+              <th>Restock</th>
+              <th>Remove</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- If no listings exist -->
+            <tr th:if="${rows.empty}">
+              <td colspan="9" class="empty-state">
+                No listings found for this store.
+              </td>
+            </tr>
+
+            <tr th:each="row : ${rows}">
+              <!-- Listing ID -->
+              <td th:text="${row.listing.listingId}"></td>
+
+              <!-- Title -->
+              <td th:text="${row.listing.title}"></td>
+
+              <!-- Original price -->
+              <td th:text="'$' + row.listing.originalPrice"></td>
+
+              <!-- Rescue price -->
+              <td th:text="'$' + row.listing.rescuePrice"></td>
+
+              <!-- Listing status -->
+              <td th:text="${row.listing.status}"></td>
+
+              <!-- Available qty – colour-coded -->
+              <td>
+                <span
+                  th:classappend="${row.inventory.qtyAvailable == 0 ? 'stock-zero' : (row.inventory.qtyAvailable < 5 ? 'stock-low' : 'stock-ok')}"
+                  th:text="${row.inventory.qtyAvailable}"
+                ></span>
+              </td>
+
+              <!-- Reserved qty -->
+              <td th:text="${row.inventory.qtyReserved}"></td>
+
+              <!-- Restock form (positive delta) -->
+              <td>
+                <form
+                  th:action="@{/supplier/inventory/{id}/adjust(id=${storeId})}"
+                  method="post"
+                  class="adjust-row"
+                >
+                  <input
+                    type="hidden"
+                    name="listingId"
+                    th:value="${row.listing.listingId}"
+                  />
+                  <input type="number" name="delta" min="1" value="1" />
+                  <button type="submit" class="btn btn-restock">+ Add</button>
+                </form>
+              </td>
+
+              <!-- Remove form (negative delta) -->
+              <td>
+                <form
+                  th:action="@{/supplier/inventory/{id}/adjust(id=${storeId})}"
+                  method="post"
+                  class="adjust-row"
+                >
+                  <input
+                    type="hidden"
+                    name="listingId"
+                    th:value="${row.listing.listingId}"
+                  />
+                  <input
+                    type="hidden"
+                    name="delta"
+                    id="removeDelta"
+                    value="0"
+                  />
+                  <input
+                    type="number"
+                    name="removeQty"
+                    min="1"
+                    value="1"
+                    onchange="this.previousElementSibling.value = -this.value"
+                  />
+                  <button
+                    type="submit"
+                    class="btn btn-remove"
+                    onclick="
+                      this.previousElementSibling.previousElementSibling.value =
+                        -this.previousElementSibling.value
+                    "
+                  >
+                    − Remove
+                  </button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Small JS to sync the negative delta before form submit -->
+    <script>
+      // Every "Remove" form: set the hidden delta = -(visible number input)
+      document.querySelectorAll("form").forEach((form) => {
+        const removeQtyInput = form.querySelector('input[name="removeQty"]');
+        if (!removeQtyInput) return;
+
+        const deltaInput = form.querySelector('input[name="delta"]');
+        const submitBtn = form.querySelector(".btn-remove");
+
+        if (submitBtn) {
+          submitBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            deltaInput.value = -Math.abs(
+              parseInt(removeQtyInput.value, 10) || 1,
+            );
+            form.submit();
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

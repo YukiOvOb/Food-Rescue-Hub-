@@ -21,27 +21,27 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
 
     // Find active listings with available inventory
     @Query("SELECT l FROM Listing l " +
-           "JOIN FETCH l.store s " +
-           "JOIN FETCH l.inventory i " +
-           "LEFT JOIN FETCH l.photos " +
-           "LEFT JOIN FETCH s.supplierProfile sp " +
-           "LEFT JOIN FETCH sp.storeType " +
-           "WHERE l.status = 'ACTIVE' AND i.qtyAvailable > 0 " +
-           "ORDER BY l.createdAt DESC")
+            "JOIN FETCH l.store s " +
+            "JOIN FETCH l.inventory i " +
+            "LEFT JOIN FETCH l.photos " +
+            "LEFT JOIN FETCH s.supplierProfile sp " +
+            "LEFT JOIN FETCH sp.storeType " +
+            "WHERE l.status = 'ACTIVE' AND i.qtyAvailable > 0 " +
+            "ORDER BY l.createdAt DESC")
     List<Listing> findAllActiveListingsWithDetails();
 
     // Find nearby listings based on coordinates and radius (in km)
     @Query("SELECT l FROM Listing l " +
-           "JOIN FETCH l.store s " +
-           "JOIN FETCH l.inventory i " +
-           "LEFT JOIN FETCH l.photos " +
-           "LEFT JOIN FETCH s.supplierProfile sp " +
-           "LEFT JOIN FETCH sp.storeType " +
-           "WHERE l.status = 'ACTIVE' AND i.qtyAvailable > 0 " +
-           "AND (6371 * acos(cos(radians(:lat)) * cos(radians(s.lat)) * " +
-           "cos(radians(s.lng) - radians(:lng)) + sin(radians(:lat)) * " +
-           "sin(radians(s.lat)))) <= :radius " +
-           "ORDER BY l.createdAt DESC")
+            "JOIN FETCH l.store s " +
+            "JOIN FETCH l.inventory i " +
+            "LEFT JOIN FETCH l.photos " +
+            "LEFT JOIN FETCH s.supplierProfile sp " +
+            "LEFT JOIN FETCH sp.storeType " +
+            "WHERE l.status = 'ACTIVE' AND i.qtyAvailable > 0 " +
+            "AND (6371 * acos(cos(radians(:lat)) * cos(radians(s.lat)) * " +
+            "cos(radians(s.lng) - radians(:lng)) + sin(radians(:lat)) * " +
+            "sin(radians(s.lat)))) <= :radius " +
+            "ORDER BY l.createdAt DESC")
     List<Listing> findNearbyListings(
         @Param("lat") Double lat,
         @Param("lng") Double lng,
@@ -52,4 +52,9 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT l FROM Listing l WHERE l.listingId = :id")
     Listing findByIdForUpdate(@Param("id") Long id);
+            @Param("lat") Double lat,
+            @Param("lng") Double lng,
+            @Param("radius") Double radius);
+
+    List<Listing> findByStoreStoreId(Long storeId); // this returns every listifng
 }
