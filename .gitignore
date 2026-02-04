@@ -60,3 +60,12 @@ Desktop.ini
 **/android/.externalNativeBuild/
 **/android/.cxx/
 **/android/captures/
+
+# Python Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Vector Database (Chroma)
+chroma_db/
+.env
