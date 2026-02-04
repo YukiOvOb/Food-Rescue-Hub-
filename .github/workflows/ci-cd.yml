@@ -3,12 +3,13 @@ name: Food Rescue Hub CI/CD
 on:
   push:
     branches:
-      - "development/sprint2/**"
-      - "development/Sprint2"
-      - "feature/**"
-      - "main"
+      - main
+      - development/Sprint2
+      - development/sprint2/**
+      - feature/**
   pull_request:
-    branches: ["main"]
+    branches: 
+      - main
   workflow_dispatch:
 
 concurrency:
