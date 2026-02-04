@@ -14,6 +14,9 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
     // Find all active listings
     List<Listing> findByStatus(String status);
 
+    // Find listings by supplier (through store relationship)
+    List<Listing> findByStore_SupplierProfile_SupplierId(Long supplierId);
+
     // Find active listings with available inventory
     @Query("SELECT l FROM Listing l " +
            "JOIN FETCH l.store s " +

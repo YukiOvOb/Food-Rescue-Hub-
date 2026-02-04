@@ -186,6 +186,40 @@ curl -X DELETE "http://172.26.235.205:8080/api/orders/1"
     }
 
     /**
+     * Get orders by supplier ID
+     * GET /api/orders/supplier/{supplierId}
+     */
+    @GetMapping("/supplier/{supplierId}")
+    public ResponseEntity<?> getOrdersBySupplier(@PathVariable Long supplierId) {
+        try {
+            List<Order> orders = orderService.getOrdersBySupplier(supplierId);
+            return ResponseEntity.ok(orders);
+        } catch (Exception e) {
+            log.error("Error retrieving supplier orders", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve orders"));
+        }
+    }
+
+    /**
+     * Get orders by supplier and status
+     * GET /api/orders/supplier/{supplierId}/status/{status}
+     */
+    @GetMapping("/supplier/{supplierId}/status/{status}")
+    public ResponseEntity<?> getOrdersBySupplierAndStatus(
+            @PathVariable Long supplierId,
+            @PathVariable String status) {
+        try {
+            List<Order> orders = orderService.getOrdersBySupplierAndStatus(supplierId, status);
+            return ResponseEntity.ok(orders);
+        } catch (Exception e) {
+            log.error("Error retrieving supplier orders by status", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve orders"));
+        }
+    }
+
+    /**
      * Update order
      * PUT /api/orders/{orderId}
      */

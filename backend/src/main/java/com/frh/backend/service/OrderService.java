@@ -4,12 +4,14 @@ import com.frh.backend.Model.Order;
 import com.frh.backend.Model.Store;
 import com.frh.backend.Model.ConsumerProfile;
 import com.frh.backend.Model.PickupToken;
+import com.frh.backend.dto.TopSellingItemDto;
 import com.frh.backend.repository.OrderRepository;
 import com.frh.backend.repository.PickupTokenRepository;
 import com.frh.backend.repository.StoreRepository;
 import com.frh.backend.repository.ConsumerProfileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -100,6 +102,31 @@ public class OrderService {
      */
     public List<Order> getOrdersByStoreAndStatus(Long storeId, String status) {
         return orderRepository.findByStore_StoreIdAndStatus(storeId, status);
+    }
+
+    /**
+     * Get orders by supplier ID
+     */
+    public List<Order> getOrdersBySupplier(Long supplierId) {
+        return orderRepository.findByStore_SupplierProfile_SupplierId(supplierId);
+    }
+
+    /**
+     * Get orders by supplier and status
+     */
+    public List<Order> getOrdersBySupplierAndStatus(Long supplierId, String status) {
+        return orderRepository.findByStore_SupplierProfile_SupplierIdAndStatus(supplierId, status);
+    }
+
+    /**
+     * Get top selling items by supplier
+     */
+    public List<TopSellingItemDto> getTopSellingItems(Long supplierId, String status, int limit) {
+        return orderRepository.findTopSellingItemsBySupplierAndStatus(
+                supplierId,
+                status,
+                PageRequest.of(0, Math.max(1, limit))
+        );
     }
 
     /**
