@@ -37,18 +37,20 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     // Find orders by supplier and status
     List<Order> findByStore_SupplierProfile_SupplierIdAndStatus(Long supplierId, String status);
 
-    // Top selling items by supplier and order status
-    @Query("SELECT new com.frh.backend.dto.TopSellingItemDto(oi.listing.listingId, oi.listing.title, SUM(oi.quantity)) " +
-        "FROM Order o JOIN o.orderItems oi " +
-        "WHERE o.store.supplierProfile.supplierId = :supplierId AND o.status = :status " +
-        "GROUP BY oi.listing.listingId, oi.listing.title " +
-        "ORDER BY SUM(oi.quantity) DESC")
-    List<TopSellingItemDto> findTopSellingItemsBySupplierAndStatus(
-        @Param("supplierId") Long supplierId,
-        @Param("status") String status,
-        Pageable pageable);
+        // Top selling items by supplier and order status
+        @Query("SELECT new com.frh.backend.dto.TopSellingItemDto(oi.listing.listingId, oi.listing.title, SUM(oi.quantity)) " +
+           "FROM Order o JOIN o.orderItems oi " +
+           "WHERE o.store.supplierProfile.supplierId = :supplierId AND o.status = :status " +
+           "GROUP BY oi.listing.listingId, oi.listing.title " +
+           "ORDER BY SUM(oi.quantity) DESC")
+        List<TopSellingItemDto> findTopSellingItemsBySupplierAndStatus(
+            @Param("supplierId") Long supplierId,
+            @Param("status") String status,
+            Pageable pageable);
     
     // Check if order exists by order ID
+    Optional<Order> findById(Long orderId);
+
 
   @Query("SELECT o FROM Order o " +
       "JOIN FETCH o.store s " +
@@ -66,7 +68,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
    * thread can hold this lock at a time – prevents double-processing.
    */
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT o FROM Order o WHERE o.orderId = :id")
-    Optional<Order> findByIdForUpdate(@Param("id") Long id);
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  @Query("SELECT o FROM Order o WHERE o.orderId = :id")
+  Optional<Order> findByIdForUpdate(@Param("id") Long id);
 }
