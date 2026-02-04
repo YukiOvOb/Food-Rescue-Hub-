@@ -625,6 +625,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      TRIVY_TIMEOUT: 30m
     steps:
       - name: Skip if DOCKER_USERNAME missing
         shell: bash
