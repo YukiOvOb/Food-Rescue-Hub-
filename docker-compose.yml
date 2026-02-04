@@ -51,6 +51,7 @@ services:
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./frontend/dist:/usr/share/nginx/html:ro
+      - ./backend/QRCode:/data/qrcode:ro
     depends_on:
       - backend
     networks:
