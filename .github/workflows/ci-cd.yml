@@ -603,7 +603,7 @@ jobs:
         shell: bash
         run: |
           set -e
-          docker build -t "${DOCKER_USERNAME}/frh-backend:latest" ./backend
+          docker build -t "${DOCKER_USERNAME}/frh-backend:latest" -f backend/Dockerfile backend
           docker push "${DOCKER_USERNAME}/frh-backend:latest"
 
       - name: Build & push frontend image
