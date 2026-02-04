@@ -76,4 +76,20 @@ public class Listing {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public int getAvailableQty() {
+        return inventory != null && inventory.getQtyAvailable() != null
+                ? inventory.getQtyAvailable()
+                : 0;
+    }
+
+    public void setAvailableQty(int availableQty) {
+        if (inventory == null) {
+            inventory = new Inventory();
+            inventory.setListing(this);
+        }
+        inventory.setQtyAvailable(availableQty);
+    }
+
+
 }

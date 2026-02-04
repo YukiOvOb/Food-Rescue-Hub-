@@ -1,13 +1,25 @@
 package com.example.foodrescuehub.data.repository
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.foodrescuehub.data.api.RetrofitClient
+import com.example.foodrescuehub.data.model.AddCartItemRequest
 import com.example.foodrescuehub.data.model.CartItem
+import com.example.foodrescuehub.data.model.CartResponseDto
+import com.example.foodrescuehub.data.model.UpdateCartItemRequest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
- * Singleton class to manage shopping cart
+ * Singleton class to manage shopping cart with backend synchronization
  */
 object CartManager {
+
+    private const val TAG = "CartManager"
+    private val scope = CoroutineScope(Dispatchers.IO)
 
     private val _cartItems = MutableLiveData<MutableList<CartItem>>(mutableListOf())
     val cartItems: LiveData<MutableList<CartItem>> = _cartItems
@@ -21,118 +33,186 @@ object CartManager {
     private val _itemCount = MutableLiveData<Int>(0)
     val itemCount: LiveData<Int> = _itemCount
 
-    fun addItem(item: CartItem) {
-        val currentItems = _cartItems.value ?: mutableListOf()
-        val itemIndex = currentItems.indexOfFirst { it.listingId == item.listingId }
+    private val _supplierId = MutableLiveData<Long?>(null)
+    val supplierId: LiveData<Long?> = _supplierId
 
-        if (itemIndex != -1) {
-            val existingItem = currentItems[itemIndex]
-            if (existingItem.quantity < existingItem.maxQuantity) {
-                // Create a new CartItem with increased quantity (deep copy)
-                val updatedItem = existingItem.copy(quantity = existingItem.quantity + 1)
-                currentItems[itemIndex] = updatedItem
+    /**
+     * Fetch the latest cart state from the backend
+     */
+    fun fetchCart() {
+        scope.launch {
+            try {
+                val response = RetrofitClient.apiService.getCart()
+                if (response.isSuccessful) {
+                    val cartDto = response.body()
+                    withContext(Dispatchers.Main) {
+                        updateLocalState(cartDto)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error fetching cart", e)
             }
-        } else {
-            currentItems.add(item)
+        }
+    }
+
+    /**
+     * Add an item to the cart (Backend sync)
+     */
+    fun addItem(listingId: Long, quantity: Int = 1, onResult: ((Boolean, String?) -> Unit)? = null) {
+        scope.launch {
+            try {
+                val response = RetrofitClient.apiService.addItemToCart(AddCartItemRequest(listingId, quantity))
+                if (response.isSuccessful) {
+                    val cartDto = response.body()
+                    withContext(Dispatchers.Main) {
+                        updateLocalState(cartDto)
+                        onResult?.invoke(true, null)
+                    }
+                } else {
+                    val errorMsg = if (response.code() == 500) "Cross-store restriction" else "Failed to add item"
+                    withContext(Dispatchers.Main) {
+                        onResult?.invoke(false, errorMsg)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error adding item", e)
+                withContext(Dispatchers.Main) {
+                    onResult?.invoke(false, e.message)
+                }
+            }
+        }
+    }
+
+    /**
+     * Update quantity of an item (Backend sync)
+     */
+    fun updateQuantity(listingId: Long, newQuantity: Int) {
+        if (newQuantity <= 0) {
+            removeItem(listingId)
+            return
         }
 
-        // Create a new list to trigger LiveData and DiffUtil properly
-        _cartItems.value = currentItems.toMutableList()
-        updateTotals()
-    }
-
-    fun removeItem(listingId: Long) {
-        val currentItems = _cartItems.value ?: mutableListOf()
-        currentItems.removeAll { it.listingId == listingId }
-        // Create a new list to trigger LiveData update properly
-        _cartItems.value = currentItems.toMutableList()
-        updateTotals()
-    }
-
-    fun updateQuantity(listingId: Long, newQuantity: Int) {
-        val currentItems = _cartItems.value ?: mutableListOf()
-        val itemIndex = currentItems.indexOfFirst { it.listingId == listingId }
-
-        if (itemIndex != -1) {
-            val item = currentItems[itemIndex]
-            if (newQuantity > 0 && newQuantity <= item.maxQuantity) {
-                // Create a new CartItem with updated quantity (deep copy)
-                val updatedItem = item.copy(quantity = newQuantity)
-                currentItems[itemIndex] = updatedItem
-                // Create a new list to trigger LiveData and DiffUtil properly
-                _cartItems.value = currentItems.toMutableList()
-                updateTotals()
-            } else if (newQuantity <= 0) {
-                removeItem(listingId)
+        scope.launch {
+            try {
+                val response = RetrofitClient.apiService.updateCartItemQuantity(listingId, UpdateCartItemRequest(newQuantity))
+                if (response.isSuccessful) {
+                    val cartDto = response.body()
+                    withContext(Dispatchers.Main) {
+                        updateLocalState(cartDto)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error updating quantity", e)
             }
         }
     }
 
     fun increaseQuantity(listingId: Long) {
-        val currentItems = _cartItems.value ?: mutableListOf()
-        val itemIndex = currentItems.indexOfFirst { it.listingId == listingId }
-
-        if (itemIndex != -1) {
-            val item = currentItems[itemIndex]
-            if (item.quantity < item.maxQuantity) {
-                // Create a new CartItem with increased quantity (deep copy)
-                val updatedItem = item.copy(quantity = item.quantity + 1)
-                currentItems[itemIndex] = updatedItem
-                // Create a new list to trigger LiveData and DiffUtil properly
-                _cartItems.value = currentItems.toMutableList()
-                updateTotals()
-            }
-        }
+        val currentQty = getItemQuantity(listingId)
+        updateQuantity(listingId, currentQty + 1)
     }
 
     fun decreaseQuantity(listingId: Long) {
-        val currentItems = _cartItems.value ?: mutableListOf()
-        val itemIndex = currentItems.indexOfFirst { it.listingId == listingId }
+        val currentQty = getItemQuantity(listingId)
+        if (currentQty > 1) {
+            updateQuantity(listingId, currentQty - 1)
+        } else {
+            removeItem(listingId)
+        }
+    }
 
-        if (itemIndex != -1) {
-            val item = currentItems[itemIndex]
-            if (item.quantity > 1) {
-                // Create a new CartItem with decreased quantity (deep copy)
-                val updatedItem = item.copy(quantity = item.quantity - 1)
-                currentItems[itemIndex] = updatedItem
-                // Create a new list to trigger LiveData and DiffUtil properly
-                _cartItems.value = currentItems.toMutableList()
-                updateTotals()
-            } else {
-                removeItem(listingId)
+    /**
+     * Remove an item from the cart (Backend sync)
+     */
+    fun removeItem(listingId: Long) {
+        scope.launch {
+            try {
+                val response = RetrofitClient.apiService.removeCartItem(listingId)
+                if (response.isSuccessful) {
+                    val cartDto = response.body()
+                    withContext(Dispatchers.Main) {
+                        updateLocalState(cartDto)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error removing item", e)
             }
         }
     }
 
-    fun clearCart() {
-        _cartItems.value = mutableListOf()
-        updateTotals()
+    /**
+     * Clear the entire cart (Backend sync)
+     */
+    fun clearCart(onResult: ((Boolean) -> Unit)? = null) {
+        scope.launch {
+            try {
+                val response = RetrofitClient.apiService.clearCart()
+                if (response.isSuccessful) {
+                    val cartDto = response.body()
+                    withContext(Dispatchers.Main) {
+                        updateLocalState(cartDto)
+                        onResult?.invoke(true)
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        onResult?.invoke(false)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error clearing cart", e)
+                withContext(Dispatchers.Main) {
+                    onResult?.invoke(false)
+                }
+            }
+        }
     }
 
     /**
-     * Called by AuthManager when user logs out
-     * Internal method to clear cart
+     * Helper to update local LiveData from Backend DTO
      */
+    private fun updateLocalState(cartDto: CartResponseDto?) {
+        if (cartDto == null) {
+            _cartItems.value = mutableListOf()
+            _totalPrice.value = 0.0
+            _totalSavings.value = 0.0
+            _itemCount.value = 0
+            _supplierId.value = null
+            return
+        }
+
+        val cartStoreName = cartDto.storeName ?: ""
+
+        val mappedItems = cartDto.items.map { dto ->
+            CartItem(
+                listingId = dto.listingId,
+                title = dto.title,
+                storeName = dto.storeName ?: cartStoreName,
+                price = dto.unitPrice,
+                originalPrice = dto.originalPrice, 
+                savingsLabel = dto.savingsLabel,
+                photoUrl = dto.imageUrl,
+                quantity = dto.qty,
+                pickupStart = dto.pickupStart,
+                pickupEnd = dto.pickupEnd
+            )
+        }.toMutableList()
+
+        _cartItems.value = mappedItems
+        _totalPrice.value = cartDto.total
+        _totalSavings.value = cartDto.totalSavings // Directly use calculated savings from backend
+        _itemCount.value = mappedItems.sumOf { it.quantity }
+        _supplierId.value = cartDto.supplierId
+    }
+
+    fun getItemCount(): Int = _itemCount.value ?: 0
+    fun isInCart(listingId: Long): Boolean = _cartItems.value?.any { it.listingId == listingId } ?: false
+    fun getItemQuantity(listingId: Long): Int = _cartItems.value?.find { it.listingId == listingId }?.quantity ?: 0
+
     internal fun clearCartForLogout() {
-        clearCart()
-    }
-
-    fun getItemCount(): Int {
-        return _cartItems.value?.sumOf { it.quantity } ?: 0
-    }
-
-    fun isInCart(listingId: Long): Boolean {
-        return _cartItems.value?.any { it.listingId == listingId } ?: false
-    }
-
-    fun getItemQuantity(listingId: Long): Int {
-        return _cartItems.value?.find { it.listingId == listingId }?.quantity ?: 0
-    }
-
-    private fun updateTotals() {
-        val items = _cartItems.value ?: mutableListOf()
-        _totalPrice.value = items.sumOf { it.getSubtotal() }
-        _totalSavings.value = items.sumOf { it.getSavings() }
-        _itemCount.value = items.sumOf { it.quantity }
+        _cartItems.value = mutableListOf()
+        _totalPrice.value = 0.0
+        _totalSavings.value = 0.0
+        _itemCount.value = 0
+        _supplierId.value = null
     }
 }

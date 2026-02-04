@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Queue – Food Rescue Hub</title>
+    <style>
+      /* Reset & base  */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: #f0f4f8;
+        color: #1e293b;
+        min-height: 100vh;
+        padding: 24px 16px;
+      }
+
+      /*  Layout  */
+      .page-wrapper {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      /*  Header  */
+      .page-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+      .page-header h1 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #0f172a;
+      }
+      .badge-store {
+        background: #e0e7ff;
+        color: #3730a3;
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 12px;
+      }
+
+      /*  Flash messages  */
+      .flash {
+        padding: 10px 16px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 0.9rem;
+      }
+      .flash-success {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+      }
+      .flash-error {
+        background: #fef2f2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+      }
+
+      /*  Status tabs  */
+      .tabs {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .tabs a {
+        text-decoration: none;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        background: #fff;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+        transition: all 0.15s;
+      }
+      .tabs a:hover {
+        background: #f1f5f9;
+      }
+      .tabs a.active {
+        background: #3b82f6;
+        color: #fff;
+        border-color: #3b82f6;
+      }
+      .tabs a.active-accepted {
+        background: #22c55e;
+        color: #fff;
+        border-color: #22c55e;
+      }
+      .tabs a.active-rejected {
+        background: #ef4444;
+        color: #fff;
+        border-color: #ef4444;
+      }
+      .tabs a.active-cancelled {
+        background: #f59e0b;
+        color: #fff;
+        border-color: #f59e0b;
+      }
+
+      /*  Empty state  */
+      .empty-state {
+        text-align: center;
+        padding: 48px 16px;
+        color: #94a3b8;
+        font-size: 1rem;
+      }
+      .empty-state svg {
+        width: 48px;
+        height: 48px;
+        margin-bottom: 12px;
+        opacity: 0.4;
+      }
+
+      /*  Order card  */
+      .order-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e2e8f0;
+        padding: 18px 20px;
+        margin-bottom: 14px;
+        transition: box-shadow 0.2s;
+      }
+      .order-card:hover {
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+      }
+
+      /*  Card header row  */
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .card-header h3 {
+        font-size: 1rem;
+        font-weight: 700;
+      }
+      .status-badge {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 3px 10px;
+        border-radius: 12px;
+        letter-spacing: 0.04em;
+      }
+      .status-PENDING {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .status-ACCEPTED {
+        background: #dcfce7;
+        color: #166534;
+      }
+      .status-REJECTED {
+        background: #fef2f2;
+        color: #991b1b;
+      }
+      .status-CANCELLED {
+        background: #fef3c7;
+        color: #b45309;
+      }
+      .status-COMPLETED {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+
+      /*  Card body grid  */
+      .card-body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px 24px;
+        font-size: 0.85rem;
+        color: #475569;
+      }
+      .card-body .label {
+        font-weight: 600;
+        color: #64748b;
+      }
+      .card-body .value {
+        color: #1e293b;
+      }
+
+      /*  Card actions  */
+      .card-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 16px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      /*  Buttons  */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 7px 18px;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition:
+          filter 0.15s,
+          transform 0.1s;
+      }
+      .btn:active {
+        transform: scale(0.96);
+      }
+      .btn-accept {
+        background: #22c55e;
+        color: #fff;
+      }
+      .btn-accept:hover {
+        filter: brightness(0.9);
+      }
+      .btn-reject {
+        background: #ef4444;
+        color: #fff;
+      }
+      .btn-reject:hover {
+        filter: brightness(0.9);
+      }
+      .btn-cancel {
+        background: #f59e0b;
+        color: #fff;
+      }
+      .btn-cancel:hover {
+        filter: brightness(0.9);
+      }
+
+      /*  Inline reject / cancel reason input  */
+      .reason-row {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        flex: 1;
+        min-width: 220px;
+      }
+      .reason-row input {
+        flex: 1;
+        padding: 7px 10px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        font-size: 0.82rem;
+        outline: none;
+      }
+      .reason-row input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px #bfdbfe;
+      }
+
+      /*  Cancel reason display */
+      .cancel-reason-display {
+        margin-top: 10px;
+        padding: 8px 12px;
+        background: #fef2f2;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        color: #991b1b;
+      }
+      .cancel-reason-display span {
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <!-- Header -->
+      <div class="page-header">
+        <h1>📦 Order Queue</h1>
+        <span class="badge-store"
+          >Store ID: <th:block th:text="${storeId}"
+        /></span>
+      </div>
+
+      <!-- Flash messages -->
+      <div
+        th:if="${successMsg}"
+        class="flash flash-success"
+        th:text="${successMsg}"
+      ></div>
+      <div
+        th:if="${errorMsg}"
+        class="flash flash-error"
+        th:text="${errorMsg}"
+      ></div>
+
+      <!-- Status filter tabs -->
+      <nav class="tabs">
+        <a
+          th:href="@{/supplier/order-queue/{id}(id=${storeId}, status='PENDING')}"
+          th:classappend="${activeStatus == 'PENDING' ? 'active' : ''}"
+          >Pending</a
+        >
+        <a
+          th:href="@{/supplier/order-queue/{id}(id=${storeId}, status='ACCEPTED')}"
+          th:classappend="${activeStatus == 'ACCEPTED' ? 'active-accepted' : ''}"
+          >Accepted</a
+        >
+        <a
+          th:href="@{/supplier/order-queue/{id}(id=${storeId}, status='REJECTED')}"
+          th:classappend="${activeStatus == 'REJECTED' ? 'active-rejected' : ''}"
+          >Rejected</a
+        >
+        <a
+          th:href="@{/supplier/order-queue/{id}(id=${storeId}, status='CANCELLED')}"
+          th:classappend="${activeStatus == 'CANCELLED' ? 'active-cancelled' : ''}"
+          >Cancelled</a
+        >
+        <a
+          th:href="@{/supplier/order-queue/{id}(id=${storeId})}"
+          th:classappend="${activeStatus == null ? 'active' : ''}"
+          >All</a
+        >
+      </nav>
+
+      <!-- Empty state -->
+      <div th:if="${orders.empty}" class="empty-state">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+        >
+          <path
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+          />
+        </svg>
+        <p>No orders found for the selected filter.</p>
+      </div>
+
+      <!-- Order cards -->
+      <div th:each="order : ${orders}" class="order-card">
+        <!-- Header: title + status badge -->
+        <div class="card-header">
+          <h3 th:text="'Order #' + order.orderId"></h3>
+          <span
+            class="status-badge"
+            th:classappend="'status-' + order.status"
+            th:text="${order.status}"
+          ></span>
+        </div>
+
+        <!-- Details grid -->
+        <div class="card-body">
+          <div>
+            <span class="label">Listing</span>
+            <span class="value" th:text="${order.listingTitle}"></span>
+          </div>
+          <div>
+            <span class="label">Qty</span>
+            <span class="value" th:text="${order.quantity}"></span>
+          </div>
+          <div>
+            <span class="label">Unit Price</span>
+            <span class="value" th:text="'$' + order.unitPrice"></span>
+          </div>
+          <div>
+            <span class="label">Total</span>
+            <span class="value" th:text="'$' + order.totalAmount"></span>
+          </div>
+          <div>
+            <span class="label">Consumer</span>
+            <span class="value" th:text="${order.consumerName}"></span>
+          </div>
+          <div>
+            <span class="label">Phone</span>
+            <span class="value" th:text="${order.consumerPhone}"></span>
+          </div>
+          <div>
+            <span class="label">Pickup Start</span>
+            <span
+              class="value"
+              th:text="${order.pickupSlotStart != null ? order.pickupSlotStart : '—'}"
+            ></span>
+          </div>
+          <div>
+            <span class="label">Pickup End</span>
+            <span
+              class="value"
+              th:text="${order.pickupSlotEnd != null ? order.pickupSlotEnd : '—'}"
+            ></span>
+          </div>
+          <div>
+            <span class="label">Placed At</span>
+            <span class="value" th:text="${order.createdAt}"></span>
+          </div>
+        </div>
+
+        <!-- Reject / Cancel reason (read-only, shown after action) -->
+        <div th:if="${order.cancelReason}" class="cancel-reason-display">
+          <span>Reason:</span> <span th:text="${order.cancelReason}"></span>
+        </div>
+
+        <!-- all the order actions like pend/accept/reject -->
+
+        <!-- PENDING shows Accept button + Reject form -->
+        <div th:if="${order.status == 'PENDING'}" class="card-actions">
+          <!-- Accept (simple POST, no body) -->
+          <form
+            th:action="@{/supplier/order-queue/{id}/accept(id=${storeId})}"
+            method="post"
+          >
+            <input type="hidden" name="orderId" th:value="${order.orderId}" />
+            <button type="submit" class="btn btn-accept">✓ Accept</button>
+          </form>
+
+          <!-- Reject (requires reason) -->
+          <form
+            th:action="@{/supplier/order-queue/{id}/reject(id=${storeId})}"
+            method="post"
+            class="reason-row"
+          >
+            <input type="hidden" name="orderId" th:value="${order.orderId}" />
+            <input
+              type="text"
+              name="reason"
+              placeholder="Rejection reason…"
+              required
+            />
+            <button type="submit" class="btn btn-reject">✗ Reject</button>
+          </form>
+        </div>
+
+        <!-- ACCEPTED shows Cancel button (restores stock) -->
+        <div th:if="${order.status == 'ACCEPTED'}" class="card-actions">
+          <form
+            th:action="@{/supplier/order-queue/{id}/cancel(id=${storeId})}"
+            method="post"
+            class="reason-row"
+          >
+            <input type="hidden" name="orderId" th:value="${order.orderId}" />
+            <input
+              type="text"
+              name="reason"
+              placeholder="Cancellation reason…"
+              required
+            />
+            <button type="submit" class="btn btn-cancel">⟳ Cancel</button>
+          </form>
+        </div>
+      </div>
+      <!-- end of the order card loop -->
+    </div>
+  </body>
+</html>

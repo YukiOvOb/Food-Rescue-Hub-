@@ -33,7 +33,7 @@ public class Order {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "consumer_id", nullable = false)
-    @JsonIgnoreProperties("orders") // Prevent Consumer -> Order -> Consumer loop
+    @JsonIgnoreProperties({"orders", "wallet", "hibernateLazyInitializer", "handler"}) // Prevent Consumer -> Order -> Consumer loop
     private ConsumerProfile consumer;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -53,7 +53,7 @@ public class Order {
     private PickupToken pickupToken;
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("order")
+    @JsonIgnoreProperties({"order", "supplier"})
     private CommissionLedger commission;
 
     // --- Order Details ---

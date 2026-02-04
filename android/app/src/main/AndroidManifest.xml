@@ -6,6 +6,10 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- Location permissions for recommendations -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <application
         android:name=".FoodRescueHubApplication"
         android:allowBackup="true"
@@ -18,15 +22,25 @@
         android:theme="@style/Theme.FoodRescueHub"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+
+        <!-- Google Maps API Key -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDyRDq6SegBgoxIWUPmbFYqFSmcbCAadbo" />
+
         <activity
-            android:name=".ui.home.HomeActivity"
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ui.home.HomeActivity"
+            android:exported="false" />
+
         <activity
             android:name=".ui.detail.ProductDetailActivity"
             android:exported="false" />
@@ -45,8 +59,40 @@
             android:theme="@style/Theme.FoodRescueHub"
             android:parentActivityName=".ui.home.HomeActivity" />
         <activity
-            android:name=".MainActivity"
-            android:exported="false" />
+            android:name=".ui.search.SearchResultsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.FoodRescueHub"
+            android:parentActivityName=".ui.home.HomeActivity" />
+        <activity
+            android:name=".ui.orders.OrdersActivity"
+            android:exported="false"
+            android:label="My Orders"
+            android:parentActivityName=".ui.home.HomeActivity" />
+        <activity
+            android:name=".ui.orders.OrderDetailActivity"
+            android:exported="false"
+            android:label="Order Details"
+            android:parentActivityName=".ui.orders.OrdersActivity" />
+        <activity
+            android:name=".ui.location.LocationActivity"
+            android:exported="false"
+            android:label="Nearby Stores"
+            android:parentActivityName=".ui.home.HomeActivity" />
+        <activity
+            android:name=".ui.qrcode.QRCodeActivity"
+            android:exported="false"
+            android:label="Pickup Code"
+            android:parentActivityName=".ui.orders.OrderDetailActivity" />
+        <activity
+            android:name=".ui.checkout.CheckoutActivity"
+            android:exported="false"
+            android:label="Checkout"
+            android:parentActivityName=".ui.cart.CartActivity" />
+        <activity
+            android:name=".ui.checkout.OrderConfirmationActivity"
+            android:exported="false"
+            android:label="Confirmation"
+            android:parentActivityName=".ui.home.HomeActivity"/>
     </application>
 
 </manifest>

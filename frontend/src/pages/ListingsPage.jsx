@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import authService from '../services/authService';
 
 const cardStyle = {
   backgroundColor: '#fff',
@@ -28,6 +29,7 @@ const pillSubtle = {
 export default function ListingsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [listings, setListings] = useState([]);
+  const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     storeId: '',
     title: '',
@@ -59,19 +61,41 @@ export default function ListingsPage() {
   const supplierBase = `${apiBase}/supplier`;
 
   useEffect(() => {
-    fetchListings();
+    const loadUser = async () => {
+      try {
+        const currentUser = await authService.getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+        }
+      } catch (error) {
+        console.error('Error loading user:', error);
+      }
+    };
+    loadUser();
   }, []);
 
+  useEffect(() => {
+    if (user?.supplierId) {
+      fetchListings();
+    }
+  }, [user?.supplierId]);
+
   const fetchListings = () => {
-    fetch(`${supplierBase}/listings`, {
-      credentials: 'include'
-    })
+    if (!user?.supplierId) return;
+    
+    fetch(`${supplierBase}/listings/supplier/${user.supplierId}`)
       .then((r) => {
         if (!r.ok) throw new Error('network');
         return r.json();
       })
-      .then((data) => setListings(data))
-      .catch(() => setListings([]));
+      .then((data) => {
+        console.log('Listings fetched:', data);
+        setListings(data);
+      })
+      .catch((err) => {
+        console.error('Error fetching listings:', err);
+        setListings([]);
+      });
   };
 
   const handleChange = (e) => {

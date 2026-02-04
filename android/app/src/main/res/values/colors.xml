@@ -2,4 +2,39 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Recommendation System Colors -->
+    <color name="primary">#FF6B35</color>
+    <color name="primary_dark">#E55A2B</color>
+    <color name="primary_light">#FF8659</color>
+    <color name="accent">#4ECDC4</color>
+
+    <!-- Background -->
+    <color name="background_light">#F5F5F5</color>
+    <color name="background_white">#FFFFFF</color>
+
+    <!-- Text Colors -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_hint">#BDBDBD</color>
+
+    <!-- Semantic Colors -->
+    <color name="discount">#FF5722</color>
+    <color name="rating">#FFC107</color>
+    <color name="success">#4CAF50</color>
+    <color name="error">#F44336</color>
+    <color name="divider">#E0E0E0</color>
+
+    <!-- Tag Colors -->
+    <color name="tag_high_rating">#FF6B35</color>
+    <color name="tag_nearby">#4ECDC4</color>
+    <color name="tag_discount">#F7931E</color>
+    <color name="tag_default">#9B9B9B</color>
+    <color name="primaryColor">#4CAF50</color>
+    <color name="backgroundColor">#F5F5F5</color>
+    <color name="secondaryTextColor">#757575</color>
+    <color name="status_confirmed">#4CAF50</color>
+    <color name="status_pending">#FFA726</color>
+    <color name="status_completed">#66BB6A</color>
+    <color name="status_cancelled">#EF5350</color>
 </resources>

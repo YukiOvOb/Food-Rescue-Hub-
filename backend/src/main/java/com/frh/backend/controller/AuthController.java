@@ -38,10 +38,17 @@ public class AuthController {
 
         AuthResponse response = authService.register(request);
 
-        SupplierProfile supplier =
-            authService.getSupplierByEmail(request.getEmail());
-
-        session.setAttribute("user", supplier);
+        if ("CONSUMER".equalsIgnoreCase(request.getRole())) {
+            var consumer = authService.getConsumerByEmail(request.getEmail());
+            session.setAttribute("user", consumer);
+            session.setAttribute("USER_ID", consumer.getConsumerId());
+            session.setAttribute("USER_ROLE", "CONSUMER");
+        } else {
+            var supplier = authService.getSupplierByEmail(request.getEmail());
+            session.setAttribute("user", supplier);
+            session.setAttribute("USER_ID", supplier.getSupplierId());
+            session.setAttribute("USER_ROLE", "SUPPLIER");
+        }
 
         return ResponseEntity.ok(response);
     }
@@ -51,23 +58,28 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request,
             HttpSession session) {
 
+        // Support both consumer and supplier login
         AuthResponse response = authService.login(request, session);
+        
+        // retrieve info from session for console log
+        Long userId = (Long) session.getAttribute("USER_ID");
+        String userRole = (String) session.getAttribute("USER_ROLE");
+        log.info("User logged in - ID: {}, Role: {}", userId, userRole);
+        
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(HttpSession session) {
 
-        SupplierProfile supplier =
-            (SupplierProfile) session.getAttribute("user");
-
-        if (supplier == null) {
+        Object user = session.getAttribute("user");
+        if (user == null) {
             return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("message", "Not logged in"));
         }
 
-        return ResponseEntity.ok(supplier);
+        return ResponseEntity.ok(user);
     }
 
     @PostMapping("/logout")

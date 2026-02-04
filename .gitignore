@@ -60,3 +60,8 @@ Desktop.ini
 **/android/.externalNativeBuild/
 **/android/.cxx/
 **/android/captures/
+**/.gradle/
+**/build/
+android/.gradle/
+**/build/
+.gradle/

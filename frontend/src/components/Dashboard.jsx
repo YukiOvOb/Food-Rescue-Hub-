@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
+import axiosInstance from '../services/axiosConfig';
 import './styles/Dashboard.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [pendingOrders, setPendingOrders] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -32,6 +37,64 @@ const Dashboard = () => {
     fetchUser();
   }, [navigate]);
 
+  useEffect(() => {
+    if (!user?.supplierId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadStats = async () => {
+      setStatsLoading(true);
+      try {
+        const [pendingResult, completedResult, listingsResult] = await Promise.all([
+          axiosInstance.get(`/orders/supplier/${user.supplierId}/status/PENDING`),
+          axiosInstance.get(`/orders/supplier/${user.supplierId}/status/COMPLETED`),
+          axiosInstance.get(`/supplier/listings/supplier/${user.supplierId}`)
+        ]);
+
+        const pendingOrdersList = pendingResult?.data || [];
+        const completedOrdersList = completedResult?.data || [];
+        const allListings = listingsResult?.data || [];
+
+        console.log('Dashboard Stats - Listings data:', allListings);
+        console.log('Dashboard Stats - Listings count:', allListings.length);
+
+        const pendingCount = pendingOrdersList.length;
+
+        const revenue = completedOrdersList.reduce((sum, order) => {
+          const amount = Number(order?.totalAmount ?? 0);
+          return sum + (Number.isFinite(amount) ? amount : 0);
+        }, 0);
+
+        const listingCount = allListings.length;
+
+        if (!cancelled) {
+          setPendingOrders(pendingCount);
+          setTotalRevenue(revenue);
+          setTotalProducts(listingCount);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setPendingOrders(0);
+          setTotalRevenue(0);
+          setTotalProducts(0);
+        }
+        console.error('Failed to load dashboard stats:', error);
+        console.error('Error details:', error.response?.data, error.response?.status);
+      } finally {
+        if (!cancelled) {
+          setStatsLoading(false);
+        }
+      }
+    };
+
+    loadStats();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.supplierId]);
+
   const handleLogout = async () => {
     const confirmLogout = window.confirm('Are you sure you want to logout?');
     if (confirmLogout) {
@@ -41,6 +104,9 @@ const Dashboard = () => {
   };
 
   const goToListings = () => navigate('/listings');
+  const goToOrders = () => navigate('/orders');
+  const goToAnalytics = () => navigate('/analytics');
+  const goToQRDecoder = () => navigate('/qr-decoder');
 
   if (loading) {
     return (
@@ -104,7 +170,7 @@ const Dashboard = () => {
             <div className="card-icon">📊</div>
             <h3>Orders</h3>
             <p>Track and manage orders</p>
-            <button className="btn-card">View Orders</button>
+            <button className="btn-card" onClick={goToOrders}>View Orders</button>
           </div>
           <div className="card">
             <div className="card-icon">💰</div>
@@ -122,7 +188,7 @@ const Dashboard = () => {
             <div className="card-icon">📈</div>
             <h3>Analytics</h3>
             <p>View performance metrics</p>
-            <button className="btn-card">View Analytics</button>
+            <button className="btn-card" onClick={goToAnalytics}>View Analytics</button>
           </div>
           <div className="card">
             <div className="card-icon">👥</div>
@@ -136,21 +202,29 @@ const Dashboard = () => {
             <p>Create and manage rescue listings</p>
             <button className="btn-card" onClick={goToListings}>Create Listing</button>
           </div>
+          <div className="card">
+            <div className="card-icon">📱</div>
+            <h3>QR Code Detector</h3>
+            <p>Scan and decode pickup tokens</p>
+            <button className="btn-card" onClick={goToQRDecoder}>Scan QR Code</button>
+          </div>
         </div>
 
         {/* Quick Stats */}
         <div className="quick-stats">
           <div className="stat-card">
-            <h4>Total Products</h4>
-            <p className="stat-value">0</p>
+            <h4>Total Listings</h4>
+            <p className="stat-value">{statsLoading ? '...' : totalProducts}</p>
           </div>
           <div className="stat-card">
             <h4>Pending Orders</h4>
-            <p className="stat-value">0</p>
+            <p className="stat-value">{statsLoading ? '...' : pendingOrders}</p>
           </div>
           <div className="stat-card">
             <h4>Total Revenue</h4>
-            <p className="stat-value">$0.00</p>
+            <p className="stat-value">
+              {statsLoading ? '...' : `$${totalRevenue.toFixed(2)}`}
+            </p>
           </div>
           <div className="stat-card">
             <h4>Active Customers</h4>

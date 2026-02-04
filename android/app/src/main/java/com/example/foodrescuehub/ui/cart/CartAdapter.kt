@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.foodrescuehub.R
 import com.example.foodrescuehub.data.model.CartItem
+import com.example.foodrescuehub.util.UrlUtils
 
 class CartAdapter(
     private val onIncreaseClick: (Long) -> Unit,
@@ -33,7 +34,6 @@ class CartAdapter(
         if (payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads)
         } else {
-            // Handle partial update for quantity changes
             val item = getItem(position)
             for (payload in payloads) {
                 if (payload == PAYLOAD_QUANTITY_CHANGED) {
@@ -60,22 +60,19 @@ class CartAdapter(
         private val btnRemove: ImageButton = itemView.findViewById(R.id.btnRemoveItem)
         private val tvSubtotal: TextView = itemView.findViewById(R.id.tvCartSubtotal)
 
-        // Store only the ID to ensure we always work with latest data
         private var currentListingId: Long = -1
 
         fun bind(item: CartItem) {
             currentListingId = item.listingId
 
-            if (!item.photoUrl.isNullOrBlank()) {
-                Glide.with(itemView.context)
-                    .load(item.photoUrl)
-                    .placeholder(R.drawable.ic_launcher_foreground)
-                    .error(R.drawable.ic_launcher_foreground)
-                    .centerCrop()
-                    .into(ivItemImage)
-            } else {
-                ivItemImage.setImageResource(R.drawable.ic_launcher_foreground)
-            }
+            // USE UrlUtils to construct absolute image URL
+            val imageUrl = UrlUtils.getFullUrl(item.photoUrl)
+            Glide.with(itemView.context)
+                .load(imageUrl)
+                .placeholder(R.drawable.ic_launcher_foreground)
+                .error(R.drawable.ic_launcher_foreground)
+                .centerCrop()
+                .into(ivItemImage)
 
             tvItemTitle.text = item.title
             tvStoreName.text = item.storeName
@@ -85,35 +82,20 @@ class CartAdapter(
 
         init {
             btnDecrease.setOnClickListener {
-                if (currentListingId != -1L) {
-                    onDecreaseClick(currentListingId)
-                }
+                if (currentListingId != -1L) onDecreaseClick(currentListingId)
             }
-
             btnIncrease.setOnClickListener {
-                if (currentListingId != -1L) {
-                    onIncreaseClick(currentListingId)
-                }
-            }
-
-            btnRemove.setOnClickListener {
-                // For remove, we still need the full item to show in dialog
-                // But we fetch it fresh from the current binding
+                if (currentListingId != -1L) onIncreaseClick(currentListingId)
             }
         }
 
-        // Method to update only quantity-related UI for better performance
         fun updateQuantity(item: CartItem) {
             currentListingId = item.listingId
             tvQuantity.text = item.quantity.toString()
             tvSubtotal.text = "$%.2f".format(item.getSubtotal())
             btnDecrease.isEnabled = item.quantity > 1
             btnIncrease.isEnabled = item.quantity < item.maxQuantity
-
-            // Update remove button with current item
-            btnRemove.setOnClickListener {
-                onRemoveItem(item)
-            }
+            btnRemove.setOnClickListener { onRemoveItem(item) }
         }
     }
 
@@ -127,12 +109,7 @@ class CartAdapter(
         }
 
         override fun getChangePayload(oldItem: CartItem, newItem: CartItem): Any? {
-            // Return a payload when quantity changes for more efficient updates
-            return if (oldItem.quantity != newItem.quantity) {
-                PAYLOAD_QUANTITY_CHANGED
-            } else {
-                null
-            }
+            return if (oldItem.quantity != newItem.quantity) PAYLOAD_QUANTITY_CHANGED else null
         }
     }
 

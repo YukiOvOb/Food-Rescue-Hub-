@@ -13,7 +13,8 @@ const Register = () => {
     displayName: '',
     businessName: '',
     businessType: '',
-    payoutAccountRef: ''
+    payoutAccountRef: '',
+    role: ''
   });
   
   const [errors, setErrors] = useState({});
@@ -70,7 +71,8 @@ const Register = () => {
     setLoading(true);
     
     try {
-      const response = await authService.register(formData);
+      const payload = { ...formData, role: 'SUPPLIER' };
+      const response = await authService.register(payload);
       console.log('Registration successful:', response);
       
       // Redirect to dashboard after successful registration

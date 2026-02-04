@@ -1,5 +1,6 @@
 package com.frh.backend.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -21,12 +22,14 @@ public class Wallet {
 
     // --- Relationship: Owner ---
     // Assuming 1 Consumer = 1 Wallet.
+    @JsonIgnoreProperties({"wallet"})
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "consumer_id", nullable = false, unique = true)
     private ConsumerProfile consumer;
 
     // --- Relationship: Transactions ---
     // One Wallet has Many Transactions
+    @JsonIgnoreProperties({"wallet"})
     @OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<WalletTransaction> transactions = new ArrayList<>();
 

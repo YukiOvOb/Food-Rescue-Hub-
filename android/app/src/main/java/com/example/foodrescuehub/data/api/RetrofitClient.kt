@@ -1,5 +1,8 @@
 package com.example.foodrescuehub.data.api
 
+import android.content.Context
+import com.example.foodrescuehub.BuildConfig
+import com.example.foodrescuehub.data.storage.SecurePreferences
 import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -9,34 +12,42 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Singleton object to configure and provide Retrofit instance
- * Manages the API client configuration
+ * Manages the API client configuration with session support
  */
 object RetrofitClient {
 
-    // Backend server URL
-    // For Android emulator connecting to localhost: "http://10.0.2.2:8081/"
-    // For remote EC2 server: "http://47.129.223.141:8081/"
-    private const val BASE_URL = "http://10.0.2.2:8081/"
+    // Base URL is now automatically selected based on the build flavor (dev vs prod)
+    private val BASE_URL = BuildConfig.BASE_URL
+    private var cookieJar: SessionCookieJar? = null
 
-    // Logging interceptor for debugging API calls
+    /**
+     * Initialize Retrofit with Context to enable session management
+     */
+    fun init(context: Context) {
+        val securePreferences = SecurePreferences(context)
+        cookieJar = SessionCookieJar(securePreferences)
+    }
+
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
     }
 
-    // OkHttp client with timeout and logging configurations
-    private val okHttpClient = OkHttpClient.Builder()
-        .addInterceptor(loggingInterceptor)
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
-        .build()
+    private val okHttpClient: OkHttpClient by lazy {
+        val builder = OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+        
+        cookieJar?.let { builder.cookieJar(it) }
+        
+        builder.build()
+    }
 
-    // Gson instance with custom configurations
     private val gson = GsonBuilder()
         .setLenient()
         .create()
 
-    // Retrofit instance
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
@@ -45,21 +56,14 @@ object RetrofitClient {
             .build()
     }
 
-    // API service instance
     val apiService: ApiService by lazy {
         retrofit.create(ApiService::class.java)
     }
 
     /**
-     * Update the base URL dynamically if needed
-     * Useful for switching between development and production servers
+     * Clear session cookies manually (useful for logout)
      */
-    fun updateBaseUrl(newBaseUrl: String): ApiService {
-        return Retrofit.Builder()
-            .baseUrl(newBaseUrl)
-            .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create(gson))
-            .build()
-            .create(ApiService::class.java)
+    fun clearSession() {
+        cookieJar?.clear()
     }
 }

@@ -49,16 +49,41 @@ class SecurePreferences(context: Context) {
     }
 
     /**
-     * Clear user data from encrypted storage
+     * Get the current user's ID
+     */
+    fun getUserId(): Long {
+        return getUser()?.userId ?: 0L
+    }
+
+    /**
+     * Clear user data and session from encrypted storage
      */
     fun clearUser() {
         sharedPreferences.edit()
             .remove(KEY_USER)
+            .remove(KEY_COOKIES)
             .apply()
+    }
+
+    /**
+     * Save session cookies
+     */
+    fun saveCookies(cookies: List<String>) {
+        sharedPreferences.edit()
+            .putStringSet(KEY_COOKIES, cookies.toSet())
+            .apply()
+    }
+
+    /**
+     * Retrieve session cookies
+     */
+    fun getCookies(): List<String> {
+        return sharedPreferences.getStringSet(KEY_COOKIES, emptySet())?.toList() ?: emptyList()
     }
 
     companion object {
         private const val PREFS_FILENAME = "food_rescue_hub_secure_prefs"
         private const val KEY_USER = "user_data"
+        private const val KEY_COOKIES = "session_cookies"
     }
 }

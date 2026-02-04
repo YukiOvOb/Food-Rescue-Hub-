@@ -2,32 +2,26 @@ package com.example.foodrescuehub.ui.detail
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.example.foodrescuehub.R
-import com.example.foodrescuehub.data.model.CartItem
 import com.example.foodrescuehub.data.repository.AuthManager
 import com.example.foodrescuehub.data.repository.CartManager
+import com.example.foodrescuehub.databinding.ActivityProductDetailBinding
 import com.example.foodrescuehub.ui.auth.LoginActivity
 import com.example.foodrescuehub.ui.cart.CartActivity
 import com.example.foodrescuehub.ui.dialog.LoginPromptDialog
+import com.example.foodrescuehub.ui.home.HomeActivity
+import com.example.foodrescuehub.util.UrlUtils
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 /**
  * Product Detail Activity
- * Displays detailed information about a listing including:
- * - Product image and title
- * - Store information
- * - Pricing and savings
- * - Pickup window and contents
- * - Allergens and storage info
- * - Reliability metrics
+ * Displays detailed information about a listing and handles adding to cart
+ * Updated to use ViewBinding
  */
 class ProductDetailActivity : AppCompatActivity() {
 
@@ -35,6 +29,7 @@ class ProductDetailActivity : AppCompatActivity() {
         const val EXTRA_LISTING_ID = "extra_listing_id"
         const val EXTRA_LISTING_TITLE = "extra_listing_title"
         const val EXTRA_LISTING_STORE_NAME = "extra_listing_store_name"
+        const val EXTRA_LISTING_STORE_ID = "extra_listing_store_id"
         const val EXTRA_LISTING_CATEGORY = "extra_listing_category"
         const val EXTRA_LISTING_DISTANCE = "extra_listing_distance"
         const val EXTRA_LISTING_PRICE = "extra_listing_price"
@@ -47,53 +42,18 @@ class ProductDetailActivity : AppCompatActivity() {
         const val EXTRA_LISTING_PHOTO_URL = "extra_listing_photo_url"
     }
 
-    private lateinit var btnBack: ImageButton
-    private lateinit var btnShare: ImageButton
-    private lateinit var ivProductImage: ImageView
-    private lateinit var tvProductTitle: TextView
-    private lateinit var tvStoreName: TextView
-    private lateinit var tvCategory: TextView
-    private lateinit var tvDistance: TextView
-    private lateinit var tvPrice: TextView
-    private lateinit var tvSavingsLabel: TextView
-    private lateinit var tvPickupWindow: TextView
-    private lateinit var tvContents: TextView
-    private lateinit var tvStorage: TextView
-    private lateinit var tvAllergens: TextView
-    private lateinit var tvListingAccuracy: TextView
-    private lateinit var tvOnTimePickup: TextView
-    private lateinit var btnBuyNow: Button
+    private lateinit var binding: ActivityProductDetailBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_product_detail)
+        binding = ActivityProductDetailBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        initViews()
         loadListingData()
         setupClickListeners()
     }
 
-    private fun initViews() {
-        btnBack = findViewById(R.id.btnBack)
-        btnShare = findViewById(R.id.btnShare)
-        ivProductImage = findViewById(R.id.ivProductImage)
-        tvProductTitle = findViewById(R.id.tvProductTitle)
-        tvStoreName = findViewById(R.id.tvStoreName)
-        tvCategory = findViewById(R.id.tvCategory)
-        tvDistance = findViewById(R.id.tvDistance)
-        tvPrice = findViewById(R.id.tvPrice)
-        tvSavingsLabel = findViewById(R.id.tvSavingsLabel)
-        tvPickupWindow = findViewById(R.id.tvPickupWindow)
-        tvContents = findViewById(R.id.tvContents)
-        tvStorage = findViewById(R.id.tvStorage)
-        tvAllergens = findViewById(R.id.tvAllergens)
-        tvListingAccuracy = findViewById(R.id.tvListingAccuracy)
-        tvOnTimePickup = findViewById(R.id.tvOnTimePickup)
-        btnBuyNow = findViewById(R.id.btnBuyNow)
-    }
-
     private fun loadListingData() {
-        // Get data from intent
         val title = intent.getStringExtra(EXTRA_LISTING_TITLE) ?: "Mystery Box"
         val storeName = intent.getStringExtra(EXTRA_LISTING_STORE_NAME) ?: ""
         val category = intent.getStringExtra(EXTRA_LISTING_CATEGORY) ?: ""
@@ -106,56 +66,75 @@ class ProductDetailActivity : AppCompatActivity() {
         val qtyAvailable = intent.getIntExtra(EXTRA_LISTING_QTY_AVAILABLE, 0)
         val photoUrl = intent.getStringExtra(EXTRA_LISTING_PHOTO_URL)
 
-        // Set data to views
-        tvProductTitle.text = title
-        tvStoreName.text = storeName
-        tvCategory.text = category
-        tvDistance.text = distance
-        tvPrice.text = "$%.2f".format(price)
-        tvSavingsLabel.text = savingsLabel
+        binding.tvProductTitle.text = title
+        binding.tvStoreName.text = storeName
+        binding.tvCategory.text = category
+        binding.tvDistance.text = distance
+        binding.tvPrice.text = "$%.2f".format(price)
+        binding.tvSavingsLabel.text = savingsLabel
 
-        // Format pickup window
         val pickupWindowText = formatPickupWindow(pickupStart, pickupEnd)
-        tvPickupWindow.text = pickupWindowText
+        binding.tvPickupWindow.text = pickupWindowText
 
-        // Contents (use description or default)
-        val contentsText = if (description.isNotBlank()) {
-            description
-        } else {
-            "3-5 items ($category items)"
-        }
-        tvContents.text = contentsText
+        updateButtonState(pickupEnd, qtyAvailable)
 
-        // Storage info (based on category)
+        val contentsText = if (description.isNotBlank()) description else "3-5 items ($category items)"
+        binding.tvContents.text = contentsText
+
         val storageText = when (category.lowercase()) {
             "bakery", "cafe", "coffee shop" -> "Room temp"
             "restaurant" -> "Keep refrigerated"
             "supermarket" -> "Mixed (see package)"
             else -> "Room temp"
         }
-        tvStorage.text = storageText
+        binding.tvStorage.text = storageText
 
-        // Allergens (placeholder - should come from backend)
         val allergensText = when (category.lowercase()) {
             "bakery" -> "gluten, dairy (may contain nuts)"
             "cafe", "coffee shop" -> "dairy (may contain gluten, nuts)"
             "restaurant" -> "varies by item"
             else -> "See individual items"
         }
-        tvAllergens.text = allergensText
+        binding.tvAllergens.text = allergensText
 
-        // Reliability metrics (placeholder - should come from backend)
-        tvListingAccuracy.text = "96%"
-        tvOnTimePickup.text = "98%"
+        binding.tvListingAccuracy.text = "96%"
+        binding.tvOnTimePickup.text = "98%"
 
-        // Load image
-        if (!photoUrl.isNullOrBlank()) {
-            Glide.with(this)
-                .load(photoUrl)
-                .placeholder(R.drawable.ic_launcher_foreground)
-                .error(R.drawable.ic_launcher_foreground)
-                .centerCrop()
-                .into(ivProductImage)
+        val fullPhotoUrl = UrlUtils.getFullUrl(photoUrl)
+        Glide.with(this)
+            .load(fullPhotoUrl)
+            .placeholder(R.drawable.ic_launcher_foreground)
+            .error(R.drawable.ic_launcher_foreground)
+            .centerCrop()
+            .into(binding.ivProductImage)
+    }
+
+    private fun updateButtonState(pickupEndTime: String, qtyAvailable: Int) {
+        var isEnabled = true
+        var buttonText = "Buy Now"
+
+        if (qtyAvailable <= 0) {
+            isEnabled = false
+            buttonText = "Sold Out"
+        }
+
+        if (isEnabled && pickupEndTime.isNotBlank()) {
+            try {
+                val end = LocalDateTime.parse(pickupEndTime, DateTimeFormatter.ISO_DATE_TIME)
+                if (LocalDateTime.now().isAfter(end)) {
+                    isEnabled = false
+                    buttonText = "Expired"
+                    binding.tvPickupWindow.setTextColor(getColor(android.R.color.holo_red_dark))
+                }
+            } catch (e: Exception) {
+            }
+        }
+
+        binding.btnBuyNow.isEnabled = isEnabled
+        binding.btnBuyNow.text = buttonText
+        if (!isEnabled) {
+            binding.btnBuyNow.alpha = 0.6f
+            binding.btnBuyNow.setBackgroundColor(getColor(android.R.color.darker_gray))
         }
     }
 
@@ -164,7 +143,6 @@ class ProductDetailActivity : AppCompatActivity() {
             val formatter = DateTimeFormatter.ISO_DATE_TIME
             val start = LocalDateTime.parse(startTime, formatter)
             val end = LocalDateTime.parse(endTime, formatter)
-
             val timeFormatter = DateTimeFormatter.ofPattern("h:mm a")
             "${start.format(timeFormatter)} - ${end.format(timeFormatter)}"
         } catch (e: Exception) {
@@ -173,21 +151,21 @@ class ProductDetailActivity : AppCompatActivity() {
     }
 
     private fun setupClickListeners() {
-        btnBack.setOnClickListener {
+        binding.btnBack.setOnClickListener {
+            val intent = Intent(this, HomeActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
             finish()
         }
-
-        btnShare.setOnClickListener {
+        
+        binding.btnShare.setOnClickListener {
             Toast.makeText(this, "Share feature coming soon", Toast.LENGTH_SHORT).show()
         }
-
-        btnBuyNow.setOnClickListener {
-            addToCart()
-        }
+        
+        binding.btnBuyNow.setOnClickListener { addToCart() }
     }
 
     private fun addToCart() {
-        // Check if user is logged in
         if (!AuthManager.isUserLoggedIn()) {
             LoginPromptDialog.show(this) {
                 val intent = Intent(this, LoginActivity::class.java)
@@ -197,30 +175,44 @@ class ProductDetailActivity : AppCompatActivity() {
         }
 
         val listingId = intent.getLongExtra(EXTRA_LISTING_ID, 0L)
-        val title = intent.getStringExtra(EXTRA_LISTING_TITLE) ?: "Mystery Box"
-        val storeName = intent.getStringExtra(EXTRA_LISTING_STORE_NAME) ?: ""
-        val price = intent.getDoubleExtra(EXTRA_LISTING_PRICE, 0.0)
-        val originalPrice = intent.getDoubleExtra(EXTRA_LISTING_ORIGINAL_PRICE, 0.0)
-        val photoUrl = intent.getStringExtra(EXTRA_LISTING_PHOTO_URL)
-        val qtyAvailable = intent.getIntExtra(EXTRA_LISTING_QTY_AVAILABLE, 10)
+        val storeId = intent.getLongExtra(EXTRA_LISTING_STORE_ID, 0L)
+        
+        if (listingId == 0L) {
+            Toast.makeText(this, "Error: Invalid Product", Toast.LENGTH_SHORT).show()
+            return
+        }
 
-        val cartItem = CartItem(
-            listingId = listingId,
-            title = title,
-            storeName = storeName,
-            price = price,
-            originalPrice = originalPrice,
-            photoUrl = photoUrl,
-            quantity = 1,
-            maxQuantity = qtyAvailable.coerceAtMost(10)
-        )
+        val currentSupplierId = CartManager.supplierId.value
+        if (currentSupplierId != null && currentSupplierId != 0L && currentSupplierId != storeId) {
+            showCrossStoreWarning(listingId)
+        } else {
+            performAddToCart(listingId)
+        }
+    }
 
-        CartManager.addItem(cartItem)
+    private fun showCrossStoreWarning(listingId: Long) {
+        AlertDialog.Builder(this)
+            .setTitle("Clear Cart?")
+            .setMessage("Your cart contains items from another store. Adding this item will clear your current cart. Continue?")
+            .setPositiveButton("Clear & Add") { _, _ ->
+                CartManager.clearCart { success ->
+                    if (success) {
+                        performAddToCart(listingId)
+                    }
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
 
-        Toast.makeText(this, "Added to cart", Toast.LENGTH_SHORT).show()
-
-        // Navigate to cart
-        val intent = Intent(this, CartActivity::class.java)
-        startActivity(intent)
+    private fun performAddToCart(listingId: Long) {
+        CartManager.addItem(listingId, 1) { success, error ->
+            if (success) {
+                Toast.makeText(this, "Added to cart", Toast.LENGTH_SHORT).show()
+                startActivity(Intent(this, CartActivity::class.java))
+            } else {
+                Toast.makeText(this, error ?: "Failed to add to cart", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }
