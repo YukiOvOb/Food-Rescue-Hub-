@@ -625,15 +625,37 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       TRIVY_TIMEOUT: 30m
     steps:
-      - name: Skip if DOCKER_USERNAME missing
+      - name: Skip if Docker credentials missing
         shell: bash
         run: |
-          if [ -z "${DOCKER_USERNAME}" ]; then
-            echo "DOCKER_USERNAME missing -> skipping image scan"
+          if [ -z "${DOCKER_USERNAME}" ] || [ -z "${DOCKER_PASSWORD}" ]; then
+            echo "DOCKER_USERNAME/DOCKER_PASSWORD missing -> skipping image scan"
             exit 0
           fi
+
+      - name: Login to Docker Hub
+        if: env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
+
+      - name: Pull backend image (if exists)
+        if: needs.detect.outputs.has_backend == 'true' && env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
+        shell: bash
+        run: |
+          set -e
+          docker pull "${DOCKER_USERNAME}/frh-backend:latest"
+
+      - name: Pull frontend image (if exists)
+        if: needs.detect.outputs.has_frontend == 'true' && env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
+        shell: bash
+        run: |
+          set -e
+          docker pull "${DOCKER_USERNAME}/frh-frontend:latest"
 
       - name: Scan backend image (if exists)
         if: needs.detect.outputs.has_backend == 'true' && env.DOCKER_USERNAME != ''
