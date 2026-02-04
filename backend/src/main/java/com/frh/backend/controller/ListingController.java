@@ -85,6 +85,15 @@ public ResponseEntity<?> createListing(
     }
 
     // ==========================================
+    // READ ALL BY SUPPLIER
+    // ==========================================
+    @GetMapping("/supplier/{supplierId}")
+    public ResponseEntity<List<Listing>> getListingsBySupplier(@PathVariable Long supplierId) {
+        List<Listing> listings = listingRepository.findByStore_SupplierProfile_SupplierId(supplierId);
+        return ResponseEntity.ok(listings);
+    }
+
+    // ==========================================
     // READ ONE
     // ==========================================
     @GetMapping("/{id}")

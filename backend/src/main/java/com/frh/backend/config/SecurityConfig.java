@@ -54,10 +54,13 @@ public class SecurityConfig {
                 "http://localhost:5173",
                 "http://localhost:5174", 
                 "http://47.129.223.141:8080",
-                "http://172.26.235.205:5174"));
+                "http://172.26.235.205:5174",
+                "http://localhost:5175",
+                "http://172.26.235.205:5174",
+                "http://172.26.235.205:5175"));
 
         config.setAllowedMethods(Arrays.asList(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowCredentials(true);

@@ -1,6 +1,7 @@
 package com.frh.backend.Model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -61,6 +62,7 @@ public class ConsumerProfile {
     private Map<String, Object> preferences;
 
     // --- Relationships ---
+    @JsonIgnoreProperties({"consumer", "transactions"})
     @OneToOne(mappedBy = "consumer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Wallet wallet;
 }

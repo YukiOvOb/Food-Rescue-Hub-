@@ -26,7 +26,7 @@ export default function StoreList() {
 
     const fetchStores = async (id) => {
         try {
-            // Use axiosInstance - it already knows about localhost:8081/api
+            // Use axiosInstance - it already knows about localhost:8080/api
             const response = await axiosInstance.get(`/stores/supplier/${id}`);
             setStores(response.data);
         } catch (error) {
@@ -43,7 +43,7 @@ export default function StoreList() {
 
         if (confirmed) {
             try {
-                // axiosInstance already has the baseURL (http://localhost:8081/api)
+                // axiosInstance already has the baseURL (http://localhost:8080/api)
                 // and includes withCredentials: true
                 const response = await axiosInstance.delete(`/stores/delete/${storeId}`);
 
