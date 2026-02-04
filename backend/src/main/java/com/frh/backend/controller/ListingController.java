@@ -4,6 +4,7 @@ import com.frh.backend.Model.Listing;
 import com.frh.backend.Model.ListingPhoto;
 import com.frh.backend.Model.Store;
 import com.frh.backend.repository.ListingRepository;
+import com.frh.backend.repository.OrderItemRepository;
 import com.frh.backend.repository.StoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +34,9 @@ public class ListingController {
 
     @Autowired
     private StoreRepository storeRepository;
+
+    @Autowired
+    private OrderItemRepository orderItemRepository;
 
     private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
             "image/jpeg",
@@ -155,6 +159,12 @@ public ResponseEntity<?> createListing(
     public ResponseEntity<?> deleteListing(@PathVariable Long id) {
         if (!listingRepository.existsById(id)) {
             return ResponseEntity.status(404).body("Listing not found with id: " + id);
+        }
+
+        // Block deletion when the listing has existing order items to prevent FK violations
+        if (orderItemRepository.existsByListing_ListingId(id)) {
+            return ResponseEntity.status(409)
+                    .body("Cannot delete listing because orders already reference it.");
         }
 
         listingRepository.deleteById(id);
