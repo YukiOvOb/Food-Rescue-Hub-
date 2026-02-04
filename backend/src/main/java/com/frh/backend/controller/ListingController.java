@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
+import jakarta.servlet.http.HttpSession;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -23,6 +24,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
+
+import com.frh.backend.Model.SupplierProfile;
 
 @RestController
 // changed to this route to avoid conflict with ConsumerListingController 
@@ -54,9 +57,15 @@ public class ListingController {
 @PostMapping
 public ResponseEntity<?> createListing(
         @RequestParam(name = "storeId", required = false) Long storeId,
-        @RequestBody Listing listing) {
+        @RequestBody Listing listing,
+        HttpSession session) {
 
     List<String> errors = new ArrayList<>();
+
+    SupplierProfile currentSupplier = (SupplierProfile) session.getAttribute("user");
+    if (currentSupplier == null) {
+        return ResponseEntity.status(401).body("Not logged in");
+    }
 
     // 1) Validate / resolve store
     if (storeId == null) {
@@ -66,8 +75,13 @@ public ResponseEntity<?> createListing(
         if (storeOpt.isEmpty()) {
             errors.add("Store not found with id: " + storeId);
         } else {
-            // attach store to listing so it can be persisted
-            listing.setStore(storeOpt.get());
+            Store store = storeOpt.get();
+            if (!store.getSupplierProfile().getSupplierId().equals(currentSupplier.getSupplierId())) {
+                errors.add("Store does not belong to the logged-in supplier");
+            } else {
+                // attach store to listing so it can be persisted
+                listing.setStore(store);
+            }
         }
     }
 
@@ -100,8 +114,14 @@ public ResponseEntity<?> createListing(
     // READ ALL
     // ==========================================
     @GetMapping
-    public ResponseEntity<List<Listing>> getAllListings() {
-        List<Listing> listings = listingRepository.findAll();
+    public ResponseEntity<?> getAllListings(HttpSession session) {
+        SupplierProfile currentSupplier = (SupplierProfile) session.getAttribute("user");
+        if (currentSupplier == null) {
+            return ResponseEntity.status(401).body("Not logged in");
+        }
+
+        List<Listing> listings = listingRepository.findByStore_SupplierProfile_SupplierId(
+                currentSupplier.getSupplierId());
         listings.forEach(this::sortPhotos);
         return ResponseEntity.ok(listings);
     }
@@ -110,15 +130,26 @@ public ResponseEntity<?> createListing(
     // READ ONE
     // ==========================================
     @GetMapping("/{id}")
-    public ResponseEntity<?> getListingById(@PathVariable Long id) {
+    public ResponseEntity<?> getListingById(@PathVariable Long id, HttpSession session) {
+        SupplierProfile currentSupplier = (SupplierProfile) session.getAttribute("user");
+        if (currentSupplier == null) {
+            return ResponseEntity.status(401).body("Not logged in");
+        }
+
         Optional<Listing> listingOptional = listingRepository.findById(id);
 
-        if (listingOptional.isPresent()) {
-            sortPhotos(listingOptional.get());
-            return ResponseEntity.ok(listingOptional.get());
-        } else {
+        if (listingOptional.isEmpty()) {
             return ResponseEntity.status(404).body("Listing not found with id: " + id);
         }
+
+        Listing listing = listingOptional.get();
+        if (!listing.getStore().getSupplierProfile().getSupplierId()
+                .equals(currentSupplier.getSupplierId())) {
+            return ResponseEntity.status(403).body("Forbidden: listing not owned by supplier");
+        }
+
+        sortPhotos(listing);
+        return ResponseEntity.ok(listing);
     }
 
     // ==========================================
@@ -126,7 +157,13 @@ public ResponseEntity<?> createListing(
     // ==========================================
     @PutMapping("/{id}")
     public ResponseEntity<?> updateListing(@PathVariable Long id,
-                                           @RequestBody Listing listingDetails) {
+                                           @RequestBody Listing listingDetails,
+                                           HttpSession session) {
+
+        SupplierProfile currentSupplier = (SupplierProfile) session.getAttribute("user");
+        if (currentSupplier == null) {
+            return ResponseEntity.status(401).body("Not logged in");
+        }
 
         Optional<Listing> existingListingOpt = listingRepository.findById(id);
         if (existingListingOpt.isEmpty()) {
@@ -134,6 +171,11 @@ public ResponseEntity<?> createListing(
         }
 
         Listing existingListing = existingListingOpt.get();
+
+        if (!existingListing.getStore().getSupplierProfile().getSupplierId()
+                .equals(currentSupplier.getSupplierId())) {
+            return ResponseEntity.status(403).body("Forbidden: listing not owned by supplier");
+        }
 
         List<String> errors = validateListing(listingDetails);
         if (!errors.isEmpty()) {
@@ -156,9 +198,21 @@ public ResponseEntity<?> createListing(
     // DELETE
     // ==========================================
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteListing(@PathVariable Long id) {
+    public ResponseEntity<?> deleteListing(@PathVariable Long id, HttpSession session) {
+        SupplierProfile currentSupplier = (SupplierProfile) session.getAttribute("user");
+        if (currentSupplier == null) {
+            return ResponseEntity.status(401).body("Not logged in");
+        }
+
         if (!listingRepository.existsById(id)) {
             return ResponseEntity.status(404).body("Listing not found with id: " + id);
+        }
+
+        Optional<Listing> listingOpt = listingRepository.findById(id);
+        if (listingOpt.isEmpty() ||
+                !listingOpt.get().getStore().getSupplierProfile().getSupplierId()
+                        .equals(currentSupplier.getSupplierId())) {
+            return ResponseEntity.status(403).body("Forbidden: listing not owned by supplier");
         }
 
         // Block deletion when the listing has existing order items to prevent FK violations
@@ -177,10 +231,19 @@ public ResponseEntity<?> createListing(
     @PostMapping(value = "/{id}/photos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadListingPhoto(@PathVariable Long id,
                                                 @RequestPart("file") MultipartFile file,
-                                                @RequestParam(name = "sortOrder", required = false) Integer sortOrder) {
+                                                @RequestParam(name = "sortOrder", required = false) Integer sortOrder,
+                                                HttpSession session) {
+        SupplierProfile currentSupplier = (SupplierProfile) session.getAttribute("user");
+        if (currentSupplier == null) {
+            return ResponseEntity.status(401).body("Not logged in");
+        }
         Optional<Listing> listingOpt = listingRepository.findById(id);
         if (listingOpt.isEmpty()) {
             return ResponseEntity.status(404).body("Listing not found with id: " + id);
+        }
+        if (!listingOpt.get().getStore().getSupplierProfile().getSupplierId()
+                .equals(currentSupplier.getSupplierId())) {
+            return ResponseEntity.status(403).body("Forbidden: listing not owned by supplier");
         }
 
         if (file == null || file.isEmpty()) {

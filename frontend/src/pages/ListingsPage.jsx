@@ -92,7 +92,7 @@ export default function ListingsPage() {
   }, []);
 
   const fetchListings = () => {
-    fetch(`${supplierBase}/listings`)
+    fetch(`${supplierBase}/listings`, { credentials: 'include' })
       .then((r) => {
         if (!r.ok) throw new Error('network');
         return r.json();
@@ -196,6 +196,7 @@ export default function ListingsPage() {
 
     const res = await fetch(`${supplierBase}/listings/${listingId}/photos`, {
       method: 'POST',
+      credentials: 'include',
       body: formDataUpload
     });
 
@@ -246,12 +247,12 @@ export default function ListingsPage() {
     const doCreate = () => {
       // Backend expects storeId as query param, not inside the JSON body.
       const url = `${supplierBase}/listings?storeId=${encodeURIComponent(formData.storeId)}`;
-      return fetch(url, { method: 'POST', ...requestConfig });
+      return fetch(url, { method: 'POST', credentials: 'include', ...requestConfig });
     };
 
     const doUpdate = () => {
       const url = `${supplierBase}/listings/${editingId}`;
-      return fetch(url, { method: 'PUT', ...requestConfig });
+      return fetch(url, { method: 'PUT', credentials: 'include', ...requestConfig });
     };
 
     (editingId ? doUpdate() : doCreate())
@@ -346,7 +347,7 @@ export default function ListingsPage() {
 
   const handleDelete = (listingId) => {
     if (!window.confirm('Delete this listing?')) return;
-    fetch(`${supplierBase}/listings/${listingId}`, { method: 'DELETE' })
+    fetch(`${supplierBase}/listings/${listingId}`, { method: 'DELETE', credentials: 'include' })
       .then(async (r) => {
         if (!r.ok) {
           const txt = await r.text();
