@@ -2,10 +2,6 @@ package com.example.foodrescuehub.ui.detail
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -13,9 +9,11 @@ import com.bumptech.glide.Glide
 import com.example.foodrescuehub.R
 import com.example.foodrescuehub.data.repository.AuthManager
 import com.example.foodrescuehub.data.repository.CartManager
+import com.example.foodrescuehub.databinding.ActivityProductDetailBinding
 import com.example.foodrescuehub.ui.auth.LoginActivity
 import com.example.foodrescuehub.ui.cart.CartActivity
 import com.example.foodrescuehub.ui.dialog.LoginPromptDialog
+import com.example.foodrescuehub.ui.home.HomeActivity
 import com.example.foodrescuehub.util.UrlUtils
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -23,6 +21,7 @@ import java.time.format.DateTimeFormatter
 /**
  * Product Detail Activity
  * Displays detailed information about a listing and handles adding to cart
+ * Updated to use ViewBinding
  */
 class ProductDetailActivity : AppCompatActivity() {
 
@@ -43,49 +42,15 @@ class ProductDetailActivity : AppCompatActivity() {
         const val EXTRA_LISTING_PHOTO_URL = "extra_listing_photo_url"
     }
 
-    private lateinit var btnBack: ImageButton
-    private lateinit var btnShare: ImageButton
-    private lateinit var ivProductImage: ImageView
-    private lateinit var tvProductTitle: TextView
-    private lateinit var tvStoreName: TextView
-    private lateinit var tvCategory: TextView
-    private lateinit var tvDistance: TextView
-    private lateinit var tvPrice: TextView
-    private lateinit var tvSavingsLabel: TextView
-    private lateinit var tvPickupWindow: TextView
-    private lateinit var tvContents: TextView
-    private lateinit var tvStorage: TextView
-    private lateinit var tvAllergens: TextView
-    private lateinit var tvListingAccuracy: TextView
-    private lateinit var tvOnTimePickup: TextView
-    private lateinit var btnBuyNow: Button
+    private lateinit var binding: ActivityProductDetailBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_product_detail)
+        binding = ActivityProductDetailBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        initViews()
         loadListingData()
         setupClickListeners()
-    }
-
-    private fun initViews() {
-        btnBack = findViewById(R.id.btnBack)
-        btnShare = findViewById(R.id.btnShare)
-        ivProductImage = findViewById(R.id.ivProductImage)
-        tvProductTitle = findViewById(R.id.tvProductTitle)
-        tvStoreName = findViewById(R.id.tvStoreName)
-        tvCategory = findViewById(R.id.tvCategory)
-        tvDistance = findViewById(R.id.tvDistance)
-        tvPrice = findViewById(R.id.tvPrice)
-        tvSavingsLabel = findViewById(R.id.tvSavingsLabel)
-        tvPickupWindow = findViewById(R.id.tvPickupWindow)
-        tvContents = findViewById(R.id.tvContents)
-        tvStorage = findViewById(R.id.tvStorage)
-        tvAllergens = findViewById(R.id.tvAllergens)
-        tvListingAccuracy = findViewById(R.id.tvListingAccuracy)
-        tvOnTimePickup = findViewById(R.id.tvOnTimePickup)
-        btnBuyNow = findViewById(R.id.btnBuyNow)
     }
 
     private fun loadListingData() {
@@ -101,20 +66,20 @@ class ProductDetailActivity : AppCompatActivity() {
         val qtyAvailable = intent.getIntExtra(EXTRA_LISTING_QTY_AVAILABLE, 0)
         val photoUrl = intent.getStringExtra(EXTRA_LISTING_PHOTO_URL)
 
-        tvProductTitle.text = title
-        tvStoreName.text = storeName
-        tvCategory.text = category
-        tvDistance.text = distance
-        tvPrice.text = "$%.2f".format(price)
-        tvSavingsLabel.text = savingsLabel
+        binding.tvProductTitle.text = title
+        binding.tvStoreName.text = storeName
+        binding.tvCategory.text = category
+        binding.tvDistance.text = distance
+        binding.tvPrice.text = "$%.2f".format(price)
+        binding.tvSavingsLabel.text = savingsLabel
 
         val pickupWindowText = formatPickupWindow(pickupStart, pickupEnd)
-        tvPickupWindow.text = pickupWindowText
+        binding.tvPickupWindow.text = pickupWindowText
 
         updateButtonState(pickupEnd, qtyAvailable)
 
         val contentsText = if (description.isNotBlank()) description else "3-5 items ($category items)"
-        tvContents.text = contentsText
+        binding.tvContents.text = contentsText
 
         val storageText = when (category.lowercase()) {
             "bakery", "cafe", "coffee shop" -> "Room temp"
@@ -122,7 +87,7 @@ class ProductDetailActivity : AppCompatActivity() {
             "supermarket" -> "Mixed (see package)"
             else -> "Room temp"
         }
-        tvStorage.text = storageText
+        binding.tvStorage.text = storageText
 
         val allergensText = when (category.lowercase()) {
             "bakery" -> "gluten, dairy (may contain nuts)"
@@ -130,19 +95,18 @@ class ProductDetailActivity : AppCompatActivity() {
             "restaurant" -> "varies by item"
             else -> "See individual items"
         }
-        tvAllergens.text = allergensText
+        binding.tvAllergens.text = allergensText
 
-        tvListingAccuracy.text = "96%"
-        tvOnTimePickup.text = "98%"
+        binding.tvListingAccuracy.text = "96%"
+        binding.tvOnTimePickup.text = "98%"
 
-        // USE UrlUtils for image loading
         val fullPhotoUrl = UrlUtils.getFullUrl(photoUrl)
         Glide.with(this)
             .load(fullPhotoUrl)
             .placeholder(R.drawable.ic_launcher_foreground)
             .error(R.drawable.ic_launcher_foreground)
             .centerCrop()
-            .into(ivProductImage)
+            .into(binding.ivProductImage)
     }
 
     private fun updateButtonState(pickupEndTime: String, qtyAvailable: Int) {
@@ -160,17 +124,17 @@ class ProductDetailActivity : AppCompatActivity() {
                 if (LocalDateTime.now().isAfter(end)) {
                     isEnabled = false
                     buttonText = "Expired"
-                    tvPickupWindow.setTextColor(getColor(android.R.color.holo_red_dark))
+                    binding.tvPickupWindow.setTextColor(getColor(android.R.color.holo_red_dark))
                 }
             } catch (e: Exception) {
             }
         }
 
-        btnBuyNow.isEnabled = isEnabled
-        btnBuyNow.text = buttonText
+        binding.btnBuyNow.isEnabled = isEnabled
+        binding.btnBuyNow.text = buttonText
         if (!isEnabled) {
-            btnBuyNow.alpha = 0.6f
-            btnBuyNow.setBackgroundColor(getColor(android.R.color.darker_gray))
+            binding.btnBuyNow.alpha = 0.6f
+            binding.btnBuyNow.setBackgroundColor(getColor(android.R.color.darker_gray))
         }
     }
 
@@ -187,11 +151,18 @@ class ProductDetailActivity : AppCompatActivity() {
     }
 
     private fun setupClickListeners() {
-        btnBack.setOnClickListener { finish() }
-        btnShare.setOnClickListener {
+        binding.btnBack.setOnClickListener {
+            val intent = Intent(this, HomeActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+            finish()
+        }
+        
+        binding.btnShare.setOnClickListener {
             Toast.makeText(this, "Share feature coming soon", Toast.LENGTH_SHORT).show()
         }
-        btnBuyNow.setOnClickListener { addToCart() }
+        
+        binding.btnBuyNow.setOnClickListener { addToCart() }
     }
 
     private fun addToCart() {

@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.foodrescuehub.R
 import com.example.foodrescuehub.data.api.RetrofitClient
 import com.example.foodrescuehub.databinding.ActivityOrderDetailBinding
+import com.example.foodrescuehub.ui.home.HomeActivity
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -55,14 +56,12 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         binding = ActivityOrderDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Get order ID from intent
         orderId = intent.getLongExtra(EXTRA_ORDER_ID, 0)
         consumerId = intent.getLongExtra(EXTRA_CONSUMER_ID, 1)
 
         setupToolbar()
         setupButtons()
 
-        // Initialize MapView
         binding.mapView.onCreate(savedInstanceState)
         binding.mapView.getMapAsync(this)
 
@@ -70,21 +69,21 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun setupToolbar() {
+        // Force back to HomeActivity
         binding.toolbar.setNavigationOnClickListener {
+            val intent = Intent(this, HomeActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
             finish()
         }
     }
 
     private fun setupButtons() {
-        // QR Code button logic will be set based on order status in displayOrderDetails()
-
         binding.btnGetDirections.setOnClickListener {
             if (storeLat != null && storeLng != null) {
-                // If we have consumer location, show route from consumer to store
                 if (consumerLat != null && consumerLng != null) {
                     openMapsWithRoute(consumerLat!!, consumerLng!!, storeLat!!, storeLng!!)
                 } else {
-                    // Otherwise just show the store location
                     openMapsForDirections(storeLat!!, storeLng!!)
                 }
             } else {
@@ -97,38 +96,25 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         lifecycleScope.launch {
             try {
                 val response = RetrofitClient.apiService.getOrderById(orderId)
-
                 if (response.isSuccessful) {
                     val order = response.body()
                     order?.let { displayOrderDetails(it) }
                 } else {
-                    Toast.makeText(
-                        this@OrderDetailActivity,
-                        "Failed to load order details",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(this@OrderDetailActivity, "Failed to load order details", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(
-                    this@OrderDetailActivity,
-                    "Error: ${e.message}",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(this@OrderDetailActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private fun displayOrderDetails(order: com.example.foodrescuehub.data.model.Order) {
-        // Order ID
         binding.tvOrderId.text = "Order #${order.orderId}"
-
-        // Save order info for QR code
         orderStatus = order.status
         storeName = order.store?.storeName ?: "Store"
         pickupSlotStart = order.pickupSlotStart
         pickupSlotEnd = order.pickupSlotEnd
 
-        // Pickup Window
         val pickupWindow = if (order.pickupSlotStart != null && order.pickupSlotEnd != null) {
             "${formatTime(order.pickupSlotStart)} - ${formatTime(order.pickupSlotEnd)}"
         } else {
@@ -136,44 +122,22 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         }
         binding.tvPickupWindow.text = "Pickup Window: $pickupWindow"
 
-        // Store Info
         binding.tvStoreName.text = storeName
         binding.tvStoreAddress.text = order.store?.addressLine ?: "Address not available"
         storeLat = order.store?.lat
         storeLng = order.store?.lng
-
-        // Consumer Location
         consumerLat = order.consumer?.defaultLat
         consumerLng = order.consumer?.defaultLng
 
-        // Debug logs
-        android.util.Log.d("OrderDetail", "Store: ${order.store?.storeName}")
-        android.util.Log.d("OrderDetail", "Store Lat: ${order.store?.lat}")
-        android.util.Log.d("OrderDetail", "Store Lng: ${order.store?.lng}")
-        android.util.Log.d("OrderDetail", "Final storeLat: $storeLat, storeLng: $storeLng")
-        android.util.Log.d("OrderDetail", "Consumer Lat: $consumerLat, Lng: $consumerLng")
-
-        // Update map if ready
         updateMapMarkers()
-
-        // Total Amount
         binding.tvTotalAmount.text = "$${String.format("%.2f", order.totalAmount)}"
-
-        // Update Status Progress
         updateOrderStatus(order.status)
-
-        // Setup QR Code button based on order status
         setupQRCodeButton(order.status)
-
-        // Calculate ETA
         order.pickupSlotEnd?.let { calculateETA(it) }
 
-        // Order Items
         binding.llOrderItems.removeAllViews()
         order.orderItems?.forEach { item ->
-            val itemView = LayoutInflater.from(this)
-                .inflate(R.layout.item_order_item, binding.llOrderItems, false)
-
+            val itemView = LayoutInflater.from(this).inflate(R.layout.item_order_item, binding.llOrderItems, false)
             val tvItemName = itemView.findViewById<TextView>(R.id.tvItemName)
             val tvItemQuantity = itemView.findViewById<TextView>(R.id.tvItemQuantity)
             val tvItemPrice = itemView.findViewById<TextView>(R.id.tvItemPrice)
@@ -181,7 +145,6 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
             tvItemName.text = item.listing?.title ?: "Item"
             tvItemQuantity.text = "Qty: ${item.quantity} × $${String.format("%.2f", item.unitPrice)}"
             tvItemPrice.text = "$${String.format("%.2f", item.lineTotal)}"
-
             binding.llOrderItems.addView(itemView)
         }
     }
@@ -189,35 +152,20 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun setupQRCodeButton(status: String) {
         when (status.uppercase()) {
             "CANCELLED" -> {
-                // Grey, disabled
                 binding.btnViewQrCode.isEnabled = false
-                binding.btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(
-                    getColor(android.R.color.darker_gray)
-                )
+                binding.btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(getColor(android.R.color.darker_gray))
                 binding.btnViewQrCode.setOnClickListener(null)
             }
             "READY", "COMPLETED", "COLLECTED" -> {
-                // Green, enabled, navigate to QR code
                 binding.btnViewQrCode.isEnabled = true
-                binding.btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(
-                    getColor(R.color.status_confirmed)
-                )
-                binding.btnViewQrCode.setOnClickListener {
-                    navigateToQRCode()
-                }
+                binding.btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.status_confirmed))
+                binding.btnViewQrCode.setOnClickListener { navigateToQRCode() }
             }
             else -> {
-                // Yellow, enabled but show toast (PENDING, ACCEPTED, CONFIRMED)
                 binding.btnViewQrCode.isEnabled = true
-                binding.btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(
-                    getColor(R.color.status_pending)
-                )
+                binding.btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.status_pending))
                 binding.btnViewQrCode.setOnClickListener {
-                    Toast.makeText(
-                        this,
-                        "Order must be ready before viewing QR code. Please wait.",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    Toast.makeText(this, "Order must be ready before viewing QR code.", Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -235,16 +183,7 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun updateOrderStatus(status: String) {
         when (status.uppercase()) {
-            "PENDING" -> {
-                // Only first step - Pending
-                setStatusIcon(binding.statusPaidIcon, true)
-                setStatusIcon(binding.statusReadyIcon, false)
-                setStatusIcon(binding.statusCollectedIcon, false)
-                setProgressLine(binding.progressLine1, false)
-                setProgressLine(binding.progressLine2, false)
-            }
-            "ACCEPTED", "CONFIRMED" -> {
-                // First step completed - Accepted
+            "PENDING", "ACCEPTED", "CONFIRMED" -> {
                 setStatusIcon(binding.statusPaidIcon, true)
                 setStatusIcon(binding.statusReadyIcon, false)
                 setStatusIcon(binding.statusCollectedIcon, false)
@@ -252,7 +191,6 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
                 setProgressLine(binding.progressLine2, false)
             }
             "READY" -> {
-                // First two steps - Accepted + Ready
                 setStatusIcon(binding.statusPaidIcon, true)
                 setStatusIcon(binding.statusReadyIcon, true)
                 setStatusIcon(binding.statusCollectedIcon, false)
@@ -260,7 +198,6 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
                 setProgressLine(binding.progressLine2, false)
             }
             "COMPLETED", "COLLECTED" -> {
-                // All steps completed
                 setStatusIcon(binding.statusPaidIcon, true)
                 setStatusIcon(binding.statusReadyIcon, true)
                 setStatusIcon(binding.statusCollectedIcon, true)
@@ -268,7 +205,6 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
                 setProgressLine(binding.progressLine2, true)
             }
             "CANCELLED" -> {
-                // Show all as cancelled/inactive
                 setStatusIcon(binding.statusPaidIcon, false, true)
                 setStatusIcon(binding.statusReadyIcon, false, true)
                 setStatusIcon(binding.statusCollectedIcon, false, true)
@@ -299,13 +235,11 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun setProgressLine(line: View, completed: Boolean, cancelled: Boolean = false) {
-        line.setBackgroundColor(
-            when {
-                cancelled -> getColor(R.color.status_cancelled)
-                completed -> getColor(R.color.status_confirmed)
-                else -> getColor(android.R.color.darker_gray)
-            }
-        )
+        line.setBackgroundColor(when {
+            cancelled -> getColor(R.color.status_cancelled)
+            completed -> getColor(R.color.status_confirmed)
+            else -> getColor(android.R.color.darker_gray)
+        })
     }
 
     private fun calculateETA(pickupEndTime: String) {
@@ -313,11 +247,9 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
             val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
             val endDate = format.parse(pickupEndTime)
             val now = Date()
-
             if (endDate != null && endDate.after(now)) {
                 val diffInMillis = endDate.time - now.time
                 val minutes = TimeUnit.MILLISECONDS.toMinutes(diffInMillis)
-
                 if (minutes > 0) {
                     binding.tvEtaWarning.text = "ETA: Time left to pick up: $minutes mins"
                     binding.llEtaWarning.visibility = View.VISIBLE
@@ -343,24 +275,18 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         val uri = Uri.parse("geo:0,0?q=$lat,$lng")
         val intent = Intent(Intent.ACTION_VIEW, uri)
         intent.setPackage("com.google.android.apps.maps")
-
         if (intent.resolveActivity(packageManager) != null) {
             startActivity(intent)
         } else {
-            // Fallback to browser
             val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://maps.google.com/?q=$lat,$lng"))
             startActivity(browserIntent)
         }
     }
 
-    /**
-     * Open Google Maps with route from origin to destination
-     */
     private fun openMapsWithRoute(originLat: Double, originLng: Double, destLat: Double, destLng: Double) {
         val uri = Uri.parse("https://www.google.com/maps/dir/?api=1&origin=$originLat,$originLng&destination=$destLat,$destLng&travelmode=driving")
         val intent = Intent(Intent.ACTION_VIEW, uri)
         intent.setPackage("com.google.android.apps.maps")
-
         if (intent.resolveActivity(packageManager) != null) {
             startActivity(intent)
         } else {
@@ -378,42 +304,25 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun updateMapMarkers() {
         val map = googleMap ?: return
         map.clear()
-
         val builder = LatLngBounds.Builder()
         var hasPoints = false
-
-        // Store location
         if (storeLat != null && storeLng != null) {
             val storePos = LatLng(storeLat!!, storeLng!!)
-            map.addMarker(MarkerOptions()
-                .position(storePos)
-                .title(storeName)
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)))
+            map.addMarker(MarkerOptions().position(storePos).title(storeName).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)))
             builder.include(storePos)
             hasPoints = true
         }
-
-        // Consumer location
         if (consumerLat != null && consumerLng != null) {
             val consumerPos = LatLng(consumerLat!!, consumerLng!!)
-            map.addMarker(MarkerOptions()
-                .position(consumerPos)
-                .title("Your Location")
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)))
+            map.addMarker(MarkerOptions().position(consumerPos).title("Your Location").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)))
             builder.include(consumerPos)
             hasPoints = true
         }
-
         if (hasPoints) {
             try {
                 map.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 100))
             } catch (e: Exception) {
-                // If map not fully laid out yet, just move to store
-                storeLat?.let { lat ->
-                    storeLng?.let { lng ->
-                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 14f))
-                    }
-                }
+                storeLat?.let { lat -> storeLng?.let { lng -> map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 14f)) } }
             }
         }
     }
