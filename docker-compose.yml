@@ -33,7 +33,9 @@ services:
       - frh-net
 
   frontend-build:
-    build: ./frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
     container_name: frh-frontend-build
     command: ["sh", "-c", "rm -rf /out/* && cp -r /app/dist/* /out/ && echo 'frontend build copied'"]
     volumes:
