@@ -4,13 +4,13 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 # Copy package files for dependency caching
-COPY package.json package-lock.json* ./
+COPY frontend/package.json frontend/package-lock.json* ./
 
 # Install dependencies
 RUN npm ci
 
 # Copy source code
-COPY . ./
+COPY frontend/ ./
 
 # Build production assets
 RUN npm run build
@@ -27,7 +27,7 @@ RUN apk update && apk upgrade --no-cache
 # Copy built static files from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy custom nginx config
+# Copy custom nginx config (now accessible since context is root)
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
