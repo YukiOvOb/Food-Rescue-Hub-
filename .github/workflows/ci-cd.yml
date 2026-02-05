@@ -240,7 +240,7 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      - name: Python Ruff lint
+      - name: Python Ruff lint # only if the python files are present
         if: needs.detect.outputs.has_python_src == 'true'
         shell: bash
         run: |
