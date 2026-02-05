@@ -113,4 +113,16 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
+    dependencies {
+
+        implementation("com.squareup.retrofit2:retrofit:2.9.0")
+        implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+        // Chrome Custom Tabs use to open Stripe link
+        implementation("androidx.browser:browser:1.5.0")
+
+
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    }
+
 }

@@ -1,9 +1,9 @@
 package com.example.foodrescuehub.data.api
 
-import android.content.Context
-import com.example.foodrescuehub.BuildConfig
+
 import com.example.foodrescuehub.data.storage.SecurePreferences
 import com.google.gson.GsonBuilder
+import com.google.zxing.client.android.BuildConfig
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
