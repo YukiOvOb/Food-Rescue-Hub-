@@ -26,7 +26,7 @@ productFlavors {
         }
         create("prod") {
             dimension = "environment"
-            buildConfigField("String", "BASE_URL", "\"http://47.129.223.141:8080/\"")
+            buildConfigField("String", "BASE_URL", "\"http://13.228.183.177:8080/\"")
         }
     }
 
