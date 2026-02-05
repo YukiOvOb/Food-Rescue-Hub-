@@ -160,7 +160,4 @@ interface ApiService {
     suspend fun recordInteraction(
         @Body request: UserInteractionRequest
     ): Response<InteractionResponse>
-    //
-    @POST("api/mobile/checkout/start")
-    suspend fun startCheckout(@Body request: CheckoutRequest): Response<CheckoutResponse>
 }
