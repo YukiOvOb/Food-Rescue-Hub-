@@ -477,6 +477,27 @@ jobs:
             docker compose -f compose.yml ps
           fi
 
+      - name: Wait for MySQL (health)
+        if: needs.detect.outputs.has_compose == 'true'
+        shell: bash
+        run: |
+          set -e
+          for i in {1..60}; do
+            if docker compose -f docker-compose.yml exec -T mysql mysqladmin ping -h localhost -uroot -p"${MYSQL_ROOT_PASSWORD}" >/dev/null 2>&1; then
+              echo "MySQL is up"
+              exit 0
+            fi
+            echo "Waiting for MySQL... ($i)"
+            sleep 5
+          done
+          echo "MySQL did not become ready"
+          if [ -f "docker-compose.yml" ]; then
+            docker compose -f docker-compose.yml logs --no-color || true
+          else
+            docker compose -f compose.yml logs --no-color || true
+          fi
+          exit 1
+
       - name: Wait for backend (health)
         if: needs.detect.outputs.has_compose == 'true'
         shell: bash
