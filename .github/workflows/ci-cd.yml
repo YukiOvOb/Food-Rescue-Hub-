@@ -741,10 +741,30 @@ jobs:
 
       # IAST-style attack probes (runtime execution)
       - name: Run IAST probes
+        env:
+          BACKEND_LOCAL_URL: ${{ env.BACKEND_LOCAL_URL }}
+          SMOKE_PATH: ${{ env.SMOKE_PATH }}
         run: |
-          curl "${BACKEND_LOCAL_URL}${SMOKE_PATH}?x=' OR '1'='1"
-          curl "${BACKEND_LOCAL_URL}${SMOKE_PATH}?file=../../etc/passwd"
-          curl "${BACKEND_LOCAL_URL}${SMOKE_PATH}?name=<script>alert(1)</script>"
+          set -euo pipefail
+          echo "IAST base URL: [${BACKEND_LOCAL_URL}] [${SMOKE_PATH}] -> ${BACKEND_LOCAL_URL}${SMOKE_PATH}"
+          if [ -z "${BACKEND_LOCAL_URL}" ]; then echo "BACKEND_LOCAL_URL not set"; exit 1; fi
+          if [ -z "${SMOKE_PATH}" ]; then echo "SMOKE_PATH not set"; exit 1; fi
+
+          base="${BACKEND_LOCAL_URL}${SMOKE_PATH}"
+
+          # URL-encoded payloads to avoid spaces/quotes in raw URL
+          p1="%27%20OR%20%271%27%3D%271%27"          # ' OR '1'='1
+          p2="..%2F..%2Fetc%2Fpasswd"                  # ../../etc/passwd
+          p3="%3Cscript%3Ealert(1)%3C%2Fscript%3E"    # <script>alert(1)</script>
+
+          echo "Probing: ${base}?x=${p1}"
+          curl --fail --show-error --silent -- "${base}?x=${p1}" || true
+
+          echo "Probing: ${base}?file=${p2}"
+          curl --fail --show-error --silent -- "${base}?file=${p2}" || true
+
+          echo "Probing: ${base}?name=${p3}"
+          curl --fail --show-error --silent -- "${base}?name=${p3}" || true
 
       # Collect runtime logs
       - name: Collect runtime logs
