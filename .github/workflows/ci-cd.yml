@@ -24,7 +24,7 @@ env:
   ANDROID_DIR: "android"
 
   # Local integration endpoints inside GitHub runner:
-  BACKEND_LOCAL_URL: "http://localhost:8081"
+  PROD_URL: "http://localhost:8081"
   OPENAPI_PATH: "/v3/api-docs"   # Swagger/OpenAPI (Spring Boot default)
   SMOKE_PATH: "/api/hello"       # change to your real endpoint
 
@@ -32,6 +32,7 @@ jobs:
   # =========================================================
   # STAGE 0: Detect project parts (safe skipping)
   # =========================================================
+
   detect:
     name: Detect project folders
     runs-on: ubuntu-latest
