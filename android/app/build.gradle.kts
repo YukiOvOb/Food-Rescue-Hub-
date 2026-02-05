@@ -19,7 +19,7 @@ android {
     }
 
     flavorDimensions += "environment"
-    productFlavors {
+productFlavors {
         create("dev") {
             dimension = "environment"
             buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8081/\"")
@@ -55,62 +55,39 @@ android {
 }
 
 dependencies {
-    // Core Library Desugaring for Java 8+ APIs on older Android versions
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
-    // AndroidX Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
-
-    // Material Design
     implementation(libs.material)
-
-    // Lifecycle (ViewModel, LiveData)
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.androidx.lifecycle.livedata)
     implementation(libs.androidx.lifecycle.runtime)
-
-    // Retrofit for API calls
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
-
-    // Gson for JSON parsing
     implementation(libs.gson)
-
-    // Glide for image loading
     implementation(libs.glide)
-
-    // Location Services
     implementation("com.google.android.gms:play-services-location:21.0.1")
-
-    // Security - Encrypted SharedPreferences
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
-
-    // Kotlin Coroutines
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
-
-    // UI Components
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.cardview)
     implementation(libs.androidx.viewpager2)
     implementation(libs.androidx.coordinatorlayout)
-
-    // Google Maps
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.android.gms:play-services-location:21.1.0")
-
-    // ZXing for QR Code generation
     implementation("com.google.zxing:core:3.5.2")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    
+    // ADDED: Browser for Chrome Custom Tabs
+    implementation("androidx.browser:browser:1.7.0")
 
-    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-
 }

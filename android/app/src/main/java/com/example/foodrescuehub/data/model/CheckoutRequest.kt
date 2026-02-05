@@ -1,3 +1,4 @@
+package com.example.foodrescuehub.data.model
 
 data class CheckoutRequest(
     val userId: Long,
@@ -8,7 +9,6 @@ data class CheckoutItem(
     val listingId: Long,
     val quantity: Int
 )
-
 
 data class CheckoutResponse(
     val paymentUrl: String,
