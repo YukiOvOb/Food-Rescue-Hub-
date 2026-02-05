@@ -39,6 +39,8 @@ def search_faq_knowledge_base(query: str) -> str:
         query_texts=[query],
         n_results=3
     )
+    # Debug: show which chunks were retrieved
+    print(f"Top document IDs: {results.get('ids')}")
     
     # Format the results into a string the AI can read
     documents = results["documents"][0]

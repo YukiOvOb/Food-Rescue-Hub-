@@ -12,6 +12,21 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Debug helper for message flow
+def _print_messages(label: str, messages: list[dict]) -> None:
+    print(f"\n--- {label} (count={len(messages)}) ---")
+    for i, msg in enumerate(messages):
+        if hasattr(msg, "role"):
+            role = getattr(msg, "role", "unknown")
+            content = getattr(msg, "content", "")
+        else:
+            role = msg.get("role", "unknown")
+            content = msg.get("content", "")
+        if content is None:
+            content = ""
+        preview = str(content).replace("\n", " ")[:120]
+        print(f"{i:02d} role={role} content='{preview}'")
+
 # 1. Setup Models (The JSON Android sends)
 class ChatRequest(BaseModel):
     message: str
@@ -71,14 +86,17 @@ async def chat_endpoint(request: ChatRequest):
                     )
                 }
             ]
+    _print_messages("After system prompt", messages)
     # Add history from Android
     # extend appends multiple objects into the list
     # eg. x = [1,2]; x.extend([3,4]) -> x = [1,2,3,4]
     messages.extend(request.history)
+    _print_messages("After history", messages)
     # Add current message
     # append adds a single object into the list
     # eg. x = [1,2]; x.append([3,4]) -> x = [1,2,[3,4]]
     messages.append({"role": "user", "content": request.message})
+    _print_messages("After user message", messages)
 
     # Get available tools
     tools = await mcp_session.list_tools()
@@ -98,6 +116,7 @@ async def chat_endpoint(request: ChatRequest):
     )
 
     assistant_msg = response.choices[0].message
+    print(f"\n--- OpenAI assistant_msg ---\nrole={assistant_msg.role} tool_calls={bool(assistant_msg.tool_calls)}")
 
     # Check for Tool Use
     if assistant_msg.tool_calls:
@@ -115,6 +134,7 @@ async def chat_endpoint(request: ChatRequest):
             "tool_call_id": tool_call.id,
             "content": str(result.content)
         })
+        _print_messages("After tool result", messages)
 
         final_response = ai_client.chat.completions.create(
             model="gpt-4o",
