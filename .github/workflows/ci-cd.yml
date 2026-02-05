@@ -797,8 +797,8 @@ jobs:
       # Detect runtime security indicators (real signals)
       - name: Detect runtime security findings
         run: |
-          if grep -E \
-            "SQLSyntaxErrorException|hibernate|FileNotFoundException|Whitelabel Error Page|path traversal" \
+          if grep -Ei \
+            "SQLSyntaxErrorException|SQLException.*' OR|HibernateException|FileNotFoundException.*\.\./|Whitelabel Error Page|path traversal|directory traversal|NullPointerException|ClassCastException.*XSS|eval\(|<script>" \
             iast-out/runtime.log; then
             echo "IAST runtime issue detected"
             exit 1
