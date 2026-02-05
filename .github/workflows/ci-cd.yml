@@ -101,12 +101,13 @@ jobs:
         if: needs.detect.outputs.has_backend == 'true'
         working-directory: backend
         env:
-            SPRING_PROFILES_ACTIVE: test
+          SPRING_PROFILES_ACTIVE: test
         shell: bash
         run: |
           set -e
           chmod +x mvnw
-          ./mvnw -q clean test
+          ./mvnw -q clean verify
+
 
       - name: Upload Maven surefire reports
         if: always()

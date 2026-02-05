@@ -1,104 +1,252 @@
 package com.frh.backend.controller;
 
+import com.frh.backend.Model.Listing;
 import com.frh.backend.Model.Store;
-import com.frh.backend.Model.SupplierProfile;
 import com.frh.backend.repository.ListingRepository;
-import com.frh.backend.repository.OrderRepository;
 import com.frh.backend.repository.StoreRepository;
-import com.frh.backend.repository.SupplierProfileRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@ActiveProfiles("test")
+@WithMockUser(roles = {"CONSUMER", "SUPPLIER", "ADMIN"})
+@AutoConfigureMockMvc(addFilters = false)
+@WebMvcTest(ListingController.class)
 class ListingControllerTest {
 
     @Autowired
-    private WebApplicationContext webApplicationContext;
-
-    @Autowired
-    private ListingRepository listingRepository;
-
-    @Autowired
-    private OrderRepository orderRepository;
-
-    @Autowired
-    private SupplierProfileRepository supplierProfileRepository;
-
-    @Autowired
-    private StoreRepository storeRepository;
-
     private MockMvc mockMvc;
 
-    @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        // keep DB clean for each test (clear orders before listings to avoid FK violations)
-        orderRepository.deleteAll();
-        listingRepository.deleteAll();
-      storeRepository.deleteAll();
-      supplierProfileRepository.deleteAll();
+    @MockBean
+    private ListingRepository listingRepository;
 
-      // create a minimal supplier and store to attach listings to
-      SupplierProfile supplier = new SupplierProfile();
-      supplier.setEmail("test@example.com");
-      supplier.setPassword("password123");
-      supplier = supplierProfileRepository.save(supplier);
+    @MockBean
+    private StoreRepository storeRepository;
 
-      Store store = new Store();
-      store.setSupplierProfile(supplier);
-      store.setStoreName("Test Store");
-      store.setAddressLine("123 Test St");
-      store = storeRepository.save(store);
+    @Autowired
+    private ObjectMapper objectMapper;
 
-      // make storeId available via system property for tests if needed
-      System.setProperty("test.storeId", String.valueOf(store.getStoreId()));
+    /* -----------------------------
+       HELPERS
+       ----------------------------- */
+    private Listing validListing() {
+        Listing l = new Listing();
+        l.setTitle("Bread");
+        l.setDescription("Fresh bread");
+        l.setOriginalPrice(BigDecimal.valueOf(10));
+        l.setRescuePrice(BigDecimal.valueOf(5));
+        l.setPickupStart(LocalDateTime.now().plusHours(1));
+        l.setPickupEnd(LocalDateTime.now().plusHours(2));
+        l.setExpiryAt(LocalDateTime.now().plusHours(3));
+        return l;
     }
 
-    // 1) Simple sanity check – GET /api/listings returns 200
+    /* -----------------------------
+       CREATE – STORE MISSING
+       ----------------------------- */
     @Test
-    void testGetAllListings_ReturnsOk() throws Exception {
-        mockMvc.perform(get("/api/listings"))
+    void createListing_storeMissing() throws Exception {
+
+        mockMvc.perform(post("/api/supplier/listings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validListing())))
+                .andExpect(status().isBadRequest());
+    }
+
+    /* -----------------------------
+       CREATE – STORE NOT FOUND
+       ----------------------------- */
+    @Test
+    void createListing_storeNotFound() throws Exception {
+
+        Mockito.when(storeRepository.findById(1L))
+                .thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/supplier/listings")
+                        .param("storeId", "1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validListing())))
+                .andExpect(status().isBadRequest());
+    }
+
+    /* -----------------------------
+       CREATE – VALIDATION ERROR
+       ----------------------------- */
+    @Test
+    void createListing_validationError() throws Exception {
+
+        Store store = new Store();
+        Mockito.when(storeRepository.findById(1L))
+                .thenReturn(Optional.of(store));
+
+        Listing invalid = new Listing(); // missing fields
+
+        mockMvc.perform(post("/api/supplier/listings")
+                        .param("storeId", "1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalid)))
+                .andExpect(status().isBadRequest());
+    }
+
+    /* -----------------------------
+       CREATE – SUCCESS
+       ----------------------------- */
+    @Test
+    void createListing_success() throws Exception {
+
+        Store store = new Store();
+        Listing listing = validListing();
+        listing.setListingId(1L);
+
+        Mockito.when(storeRepository.findById(1L))
+                .thenReturn(Optional.of(store));
+
+        Mockito.when(listingRepository.save(Mockito.any()))
+                .thenReturn(listing);
+
+        mockMvc.perform(post("/api/supplier/listings")
+                        .param("storeId", "1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validListing())))
                 .andExpect(status().isOk());
     }
 
-    // 2) Price validation – rescuePrice >= originalPrice => 400 Bad Request
+    /* -----------------------------
+       CREATE – DB ERROR
+       ----------------------------- */
     @Test
-    void testCreateListing_InvalidRescuePrice_ReturnsBadRequest() throws Exception {
-        String json = """
-          {
-            "title": "Test bread",
-            "description": "Some surplus bread",
-            "originalPrice": 5.00,
-            "rescuePrice": 6.00,
-            "pickupStart": "2030-01-01T10:00:00",
-            "pickupEnd": "2030-01-01T12:00:00",
-            "expiryAt": "2030-01-02T00:00:00"
-          }
-        """;
+    void createListing_dbError() throws Exception {
 
-        String storeId = System.getProperty("test.storeId");
+        Store store = new Store();
 
-        mockMvc.perform(
-              post("/api/supplier/listings?storeId=" + storeId)
+        Mockito.when(storeRepository.findById(1L))
+                .thenReturn(Optional.of(store));
+
+        Mockito.when(listingRepository.save(Mockito.any()))
+                .thenThrow(new DataIntegrityViolationException("constraint"));
+
+        mockMvc.perform(post("/api/supplier/listings")
+                        .param("storeId", "1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json)
-                )
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string(
-                        containsString("Rescue price must be lower than original price")
-                ));
+                        .content(objectMapper.writeValueAsString(validListing())))
+                .andExpect(status().isBadRequest());
+    }
+
+    /* -----------------------------
+       GET ALL
+       ----------------------------- */
+    @Test
+    void getAllListings() throws Exception {
+
+        Mockito.when(listingRepository.findAll())
+                .thenReturn(List.of(new Listing()));
+
+        mockMvc.perform(get("/api/supplier/listings"))
+                .andExpect(status().isOk());
+    }
+
+    /* -----------------------------
+       GET BY SUPPLIER
+       ----------------------------- */
+    @Test
+    void getListingsBySupplier() throws Exception {
+
+        Mockito.when(listingRepository
+                .findByStore_SupplierProfile_SupplierId(1L))
+                .thenReturn(List.of(new Listing()));
+
+        mockMvc.perform(get("/api/supplier/listings/supplier/{id}", 1L))
+                .andExpect(status().isOk());
+    }
+
+    /* -----------------------------
+       GET BY ID – NOT FOUND
+       ----------------------------- */
+    @Test
+    void getListingById_notFound() throws Exception {
+
+        Mockito.when(listingRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/supplier/listings/{id}", 99L))
+                .andExpect(status().isNotFound());
+    }
+
+    /* -----------------------------
+       UPDATE – NOT FOUND
+       ----------------------------- */
+    @Test
+    void updateListing_notFound() throws Exception {
+
+        Mockito.when(listingRepository.findById(1L))
+                .thenReturn(Optional.empty());
+
+        mockMvc.perform(put("/api/supplier/listings/{id}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validListing())))
+                .andExpect(status().isNotFound());
+    }
+
+    /* -----------------------------
+       UPDATE – SUCCESS
+       ----------------------------- */
+    @Test
+    void updateListing_success() throws Exception {
+
+        Listing existing = validListing();
+        existing.setListingId(1L);
+
+        Mockito.when(listingRepository.findById(1L))
+                .thenReturn(Optional.of(existing));
+
+        Mockito.when(listingRepository.save(Mockito.any()))
+                .thenReturn(existing);
+
+        mockMvc.perform(put("/api/supplier/listings/{id}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validListing())))
+                .andExpect(status().isOk());
+    }
+
+    /* -----------------------------
+       DELETE – NOT FOUND
+       ----------------------------- */
+    @Test
+    void deleteListing_notFound() throws Exception {
+
+        Mockito.when(listingRepository.existsById(1L))
+                .thenReturn(false);
+
+        mockMvc.perform(delete("/api/supplier/listings/{id}", 1L))
+                .andExpect(status().isNotFound());
+    }
+
+    /* -----------------------------
+       DELETE – SUCCESS
+       ----------------------------- */
+    @Test
+    void deleteListing_success() throws Exception {
+
+        Mockito.when(listingRepository.existsById(1L))
+                .thenReturn(true);
+
+        mockMvc.perform(delete("/api/supplier/listings/{id}", 1L))
+                .andExpect(status().isOk());
     }
 }
