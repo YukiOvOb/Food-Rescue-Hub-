@@ -42,4 +42,8 @@
     <string name="error_loading_recommendations">Failed to load recommendations</string>
     <string name="retry">Retry</string>
     <string name="loading">Loading...</string>
+    <string name="rescuebot_support">RescueBot Support</string>
+    <string name="type_a_message">Type a message...</string>
+    <string name="send">Send</string>
+    <string name="message_content">Message content</string>
 </resources>

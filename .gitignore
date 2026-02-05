@@ -65,3 +65,12 @@ Desktop.ini
 android/.gradle/
 **/build/
 .gradle/
+
+# Python Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Vector Database (Chroma)
+chroma_db/
+.env

@@ -28,6 +28,10 @@ object RetrofitClient {
         cookieJar = SessionCookieJar(securePreferences)
     }
 
+//  Chatbot Backend (Port 8000)
+    private const val BOT_BASE_URL = "http://10.0.2.2:8000/"
+
+    // Logging interceptor for debugging API calls
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
     }
@@ -58,6 +62,19 @@ object RetrofitClient {
 
     val apiService: ApiService by lazy {
         retrofit.create(ApiService::class.java)
+    }
+
+    // --- THE CHATBOT BACKEND ---
+    private val botRetrofit: Retrofit by lazy {
+        Retrofit.Builder()
+            .baseUrl(BOT_BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
+    }
+
+    val rescueBotApi: RescueBotApi by lazy {
+        botRetrofit.create(RescueBotApi::class.java)
     }
 
     /**
