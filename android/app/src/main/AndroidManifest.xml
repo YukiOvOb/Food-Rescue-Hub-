@@ -51,7 +51,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ui.home.HomeActivity" android:exported="false" />
         <activity android:name=".ui.detail.ProductDetailActivity" android:exported="false" />
         <activity android:name=".ui.cart.CartActivity" android:exported="false" android:label="Shopping Cart" />
         <activity android:name=".ui.auth.LoginActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
@@ -63,25 +62,6 @@
         <activity android:name=".ui.qrcode.QRCodeActivity" android:exported="false" android:label="Pickup Code" android:parentActivityName=".ui.orders.OrderDetailActivity" />
         <activity android:name=".ui.checkout.CheckoutActivity" android:exported="false" android:label="Checkout" android:parentActivityName=".ui.cart.CartActivity" />
         <activity android:name=".ui.checkout.OrderConfirmationActivity" android:exported="false" android:label="Confirmation" android:parentActivityName=".ui.home.HomeActivity"/>
-        <activity android:name=".ui.detail.ProductDetailActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.cart.CartActivity"
-            android:exported="false"
-            android:label="Shopping Cart" />
-        <activity
-            android:name=".ui.auth.LoginActivity"
-            android:exported="false"
-            android:theme="@style/Theme.FoodRescueHub"
-            android:windowSoftInputMode="adjustResize" />
-        <activity
-            android:name=".ui.profile.ProfileActivity"
-            android:exported="false"
-            android:parentActivityName=".ui.home.HomeActivity"
-            android:theme="@style/Theme.FoodRescueHub" />
-        <activity
-            android:name=".MainActivity"
-            android:exported="false" />
     </application>
 
 </manifest>
