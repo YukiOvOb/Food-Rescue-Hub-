@@ -28,7 +28,7 @@
 
 ### 1. 连接服务器数据库
 ```bash
-mysql -h 47.129.223.141 -P 33306 -u frh_user -p
+mysql -h 13.228.183.177 -P 33306 -u frh_user -p
 # 密码: 123456
 ```
 
@@ -106,7 +106,7 @@ java -jar target/backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=local
 ### 选项2: 连接Python ML训练代码
 ```python
 from sqlalchemy import create_engine
-engine = create_engine('mysql+pymysql://frh_user:123456@47.129.223.141:33306/frh')
+engine = create_engine('mysql+pymysql://frh_user:123456@13.228.183.177:33306/frh')
 
 # 提取特征
 query = """
@@ -192,7 +192,7 @@ java -jar target/backend-0.0.1-SNAPSHOT.jar --server.port=8082
 ### 问题2: 数据库连接失败
 检查 `application-local.properties`:
 ```properties
-spring.datasource.url=jdbc:mysql://47.129.223.141:33306/frh?...
+spring.datasource.url=jdbc:mysql://13.228.183.177:33306/frh?...
 spring.datasource.username=frh_user
 spring.datasource.password=123456
 ```

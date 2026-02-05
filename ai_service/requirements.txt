@@ -6,6 +6,3 @@ streamlit
 python-dotenv
 fastapi
 uvicorn
-
-run this in terminal to start the API
-python api.py

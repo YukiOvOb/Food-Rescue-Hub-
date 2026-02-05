@@ -36,7 +36,11 @@ class ChatResponse(BaseModel):
     reply: str
 
 # 2. Global Services
-ai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+ai_client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    timeout=30.0,  # 防止请求挂起
+    max_retries=2
+)
 
 # We will start the MCP Server subprocess ONCE when the API starts
 mcp_session = None
@@ -68,6 +72,10 @@ async def chat_endpoint(request: ChatRequest):
     if not mcp_session:
         raise HTTPException(status_code=503, detail="MCP Server not ready")
 
+    # 限制历史消息数量，防止内存溢出
+    MAX_HISTORY = 20
+    limited_history = request.history[-MAX_HISTORY:] if len(request.history) > MAX_HISTORY else request.history
+    
     # Prepare messages
     messages = [
                 {
@@ -87,10 +95,10 @@ async def chat_endpoint(request: ChatRequest):
                 }
             ]
     _print_messages("After system prompt", messages)
-    # Add history from Android
+    # Add history from Android (限制数量)
     # extend appends multiple objects into the list
     # eg. x = [1,2]; x.extend([3,4]) -> x = [1,2,3,4]
-    messages.extend(request.history)
+    messages.extend(limited_history)
     _print_messages("After history", messages)
     # Add current message
     # append adds a single object into the list
@@ -145,5 +153,13 @@ async def chat_endpoint(request: ChatRequest):
     return {"reply": assistant_msg.content}
 
 if __name__ == "__main__":
-    # Run on 0.0.0.0 so Android Emulator can see it
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Run on all interfaces, use reverse proxy for security
+    uvicorn.run(
+        app, 
+        host="0.0.0.0",  # 监听所有接口，由nginx做反向代理
+        port=8000,
+        workers=1,  # 单worker避免多进程内存问题
+        timeout_keep_alive=30,
+        limit_concurrency=50,  # 限制并发连接数
+        limit_max_requests=1000  # 重启worker防止内存泄漏
+    )

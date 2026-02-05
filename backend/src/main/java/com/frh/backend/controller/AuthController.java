@@ -1,6 +1,5 @@
 package com.frh.backend.controller;
 
-import com.frh.backend.Model.SupplierProfile;
 import com.frh.backend.dto.AuthResponse;
 import com.frh.backend.dto.ErrorResponse;
 import com.frh.backend.dto.LoginRequest;

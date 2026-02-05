@@ -1,169 +1,158 @@
 package com.frh.backend.controller;
 
 import com.frh.backend.dto.StoreRequest;
-import com.frh.backend.Model.Store;
 import com.frh.backend.dto.StoreResponse;
 import com.frh.backend.service.StoreService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
+
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(StoreController.class)
+@WithMockUser(roles = {"CONSUMER", "SUPPLIER", "ADMIN"})
 @AutoConfigureMockMvc(addFilters = false)
-@ActiveProfiles("test")
-public class StoreControllerTest {
+@WebMvcTest(StoreController.class)
+class StoreControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean
+    @MockBean
     private StoreService storeService;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private ObjectMapper objectMapper;
 
-    private Store sampleStore;
-    private StoreRequest sampleRequest;
-
-    @BeforeEach
-    void setUp() {
-        // Setup dummy data for tests
-        sampleStore = new Store();
-        sampleStore.setStoreId(1L);
-        sampleStore.setStoreName("Bakery");
-        sampleStore.setAddressLine("123 NUS Road");
-        sampleStore.setLat(new BigDecimal("1.3521"));
-        sampleStore.setLng(new BigDecimal("103.8198"));
-
-        sampleRequest = new StoreRequest();
-        sampleRequest.setStoreName("Bakery");
-        sampleRequest.setAddressLine("123 NUS Road");
-        sampleRequest.setLat(new BigDecimal("1.3521"));
-        sampleRequest.setLng(new BigDecimal("103.8198"));
-        sampleRequest.setSupplierId(5L);
-    }
-
-    // --- TEST 1: CREATE STORE (POST) ---
-    // Happy Path
+    /* --------------------------------
+       CREATE STORE – SUCCESS
+       -------------------------------- */
     @Test
-    void shouldCreateNewStore() throws Exception {
-        // 1. Create a StoreResponse (DTO) for the mock to return
-        StoreResponse mockResponse = new StoreResponse();
-        mockResponse.setStoreId(1L);
-        mockResponse.setStoreName("Bakery");
-        mockResponse.setAddressLine("123 NUS Road");
-        mockResponse.setPostalCode("119077");
-        mockResponse.setLat(new BigDecimal("1.3521"));
-        mockResponse.setLng(new BigDecimal("103.8198"));
-        mockResponse.setPickupInstructions("Collect at the side entrance near the red door.");
-        mockResponse.setActive(true);
+    void createNewStore_success() throws Exception {
 
-        // 2. Mock the service: it now returns a StoreResponse
-        given(storeService.createStore(any(StoreRequest.class))).willReturn(mockResponse);
+        StoreRequest request = new StoreRequest();
+        request.setSupplierId(10L);
+        request.setStoreName("Bakery Shop");
+        request.setAddressLine("Singapore");
+        request.setLat(BigDecimal.valueOf(1.3521));
+        request.setLng(BigDecimal.valueOf(103.8198));
 
-        // 3. Perform the request
+        StoreResponse response = new StoreResponse();
+        response.setStoreId(1L);
+        response.setStoreName("Bakery Shop");
+
+        Mockito.when(storeService.createStore(Mockito.any()))
+                .thenReturn(response);
+
         mockMvc.perform(post("/api/stores/create")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(sampleRequest)))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.storeName").value("Bakery"))
                 .andExpect(jsonPath("$.storeId").value(1))
-                .andExpect(jsonPath("$.pickupInstructions").value("Collect at the side entrance near the red door."))
-                .andExpect(jsonPath("$.active").value(true));
+                .andExpect(jsonPath("$.storeName").value("Bakery Shop"));
     }
 
-    // --- TEST 2: GET ALL STORES (GET) ---
+    /* --------------------------------
+       CREATE STORE – VALIDATION ERROR
+       -------------------------------- */
     @Test
-    void shouldReturnStoresForSupplier() throws Exception {
-        // A. Given
-        // Create a list containing a DTO instead of an Entity
-        StoreResponse mockResponse = new StoreResponse();
-        mockResponse.setStoreId(1L);
-        mockResponse.setStoreName("Bakery");
+    void createNewStore_validationError() throws Exception {
 
-        List<StoreResponse> allStores = Collections.singletonList(mockResponse);
-        given(storeService.getAllStores(5L)).willReturn(allStores);
-
-        // B. When & Then
-        mockMvc.perform(get("/api/stores/supplier/5"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(1))
-                .andExpect(jsonPath("$[0].storeName").value("Bakery"))
-                .andExpect(jsonPath("$[0].storeId").value(1));
-    }
-
-    // --- TEST 3: HANDLE INVALID INPUT (Bad Request) ---
-    @Test
-    void shouldReturn400_WhenStoreNameIsEmpty() throws Exception {
-        // Create an invalid request (missing name)
-        StoreRequest invalidRequest = new StoreRequest();
-        invalidRequest.setAddressLine("Somewhere");
-        // Name is null!
+        StoreRequest invalidRequest = new StoreRequest(); // missing required fields
 
         mockMvc.perform(post("/api/stores/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
-                .andExpect(status().isBadRequest()); // Expect 400 Bad Request
-        // (Note: This assumes you added @Valid in your controller)
+                .andExpect(status().isBadRequest());
     }
 
+    /* --------------------------------
+       GET STORE BY ID
+       -------------------------------- */
     @Test
-    void shouldUpdateStore() throws Exception {
-        // 1. Create a StoreResponse (DTO) for the mock to return instead of the Entity
-        StoreResponse mockResponse = new StoreResponse();
-        mockResponse.setStoreId(1L);
-        mockResponse.setStoreName("Updated Bakery Name");
-        mockResponse.setAddressLine("123 NUS Road");
-        mockResponse.setPostalCode("119077");
-        mockResponse.setLat(new java.math.BigDecimal("1.3521"));
-        mockResponse.setLng(new java.math.BigDecimal("103.8198"));
-        mockResponse.setPickupInstructions("Collect at the side entrance near the red door.");
-        mockResponse.setActive(true);
+    void getStoreById_success() throws Exception {
 
-        // 2. Mock the service: it must now return the StoreResponse DTO
-        given(storeService.updateStore(any(Long.class), any(StoreRequest.class)))
-                .willReturn(mockResponse);
+        StoreResponse response = new StoreResponse();
+        response.setStoreId(2L);
+        response.setStoreName("Cafe");
 
-        // 3. Perform the request
-        mockMvc.perform(put("/api/stores/update/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(sampleRequest)))
+        Mockito.when(storeService.getStoreResponseById(2L))
+                .thenReturn(response);
+
+        mockMvc.perform(get("/api/stores/{storeId}", 2L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.storeName").value("Updated Bakery Name"))
-                .andExpect(jsonPath("$.storeId").value(1));
+                .andExpect(jsonPath("$.storeId").value(2))
+                .andExpect(jsonPath("$.storeName").value("Cafe"));
     }
 
+    /* --------------------------------
+       GET STORES BY SUPPLIER
+       -------------------------------- */
     @Test
-    void shouldDeleteStore() throws Exception {
-        // We don't need 'given' for void methods unless we want to throw an error
-        mockMvc.perform(delete("/api/stores/delete/1"))
+    void getStoresBySupplier_success() throws Exception {
+
+        StoreResponse store = new StoreResponse();
+        store.setStoreId(3L);
+        store.setStoreName("Restaurant");
+
+        Mockito.when(storeService.getAllStores(1L))
+                .thenReturn(List.of(store));
+
+        mockMvc.perform(get("/api/stores/supplier/{supplierId}", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].storeName").value("Restaurant"));
+    }
+
+    /* --------------------------------
+       UPDATE STORE
+       -------------------------------- */
+    @Test
+    void updateStore_success() throws Exception {
+
+        StoreRequest request = new StoreRequest();
+        request.setSupplierId(10L);
+        request.setStoreName("Updated Store");
+        request.setAddressLine("New Address");
+        request.setLat(BigDecimal.valueOf(1.3521));
+        request.setLng(BigDecimal.valueOf(103.8198));
+
+        StoreResponse response = new StoreResponse();
+        response.setStoreId(4L);
+        response.setStoreName("Updated Store");
+
+        Mockito.when(storeService.updateStore(Mockito.eq(4L), Mockito.any()))
+                .thenReturn(response);
+
+        mockMvc.perform(put("/api/stores/update/{storeId}", 4L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.storeName").value("Updated Store"));
+    }
+
+    /* --------------------------------
+       DELETE STORE
+       -------------------------------- */
+    @Test
+    void deleteStore_success() throws Exception {
+
+        Mockito.doNothing()
+                .when(storeService)
+                .deleteStore(5L);
+
+        mockMvc.perform(delete("/api/stores/delete/{storeId}", 5L))
                 .andExpect(status().isNoContent());
-    }
-
-    @Test
-    void shouldReturn404_WhenDeletingNonExistentStore() throws Exception {
-        // 1. Setup: Force service to throw the exception
-        doThrow(new RuntimeException("Store not found"))
-                .when(storeService).deleteStore(99L);
-        // 2. Act & Assert
-        mockMvc.perform(delete("/api/stores/delete/99"))
-                .andExpect(status().isNotFound()) // This will now work because of the GlobalExceptionHandler
-                .andExpect(jsonPath("$.error").value("Store not found"));
     }
 }

@@ -178,7 +178,7 @@ TRUNCATE TABLE user_interactions;
 - Java版本: 21.0.8
 - Spring Boot版本: 4.0.2
 - Hibernate版本: 7.2.1.Final
-- 数据库: MySQL 8.0.45 @ 47.129.223.141:33306
+- 数据库: MySQL 8.0.45 @ 13.228.183.177:33306
 
 ### 测试结果
 
@@ -228,7 +228,7 @@ Hibernate: create table user_store_interactions ...
 
 连接到服务器数据库并运行:
 ```bash
-mysql -h 47.129.223.141 -P 33306 -u frh_user -p frh < verification_script.sql
+mysql -h 13.228.183.177 -P 33306 -u frh_user -p frh < verification_script.sql
 ```
 
 ---
@@ -265,7 +265,7 @@ from sqlalchemy import create_engine
 import pandas as pd
 
 # 连接数据库
-engine = create_engine('mysql+pymysql://frh_user:123456@47.129.223.141:33306/frh')
+engine = create_engine('mysql+pymysql://frh_user:123456@13.228.183.177:33306/frh')
 
 # 提取特征
 query = """
