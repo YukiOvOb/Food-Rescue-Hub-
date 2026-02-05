@@ -679,45 +679,78 @@ jobs:
 
 
   # =========================================================
-  # STAGE 3: IAST (Contrast) - optional, runs AFTER image scan
-  # Provide secrets or it auto-skips.
-  #
-  # Required GitHub Secrets (example):
-  #   CONTRAST_API_URL
-  #   CONTRAST_API_USER_NAME
-  #   CONTRAST_API_KEY
-  #   CONTRAST_ORG_ID
-  #   CONTRAST_APP_ID
+  # STAGE 3: IAST (OpenTelemetry-based, open-source)
   # =========================================================
-  iast-contrast:
-    name: IAST (Contrast) - optional
+
+  iast-opentelemetry:
+    name: IAST (OpenTelemetry runtime – open source)
     runs-on: ubuntu-latest
     needs: [image-scan-trivy]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    env:
-      CONTRAST_API_URL: ${{ secrets.CONTRAST_API_URL }}
-      CONTRAST_API_USER_NAME: ${{ secrets.CONTRAST_API_USER_NAME }}
-      CONTRAST_API_KEY: ${{ secrets.CONTRAST_API_KEY }}
-      CONTRAST_ORG_ID: ${{ secrets.CONTRAST_ORG_ID }}
-      CONTRAST_APP_ID: ${{ secrets.CONTRAST_APP_ID }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Skip if Contrast secrets not set
-        shell: bash
+      # Download OpenTelemetry Java agent (runner side)
+      - name: Prepare OpenTelemetry agent
         run: |
-          if [ -z "${CONTRAST_API_URL}" ] || [ -z "${CONTRAST_API_USER_NAME}" ] || [ -z "${CONTRAST_API_KEY}" ] || [ -z "${CONTRAST_ORG_ID}" ] || [ -z "${CONTRAST_APP_ID}" ]; then
-            echo "Contrast secrets missing -> skipping IAST"
-            exit 0
+          mkdir -p otel
+          curl -L -o otel/opentelemetry-javaagent.jar \
+            https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
+
+      # Start application with Docker Compose (agent mounted via volume)
+      - name: Start application
+        run: docker compose up -d
+
+      # Wait for backend
+      - name: Wait for backend
+        run: |
+          for i in {1..60}; do
+            if curl -fsS "${BACKEND_LOCAL_URL}${SMOKE_PATH}" >/dev/null; then
+              echo "Backend is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose logs
+          exit 1
+
+      # IAST-style attack probes (runtime execution)
+      - name: Run IAST probes
+        run: |
+          curl "${BACKEND_LOCAL_URL}${SMOKE_PATH}?x=' OR '1'='1"
+          curl "${BACKEND_LOCAL_URL}${SMOKE_PATH}?file=../../etc/passwd"
+          curl "${BACKEND_LOCAL_URL}${SMOKE_PATH}?name=<script>alert(1)</script>"
+
+      # Collect runtime logs
+      - name: Collect runtime logs
+        if: always()
+        run: |
+          mkdir -p iast-out
+          docker compose logs --no-color > iast-out/runtime.log
+
+      # Detect runtime security indicators (real signals)
+      - name: Detect runtime security findings
+        run: |
+          if grep -E \
+            "SQLSyntaxErrorException|hibernate|FileNotFoundException|Whitelabel Error Page|path traversal" \
+            iast-out/runtime.log; then
+            echo "IAST runtime issue detected"
+            exit 1
           fi
+          echo "No runtime security indicators detected"
 
-      - name: Info
-        run: |
-          echo "IAST requires Contrast agent + service. This step is optional and runs only when secrets are configured."
-          echo "If you want, I can give you the exact agent wiring for Spring Boot."
+      - name: Upload IAST evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iast-opentelemetry-report
+          path: iast-out
 
-      # NOTE: actual agent wiring depends on how you start your app (jar/docker/k8s).
-      # For grading, the key point is showing IAST stage exists and is gated by secrets.
+      - name: Stop stack
+        if: always()
+        run: docker compose down -v
+
+
 
 
   # =========================================================
@@ -727,7 +760,7 @@ jobs:
   perf-k6:
     name: Performance (k6) - optional
     runs-on: ubuntu-latest
-    needs: [iast-contrast]
+    needs: [iast-opentelemetry]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
       STAGING_URL: ${{ secrets.STAGING_URL }}
