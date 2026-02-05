@@ -502,10 +502,14 @@ jobs:
       - name: Wait for backend (health)
         if: needs.detect.outputs.has_compose == 'true'
         shell: bash
+        env:
+          BACKEND_LOCAL_URL: "http://localhost:8080"
+          SMOKE_PATH: "/api/hello"
         run: |
           set -e
+          echo "Health check URL: ${BACKEND_LOCAL_URL}${SMOKE_PATH}"
           for i in {1..60}; do
-            if curl -fsS "${BACKEND_LOCAL_URL}${SMOKE_PATH}" >/dev/null 2>&1; then
+            if curl -fsS --retry 3 --retry-delay 2 "${BACKEND_LOCAL_URL}${SMOKE_PATH}" >/dev/null 2>&1; then
               echo "Backend is up"
               exit 0
             fi
@@ -514,9 +518,9 @@ jobs:
           done
           echo "Backend did not become ready"
           if [ -f "docker-compose.yml" ]; then
-            docker compose -f docker-compose.yml logs --no-color
+            docker compose -f docker-compose.yml logs --no-color || true
           else
-            docker compose -f compose.yml logs --no-color
+            docker compose -f compose.yml logs --no-color || true
           fi
           exit 1
 
