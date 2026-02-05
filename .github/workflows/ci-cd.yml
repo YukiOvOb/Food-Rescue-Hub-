@@ -611,7 +611,7 @@ jobs:
         shell: bash
         run: |
           set -e
-          docker build -t "${DOCKER_USERNAME}/frh-frontend:latest" -f frontend/Dockerfile frontend
+          docker build -t "${DOCKER_USERNAME}/frh-frontend:latest" -f frontend/Dockerfile .
           docker push "${DOCKER_USERNAME}/frh-frontend:latest"
 
 
