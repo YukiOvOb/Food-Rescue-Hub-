@@ -722,6 +722,38 @@ jobs:
           curl -L -o otel/opentelemetry-javaagent.jar \
             https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
 
+      # Load repository .env into the step environment (so MYSQL_* are available)
+      - name: Load .env
+        run: |
+          if [ -f .env ]; then
+            echo "Loading .env"
+            set -o allexport
+            # strip CRLF and ignore empty/comment lines
+            sed 's/\r$//' .env | grep -v '^\s*$' | grep -v '^\s*#' > .env.clean || true
+            # shellcheck disable=SC1090
+            source .env.clean || true
+            set +o allexport
+          else
+            echo ".env not found"
+          fi
+
+      # Wait for MySQL to be accepting connections before starting the whole stack
+      - name: Wait for MySQL
+        shell: bash
+        run: |
+          set -e
+          for i in {1..60}; do
+            if docker compose exec -T mysql mysqladmin ping -h localhost -uroot -p"${MYSQL_ROOT_PASSWORD}" >/dev/null 2>&1; then
+              echo "MySQL is up"
+              exit 0
+            fi
+            echo "Waiting for MySQL... ($i)"
+            sleep 5
+          done
+          echo "MySQL did not become ready"
+          docker compose logs --no-color || true
+          exit 1
+
       # Start application with Docker Compose (agent mounted via volume)
       - name: Start application
         run: docker compose up -d
@@ -734,7 +766,8 @@ jobs:
               echo "Backend is up"
               exit 0
             fi
-            sleep 2
+            echo "Waiting for backend... ($i)"
+            sleep 5
           done
           docker compose logs
           exit 1
