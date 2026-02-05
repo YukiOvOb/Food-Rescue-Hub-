@@ -4,11 +4,15 @@ import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.example.foodrescuehub.data.api.RetrofitClient.apiService
 import com.example.foodrescuehub.databinding.ActivityPaymentResultBinding
 import com.example.foodrescuehub.ui.home.HomeActivity
 import com.example.foodrescuehub.ui.orders.OrderDetailActivity
+import kotlinx.coroutines.launch
 
 /**
  * Activity to handle the result of external payments via deep links
@@ -33,13 +37,13 @@ class PaymentResultActivity : AppCompatActivity() {
             return
         }
 
-        // Example URL: frhapp://payment?status=success&order_ids=101,102
-        val status = data.getQueryParameter("status")
+        // Example URL: frhapp://payment/success?order_ids=101,102
+        val path = data.path
         val orderIds = data.getQueryParameter("order_ids")
 
-        if (status == "success" || data.toString().contains("success")) {
+        if (path?.contains("success") == true || data.toString().contains("success")) {
             showSuccess(orderIds)
-        } else if (status == "cancel" || data.toString().contains("cancel")) {
+        } else if (path?.contains("cancel") == true || data.toString().contains("cancel")) {
             showCancelled()
         } else {
             showError("Payment status unknown.")
@@ -53,8 +57,15 @@ class PaymentResultActivity : AppCompatActivity() {
         binding.tvStatus.setTextColor(Color.GREEN)
         binding.tvOrderDetails.text = if (!orderIds.isNullOrBlank()) "Orders: $orderIds" else "Your order has been placed."
 
+        // Update backend status to PAID for each order
+        orderIds?.split(",")?.forEach { idStr ->
+            idStr.trim().toLongOrNull()?.let { orderId ->
+                updateOrderStatusToPaid(orderId)
+            }
+        }
+
         // If we have a single order ID, allow user to jump to details
-        val firstOrderId = orderIds?.split(",")?.firstOrNull()?.toLongOrNull()
+        val firstOrderId = orderIds?.split(",")?.firstOrNull()?.trim()?.toLongOrNull()
         if (firstOrderId != null) {
             binding.btnViewOrder.visibility = View.VISIBLE
             binding.btnViewOrder.setOnClickListener {
@@ -63,6 +74,21 @@ class PaymentResultActivity : AppCompatActivity() {
                 }
                 startActivity(intent)
                 finish()
+            }
+        }
+    }
+
+    private fun updateOrderStatusToPaid(orderId: Long) {
+        lifecycleScope.launch {
+            try {
+                val response = apiService.updateOrderStatus(orderId, "PAID")
+                if (response.isSuccessful) {
+                    Log.d("PaymentResult", "Successfully updated order $orderId to PAID")
+                } else {
+                    Log.e("PaymentResult", "Failed to update order $orderId: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Log.e("PaymentResult", "Error updating order $orderId", e)
             }
         }
     }
