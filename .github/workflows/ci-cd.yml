@@ -456,7 +456,7 @@ jobs:
       - sast-codeql
       - sca-trivy-fs
     if: >
-      (github.event_name == 'push' && (github.ref == 'refs/heads/development/Sprint2' || github.ref == 'refs/heads/main')) ||
+      (github.event_name == 'push' && (github.ref == 'refs/heads/Sprint2' || github.ref == 'refs/heads/main')) ||
       (github.event_name == 'pull_request' && github.base_ref == 'main')
     steps:
       - uses: actions/checkout@v4
