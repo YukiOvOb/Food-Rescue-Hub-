@@ -9,6 +9,7 @@ import com.example.foodrescuehub.R
 import com.example.foodrescuehub.data.repository.AuthManager
 import com.example.foodrescuehub.databinding.ActivityProfileBinding
 import com.example.foodrescuehub.ui.auth.LoginActivity
+import com.example.foodrescuehub.ui.chatbot.ChatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -60,7 +61,8 @@ class ProfileActivity : AppCompatActivity() {
         }
 
         binding.cvHelp.setOnClickListener {
-            Toast.makeText(this, R.string.feature_coming_soon, Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, ChatActivity::class.java)
+            startActivity(intent)
         }
     }
 

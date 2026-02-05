@@ -28,4 +28,8 @@
     <string name="help_support">Help &amp; Support</string>
     <string name="feature_coming_soon">This feature is coming soon</string>
     <string name="guest_message">Login to access personalized features</string>
+    <string name="rescuebot_support">RescueBot Support</string>
+    <string name="type_a_message">Type a message...</string>
+    <string name="send">Send</string>
+    <string name="message_content">Message content</string>
 </resources>
