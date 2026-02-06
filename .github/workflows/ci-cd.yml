@@ -19,14 +19,12 @@ permissions:
   contents: read
 
 env:
-  REPORT_ONLY: "true"          # true = don't fail pipeline on lint/scans; false = strict gate
+  REPORT_ONLY: "true"
   PYTHON_DIR: "ml"
   ANDROID_DIR: "android"
-
-  # Local integration endpoints inside GitHub runner:
-  PROD_URL: "http://localhost:80"   # nginx port for production
+  PROD_URL: "http://localhost:80"
   BACKEND_LOCAL_URL: "http://localhost:8080"
-  OPENAPI_PATH: "/v3/api-docs"
+  OPENAI_PATH: "/v3/api-docs"
   SMOKE_PATH: "/api/hello"
 
 jobs:
