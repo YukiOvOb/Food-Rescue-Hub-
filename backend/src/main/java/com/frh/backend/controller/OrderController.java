@@ -2,26 +2,13 @@ package com.frh.backend.controller;
 
 import com.frh.backend.Model.Order;
 import com.frh.backend.service.OrderService;
-import com.frh.backend.repository.ListingRepository;
-import com.frh.backend.repository.ConsumerProfileRepository;
-import com.frh.backend.repository.OrderRepository;
-import com.frh.backend.service.StripeService;
-import com.frh.backend.Model.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.List;
-
-import jakarta.servlet.http.HttpSession;
-import jakarta.transaction.Transactional;
-
 import com.frh.backend.dto.CreateOrderResponseDto;
 import com.frh.backend.dto.ErrorResponse;
 import com.frh.backend.exception.InsufficientStockException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -70,10 +57,13 @@ public class OrderController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (InsufficientStockException e) {
             throw e;
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error creating order", e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Failed to create order"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to create order: " + e.getMessage()));
         }
     }
 
@@ -85,12 +75,16 @@ public class OrderController {
     public ResponseEntity<?> getOrderById(@PathVariable Long orderId) {
         try {
             Order order = orderService.getOrderById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Order not found with id: " + orderId));
             return ResponseEntity.ok(order);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error retrieving order", e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ErrorResponse(HttpStatus.NOT_FOUND.value(), "Order not found"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve order: " + e.getMessage()));
         }
     }
 
@@ -103,10 +97,13 @@ public class OrderController {
         try {
             List<Order> orders = orderService.getAllOrders();
             return ResponseEntity.ok(orders);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error retrieving orders", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve orders"));
+                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve orders: " + e.getMessage()));
         }
     }
 
@@ -126,10 +123,13 @@ public class OrderController {
         try {
             List<Order> orders = orderService.getOrdersByConsumer(consumerId);
             return ResponseEntity.ok(orders);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error retrieving consumer orders", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve orders"));
+                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve orders: " + e.getMessage()));
         }
     }
 
@@ -142,10 +142,13 @@ public class OrderController {
         try {
             List<Order> orders = orderService.getOrdersByStore(storeId);
             return ResponseEntity.ok(orders);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error retrieving store orders", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve orders"));
+                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve orders: " + e.getMessage()));
         }
     }
 
@@ -158,10 +161,13 @@ public class OrderController {
         try {
             List<Order> orders = orderService.getOrdersByStatus(status);
             return ResponseEntity.ok(orders);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error retrieving orders by status", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve orders"));
+                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve orders: " + e.getMessage()));
         }
     }
 
@@ -176,10 +182,13 @@ public class OrderController {
         try {
             List<Order> orders = orderService.getOrdersByStoreAndStatus(storeId, status);
             return ResponseEntity.ok(orders);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error retrieving store orders by status", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve orders"));
+                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve orders: " + e.getMessage()));
         }
     }
 
@@ -196,10 +205,13 @@ public class OrderController {
             Order updatedOrder = orderService.updateOrder(orderId, orderDetails);
             log.info("Order updated successfully with ID: {}", orderId);
             return ResponseEntity.ok(updatedOrder);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error updating order", e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Failed to update order"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to update order: " + e.getMessage()));
         }
     }
 
@@ -216,10 +228,13 @@ public class OrderController {
             Order updatedOrder = orderService.updateOrderStatus(orderId, status);
             log.info("Order status updated to {} for order ID: {}", status, orderId);
             return ResponseEntity.ok(updatedOrder);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error updating order status", e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Failed to update order status"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to update order status: " + e.getMessage()));
         }
     }
 
@@ -236,10 +251,13 @@ public class OrderController {
             Order cancelledOrder = orderService.cancelOrder(orderId, cancelReason);
             log.info("Order cancelled with ID: {}", orderId);
             return ResponseEntity.ok(cancelledOrder);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error cancelling order", e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Failed to cancel order"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to cancel order: " + e.getMessage()));
         }
     }   
 
@@ -253,10 +271,13 @@ public class OrderController {
             orderService.deleteOrder(orderId);
             log.info("Order deleted successfully with ID: {}", orderId);
             return ResponseEntity.ok().body("Order deleted successfully");
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error deleting order", e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Failed to delete order"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to delete order: " + e.getMessage()));
         }
     }
 

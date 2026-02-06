@@ -1,0 +1,116 @@
+nohup: ignoring input
+[0;34m============================================[0m
+[0;34mRescueBot AI Service Startup[0m
+[0;34m============================================[0m
+
+[1;33m[1/6][0m Checking Python version...
+[0;32m✓ Python 3.12.3 found[0m
+
+[1;33m[2/6][0m Setting up virtual environment...
+[0;32m✓ Virtual environment activated[0m
+
+[1;33m[3/6][0m Installing dependencies...
+[0;32m✓ Dependencies installed[0m
+
+[1;33m[4/6][0m Checking environment configuration...
+[0;32m✓ Environment configuration found[0m
+
+[1;33m[5/6][0m Ingesting FAQ data...
+Found 11 raw sections. Processing...
+Successfully loaded 10 FAQs into ChromaDB!
+[0;32m✓ FAQ data ingested[0m
+
+[0;34m============================================[0m
+[0;32mStarting RescueBot AI Service...[0m
+[0;34m============================================[0m
+
+[1;33mService Info:[0m
+  API Endpoint: [0;32mhttp://0.0.0.0:8000[0m
+  Chat Endpoint: [0;32mhttp://0.0.0.0:8000/chat[0m
+  Docs: [0;32mhttp://localhost:8000/docs[0m
+
+[1;33mFor Android Emulator, use:[0m
+  [0;32mhttp://10.0.2.2:8000[0m
+
+[1;33mPress Ctrl+C to stop the service[0m
+
+INFO:     Started server process [227930]
+INFO:     Waiting for application startup.
+[02/06/26 04:46:53] INFO     Anonymized telemetry enabled. See     posthog.py:22
+                             https://docs.trychroma.com/telemetry               
+                             for more information.                              
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+[02/06/26 04:46:56] INFO     Processing request of type            server.py:720
+                             ListToolsRequest                                   
+[02/06/26 04:46:58] INFO     Processing request of type            server.py:720
+                             CallToolRequest                                    
+[02/06/26 04:47:01] INFO     HTTP Request: POST                  _client.py:1025
+                             https://api.openai.com/v1/embedding                
+                             s "HTTP/1.1 200 OK"                                
+Starting MCP Server connection...
+
+--- After system prompt (count=1) ---
+00 role=system content='You are RescueBot, the dedicated AI assistant for a Food Rescue App. Follow these rules strictly: 1. IDENTITY: If asked '
+
+--- After history (count=3) ---
+00 role=system content='You are RescueBot, the dedicated AI assistant for a Food Rescue App. Follow these rules strictly: 1. IDENTITY: If asked '
+01 role=assistant content='Hello! I am RescueBot. How can I help you save food today?'
+02 role=user content='How to get refund'
+
+--- After user message (count=4) ---
+00 role=system content='You are RescueBot, the dedicated AI assistant for a Food Rescue App. Follow these rules strictly: 1. IDENTITY: If asked '
+01 role=assistant content='Hello! I am RescueBot. How can I help you save food today?'
+02 role=user content='How to get refund'
+03 role=user content='How to get refund'
+
+--- OpenAI assistant_msg ---
+role=assistant tool_calls=True
+
+--- After tool result (count=6) ---
+00 role=system content='You are RescueBot, the dedicated AI assistant for a Food Rescue App. Follow these rules strictly: 1. IDENTITY: If asked '
+01 role=assistant content='Hello! I am RescueBot. How can I help you save food today?'
+02 role=user content='How to get refund'
+03 role=user content='How to get refund'
+04 role=assistant content=''
+05 role=tool content='[TextContent(type='text', text='I missed my pickup window. Can I get a refund?\nOrders must be collected during the desi'
+INFO:     118.200.186.10:57239 - "POST /chat HTTP/1.1" 200 OK
+[02/06/26 04:47:42] INFO     Processing request of type            server.py:720
+                             ListToolsRequest                                   
+[02/06/26 04:47:43] INFO     Processing request of type            server.py:720
+                             CallToolRequest                                    
+[02/06/26 04:47:44] INFO     HTTP Request: POST                  _client.py:1025
+                             https://api.openai.com/v1/embedding                
+                             s "HTTP/1.1 200 OK"                                
+
+--- After system prompt (count=1) ---
+00 role=system content='You are RescueBot, the dedicated AI assistant for a Food Rescue App. Follow these rules strictly: 1. IDENTITY: If asked '
+
+--- After history (count=5) ---
+00 role=system content='You are RescueBot, the dedicated AI assistant for a Food Rescue App. Follow these rules strictly: 1. IDENTITY: If asked '
+01 role=assistant content='Hello! I am RescueBot. How can I help you save food today?'
+02 role=user content='How to get refund'
+03 role=assistant content='To get a refund for your order, you need to cancel it through the app up to 2 hours before the pickup window begins. If '
+04 role=user content='What if I have food allergies'
+
+--- After user message (count=6) ---
+00 role=system content='You are RescueBot, the dedicated AI assistant for a Food Rescue App. Follow these rules strictly: 1. IDENTITY: If asked '
+01 role=assistant content='Hello! I am RescueBot. How can I help you save food today?'
+02 role=user content='How to get refund'
+03 role=assistant content='To get a refund for your order, you need to cancel it through the app up to 2 hours before the pickup window begins. If '
+04 role=user content='What if I have food allergies'
+05 role=user content='What if I have food allergies'
+
+--- OpenAI assistant_msg ---
+role=assistant tool_calls=True
+
+--- After tool result (count=8) ---
+00 role=system content='You are RescueBot, the dedicated AI assistant for a Food Rescue App. Follow these rules strictly: 1. IDENTITY: If asked '
+01 role=assistant content='Hello! I am RescueBot. How can I help you save food today?'
+02 role=user content='How to get refund'
+03 role=assistant content='To get a refund for your order, you need to cancel it through the app up to 2 hours before the pickup window begins. If '
+04 role=user content='What if I have food allergies'
+05 role=user content='What if I have food allergies'
+06 role=assistant content=''
+07 role=tool content='[TextContent(type='text', text='What if I have food allergies?\nBecause the contents of Surprise Bags vary daily, we can'
+INFO:     118.200.186.10:51522 - "POST /chat HTTP/1.1" 200 OK

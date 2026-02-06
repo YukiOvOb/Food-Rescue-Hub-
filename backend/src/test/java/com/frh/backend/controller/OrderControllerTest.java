@@ -10,9 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -80,7 +82,7 @@ class OrderControllerTest {
                 Mockito.eq(1L),
                 Mockito.any(),
                 Mockito.any()))
-                .thenThrow(new RuntimeException("error"));
+                .thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cart is empty"));
 
         mockMvc.perform(post("/api/orders")
                         .sessionAttr("USER_ID", 1L)
@@ -318,12 +320,12 @@ class OrderControllerTest {
     void updateOrder_error() throws Exception {
 
         Mockito.when(orderService.updateOrder(Mockito.eq(1L), Mockito.any()))
-                .thenThrow(new RuntimeException("Order not found"));
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
 
         mockMvc.perform(put("/api/orders/{orderId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new Order())))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     /* -----------------------------
@@ -333,11 +335,11 @@ class OrderControllerTest {
     void updateOrderStatus_error() throws Exception {
 
         Mockito.when(orderService.updateOrderStatus(1L, "INVALID"))
-                .thenThrow(new RuntimeException("Invalid status"));
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
 
         mockMvc.perform(patch("/api/orders/{orderId}/status", 1L)
                         .param("status", "INVALID"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     /* -----------------------------
@@ -347,10 +349,10 @@ class OrderControllerTest {
     void cancelOrder_error() throws Exception {
 
         Mockito.when(orderService.cancelOrder(Mockito.eq(1L), Mockito.any()))
-                .thenThrow(new RuntimeException("Cannot cancel order"));
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
 
         mockMvc.perform(patch("/api/orders/{orderId}/cancel", 1L))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     /* -----------------------------
@@ -359,12 +361,12 @@ class OrderControllerTest {
     @Test
     void deleteOrder_error() throws Exception {
 
-        Mockito.doThrow(new RuntimeException("Cannot delete order"))
+        Mockito.doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"))
                 .when(orderService)
                 .deleteOrder(1L);
 
         mockMvc.perform(delete("/api/orders/{orderId}", 1L))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     /* -----------------------------
@@ -374,7 +376,7 @@ class OrderControllerTest {
     void getOrderById_error() throws Exception {
 
         Mockito.when(orderService.getOrderById(1L))
-                .thenThrow(new RuntimeException("Database error"));
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
 
         mockMvc.perform(get("/api/orders/{orderId}", 1L))
                 .andExpect(status().isNotFound());

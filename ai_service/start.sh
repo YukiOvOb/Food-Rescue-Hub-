@@ -22,7 +22,7 @@ echo -e "${BLUE}============================================${NC}"
 echo ""
 
 # 1. Check Python version
-echo -e "${YELLOW}[1/5]${NC} Checking Python version..."
+echo -e "${YELLOW}[1/6]${NC} Checking Python version..."
 if ! command -v python3 &> /dev/null; then
     echo -e "${RED}✗ Python3 not found. Please install Python 3.8+${NC}"
     exit 1
@@ -32,7 +32,7 @@ echo -e "${GREEN}✓ Python ${PYTHON_VERSION} found${NC}"
 echo ""
 
 # 2. Check if virtual environment exists, if not create it
-echo -e "${YELLOW}[2/5]${NC} Setting up virtual environment..."
+echo -e "${YELLOW}[2/6]${NC} Setting up virtual environment..."
 if [ ! -d "$SCRIPT_DIR/venv" ]; then
     echo -e "${YELLOW}Creating virtual environment...${NC}"
     python3 -m venv "$SCRIPT_DIR/venv"
@@ -42,7 +42,7 @@ echo -e "${GREEN}✓ Virtual environment activated${NC}"
 echo ""
 
 # 3. Install dependencies
-echo -e "${YELLOW}[3/5]${NC} Installing dependencies..."
+echo -e "${YELLOW}[3/6]${NC} Installing dependencies..."
 if [ -f "$SCRIPT_DIR/requirements.txt" ]; then
     pip install --upgrade pip > /dev/null 2>&1
     pip install -r "$SCRIPT_DIR/requirements.txt" > /dev/null 2>&1
@@ -54,7 +54,7 @@ fi
 echo ""
 
 # 4. Check for .env file
-echo -e "${YELLOW}[4/5]${NC} Checking environment configuration..."
+echo -e "${YELLOW}[4/6]${NC} Checking environment configuration..."
 if [ ! -f "$SCRIPT_DIR/.env" ]; then
     echo -e "${YELLOW}⚠ .env file not found. Creating template...${NC}"
     cat > "$SCRIPT_DIR/.env" << 'EOF'
@@ -75,15 +75,10 @@ else
 fi
 echo ""
 
-# 5. Check if ChromaDB data exists
-echo -e "${YELLOW}[5/5]${NC} Checking ChromaDB knowledge base..."
-if [ ! -d "$SCRIPT_DIR/data/chroma_db" ]; then
-    echo -e "${YELLOW}⚠ ChromaDB not found. Ingesting FAQ data...${NC}"
-    python3 "$SCRIPT_DIR/ingest.py"
-    echo -e "${GREEN}✓ FAQ data ingested${NC}"
-else
-    echo -e "${GREEN}✓ ChromaDB knowledge base found${NC}"
-fi
+# 5. Ingest FAQ data into ChromaDB
+echo -e "${YELLOW}[5/6]${NC} Ingesting FAQ data..."
+python3 "$SCRIPT_DIR/ingest.py"
+echo -e "${GREEN}✓ FAQ data ingested${NC}"
 echo ""
 
 # 6. Start the API service

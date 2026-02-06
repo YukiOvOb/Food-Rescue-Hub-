@@ -60,15 +60,15 @@ public class OrderService {
     @Transactional
     public Order createOrderFromCart(Long consumerId, LocalDateTime pickupSlotStart, LocalDateTime pickupSlotEnd) {
         Cart cart = cartRepository.findFirstByConsumer_ConsumerIdAndStatusOrderByCreatedAtDesc(consumerId, "ACTIVE")
-            .orElseThrow(() -> new RuntimeException("No active cart found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No active cart found"));
 
         List<CartItem> items = cartItemRepository.findByCart_CartId(cart.getCartId());
         if (items.isEmpty()) {
-            throw new RuntimeException("Cart is empty");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cart is empty");
         }
 
         if (pickupSlotStart == null || pickupSlotEnd == null || !pickupSlotStart.isBefore(pickupSlotEnd)) {
-            throw new RuntimeException("Invalid pickup slot");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid pickup slot");
         }
 
         Order order = new Order();
@@ -150,14 +150,14 @@ public class OrderService {
     @Transactional
     public Order createOrder(CreateOrderRequest req) {
         Listing listing = listingRepository.findById(req.getListingId())
-            .orElseThrow(() -> new RuntimeException("Listing not found with id: " + req.getListingId()));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found with id: " + req.getListingId()));
 
         if (!"ACTIVE".equalsIgnoreCase(listing.getStatus())) {
-            throw new RuntimeException("Listing " + req.getListingId() + " is not active");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Listing " + req.getListingId() + " is not active");
         }
 
         ConsumerProfile consumer = consumerProfileRepository.findById(req.getConsumerId())
-            .orElseThrow(() -> new RuntimeException("Consumer not found with id: " + req.getConsumerId()));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Consumer not found with id: " + req.getConsumerId()));
 
         // fast stock check (no lock – just an early exit)
         if (!inventoryService.checkStock(req.getListingId(), req.getQuantity())) {
@@ -193,7 +193,7 @@ public class OrderService {
     @Transactional
     public Order acceptOrder(Long orderId) {
         Order order = orderRepository.findByIdForUpdate(orderId)
-            .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with id: " + orderId));
 
         if (!"PENDING".equals(order.getStatus())) {
             throw new OrderStateException(orderId, order.getStatus(), "PENDING");
@@ -217,7 +217,7 @@ public class OrderService {
     @Transactional
     public Order rejectOrder(Long orderId, String reason) {
         Order order = orderRepository.findByIdForUpdate(orderId)
-            .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with id: " + orderId));
 
         if (!"PENDING".equals(order.getStatus())) {
             throw new OrderStateException(orderId, order.getStatus(), "PENDING");
@@ -232,7 +232,7 @@ public class OrderService {
     @Transactional
     public Order cancelAcceptedOrder(Long orderId, String reason) {
         Order order = orderRepository.findByIdForUpdate(orderId)
-            .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with id: " + orderId));
 
         if (!"ACCEPTED".equals(order.getStatus())) {
             throw new OrderStateException(orderId, order.getStatus(), "ACCEPTED");
@@ -340,7 +340,7 @@ public class OrderService {
     @Transactional
     public Order updateOrder(Long orderId, Order orderDetails) {
         Order order = orderRepository.findById(orderId)
-            .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with id: " + orderId));
 
         if (orderDetails.getStatus() != null) {
             order.setStatus(orderDetails.getStatus());
@@ -373,7 +373,7 @@ public class OrderService {
     @Transactional
     public Order updateOrderStatus(Long orderId, String status) {
         Order order = orderRepository.findById(orderId)
-            .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with id: " + orderId));
 
         order.setStatus(status);
         Order updatedOrder = orderRepository.save(order);
@@ -387,7 +387,7 @@ public class OrderService {
     @Transactional
     public void deleteOrder(Long orderId) {
         if (!orderRepository.existsById(orderId)) {
-            throw new RuntimeException("Order not found with id: " + orderId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with id: " + orderId);
         }
         orderRepository.deleteById(orderId);
         log.info("Order deleted successfully with ID: {}", orderId);
@@ -399,7 +399,7 @@ public class OrderService {
     @Transactional
     public Order cancelOrder(Long orderId, String cancelReason) {
         Order order = orderRepository.findById(orderId)
-            .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with id: " + orderId));
 
         order.setStatus("CANCELLED");
         order.setCancelReason(cancelReason);
