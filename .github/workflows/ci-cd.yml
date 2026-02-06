@@ -390,6 +390,15 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{ matrix.language }}"
+      - name: Upload CodeQL SARIF artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-sast-${{ matrix.language }}
+          path: |
+            **/*.sarif
+          if-no-files-found: warn
+
 
 
   # =========================================================
