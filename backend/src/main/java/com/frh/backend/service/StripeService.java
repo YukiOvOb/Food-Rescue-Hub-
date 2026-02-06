@@ -7,6 +7,7 @@ import com.stripe.param.checkout.SessionCreateParams;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -25,11 +26,13 @@ public class StripeService {
             this.unitPrice = unitPrice;
         }
     }
-    @Value("${stripe.secret.key}")
+    @Value("${stripe.secret.key:}")
     private String stripeSecretKey;
     @PostConstruct
     public void init() {
-        Stripe.apiKey = stripeSecretKey;
+        if (StringUtils.hasText(stripeSecretKey)) {
+            Stripe.apiKey = stripeSecretKey;
+        }
     }
     /**
      * Create payment session with individual line items showing listing titles
@@ -37,6 +40,11 @@ public class StripeService {
      * @param orderReference "orderId" for success URL
      */
     public String createCheckoutSession(List<StripeLineItem> lineItems, String orderReference) throws StripeException {
+        if (!StringUtils.hasText(stripeSecretKey)) {
+            throw new IllegalStateException("Stripe is not configured");
+        }
+        Stripe.apiKey = stripeSecretKey;
+
         SessionCreateParams.Builder paramsBuilder = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
                 .setSuccessUrl("frhapp://payment/success?order_ids=" + orderReference)

@@ -142,6 +142,8 @@ public class MobileCheckoutController {
             response.put("paymentUrl", paymentUrl);
             response.put("orderIds", createdOrderIds);
             return ResponseEntity.ok(response);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Payment service unavailable");
         } catch (Exception e) {
             throw new RuntimeException("Stripe Error: " + e.getMessage());
         }
