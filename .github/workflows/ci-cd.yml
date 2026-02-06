@@ -26,8 +26,8 @@ env:
   # Local integration endpoints inside GitHub runner:
   PROD_URL: "http://localhost:80"   # nginx port for production
   BACKEND_LOCAL_URL: "http://localhost:8080"
-  OPENAPI_PATH: "/v3/api-docs"   # Swagger/OpenAPI (Spring Boot default)
-  SMOKE_PATH: "/api/hello"       # change to your real endpoint
+  OPENAPI_PATH: "/v3/api-docs"
+  SMOKE_PATH: "/api/hello"
 
 jobs:
   # =========================================================
