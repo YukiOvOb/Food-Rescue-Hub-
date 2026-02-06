@@ -20,8 +20,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Map;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -140,8 +138,16 @@ class AuthControllerTest {
     void getCurrentUser_success() throws Exception {
 
         mockMvc.perform(get("/api/auth/me")
-                        .sessionAttr("user", Map.of("id", 1)))
-                .andExpect(status().isOk());
+                        .sessionAttr("USER_ID", 1L)
+                        .sessionAttr("USER_ROLE", "CONSUMER")
+                        .sessionAttr("USER_EMAIL", "user@test.com")
+                        .sessionAttr("USER_DISPLAY_NAME", "Test User"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(1))
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.role").value("CONSUMER"))
+                .andExpect(jsonPath("$.email").value("user@test.com"))
+                .andExpect(jsonPath("$.displayName").value("Test User"));
     }
 
     /* --------------------------------
