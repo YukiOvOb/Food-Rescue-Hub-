@@ -24,7 +24,7 @@ public class ConsumerOrderController {
      */
     @GetMapping
     public ResponseEntity<List<Order>> getOrdersByConsumerId(HttpSession session) {
-        Long consumerId = (Long) session.getAttribute("USER_ID");
+        Long consumerId = getSessionConsumerId(session);
         if (consumerId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -35,50 +35,88 @@ public class ConsumerOrderController {
 
     /**
      * Get order by ID
-     * @param consumerId the consumer's ID
      * @param orderId the order ID
      * @return the order
      */
-    @GetMapping("/{consumerId}/order/{orderId}")
+    @GetMapping("/order/{orderId}")
     public ResponseEntity<Order> getOrderById(
-            @PathVariable Long consumerId,
+            HttpSession session,
             @PathVariable Long orderId) {
-        return consumerOrderService.getOrderById(orderId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Long consumerId = getSessionConsumerId(session);
+        if (consumerId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Order order = consumerOrderService.getOrderById(orderId).orElse(null);
+        if (order == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!isOrderOwnedByConsumer(order, consumerId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        return ResponseEntity.ok(order);
     }
 
     /**
      * Get orders for a specific consumer with a specific status
-     * @param consumerId the consumer's ID
      * @param status the order status
      * @return list of orders
      */
-    @GetMapping("/{consumerId}/status/{status}")
+    @GetMapping("/status/{status}")
     public ResponseEntity<List<Order>> getOrdersByConsumerIdAndStatus(
-            @PathVariable Long consumerId,
+            HttpSession session,
             @PathVariable String status) {
+        Long consumerId = getSessionConsumerId(session);
+        if (consumerId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         List<Order> orders = consumerOrderService.getOrdersByConsumerIdAndStatus(consumerId, status);
         return ResponseEntity.ok(orders);
     }
 
     /**
      * Update order status
-     * @param consumerId the consumer's ID
      * @param orderId the order ID
      * @param status the new status
      * @return the updated order
      */
-    @PatchMapping("/{consumerId}/order/{orderId}/status")
+    @PatchMapping("/order/{orderId}/status")
     public ResponseEntity<Order> updateOrderStatus(
-            @PathVariable Long consumerId,
+            HttpSession session,
             @PathVariable Long orderId,
             @RequestParam String status) {
+        Long consumerId = getSessionConsumerId(session);
+        if (consumerId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         try {
+            Order existingOrder = consumerOrderService.getOrderById(orderId)
+                    .orElse(null);
+            if (existingOrder == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            if (!isOrderOwnedByConsumer(existingOrder, consumerId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+
             Order updatedOrder = consumerOrderService.updateOrderStatus(orderId, status);
             return ResponseEntity.ok(updatedOrder);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    private Long getSessionConsumerId(HttpSession session) {
+        return (Long) session.getAttribute("USER_ID");
+    }
+
+    private boolean isOrderOwnedByConsumer(Order order, Long consumerId) {
+        return order.getConsumer() != null
+                && order.getConsumer().getConsumerId() != null
+                && order.getConsumer().getConsumerId().equals(consumerId);
     }
 }

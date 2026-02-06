@@ -1,6 +1,7 @@
 package com.frh.backend.controller;
 
 import com.frh.backend.Model.Order;
+import com.frh.backend.Model.ConsumerProfile;
 import com.frh.backend.service.ConsumerOrderService;
 
 import org.junit.jupiter.api.Test;
@@ -52,11 +53,15 @@ class ConsumerOrderControllerTest {
     void getOrderById_found() throws Exception {
 
         Order order = Mockito.mock(Order.class);
+        ConsumerProfile consumer = Mockito.mock(ConsumerProfile.class);
+        Mockito.when(order.getConsumer()).thenReturn(consumer);
+        Mockito.when(consumer.getConsumerId()).thenReturn(1L);
 
         Mockito.when(consumerOrderService.getOrderById(10L))
                 .thenReturn(Optional.of(order));
 
-        mockMvc.perform(get("/api/consumer/orders/{consumerId}/order/{orderId}", 1L, 10L))
+        mockMvc.perform(get("/api/consumer/orders/order/{orderId}", 10L)
+                        .sessionAttr("USER_ID", 1L))
                 .andExpect(status().isOk());
     }
 
@@ -69,7 +74,8 @@ class ConsumerOrderControllerTest {
         Mockito.when(consumerOrderService.getOrderById(99L))
                 .thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/consumer/orders/{consumerId}/order/{orderId}", 1L, 99L))
+        mockMvc.perform(get("/api/consumer/orders/order/{orderId}", 99L)
+                        .sessionAttr("USER_ID", 1L))
                 .andExpect(status().isNotFound());
     }
 
@@ -85,7 +91,8 @@ class ConsumerOrderControllerTest {
                 .getOrdersByConsumerIdAndStatus(1L, "COMPLETED"))
                 .thenReturn(List.of(order));
 
-        mockMvc.perform(get("/api/consumer/orders/{consumerId}/status/{status}", 1L, "COMPLETED"))
+        mockMvc.perform(get("/api/consumer/orders/status/{status}", "COMPLETED")
+                        .sessionAttr("USER_ID", 1L))
                 .andExpect(status().isOk());
     }
 
@@ -95,13 +102,19 @@ class ConsumerOrderControllerTest {
     @Test
     void updateOrderStatus_success() throws Exception {
 
+        Order existingOrder = Mockito.mock(Order.class);
+        ConsumerProfile consumer = Mockito.mock(ConsumerProfile.class);
         Order updatedOrder = Mockito.mock(Order.class);
+        Mockito.when(existingOrder.getConsumer()).thenReturn(consumer);
+        Mockito.when(consumer.getConsumerId()).thenReturn(1L);
 
+        Mockito.when(consumerOrderService.getOrderById(10L))
+                .thenReturn(Optional.of(existingOrder));
         Mockito.when(consumerOrderService.updateOrderStatus(10L, "CANCELLED"))
                 .thenReturn(updatedOrder);
 
-        mockMvc.perform(patch("/api/consumer/orders/{consumerId}/order/{orderId}/status",
-                        1L, 10L)
+        mockMvc.perform(patch("/api/consumer/orders/order/{orderId}/status", 10L)
+                        .sessionAttr("USER_ID", 1L)
                         .param("status", "CANCELLED"))
                 .andExpect(status().isOk());
     }
@@ -112,11 +125,11 @@ class ConsumerOrderControllerTest {
     @Test
     void updateOrderStatus_notFound() throws Exception {
 
-        Mockito.when(consumerOrderService.updateOrderStatus(99L, "CANCELLED"))
-                .thenThrow(new RuntimeException("Order not found"));
+        Mockito.when(consumerOrderService.getOrderById(99L))
+                .thenReturn(Optional.empty());
 
-        mockMvc.perform(patch("/api/consumer/orders/{consumerId}/order/{orderId}/status",
-                        1L, 99L)
+        mockMvc.perform(patch("/api/consumer/orders/order/{orderId}/status", 99L)
+                        .sessionAttr("USER_ID", 1L)
                         .param("status", "CANCELLED"))
                 .andExpect(status().isNotFound());
     }
