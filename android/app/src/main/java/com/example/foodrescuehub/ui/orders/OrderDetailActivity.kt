@@ -27,7 +27,8 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 /**
- * Order Detail Activity - Display detailed information about an order
+ * Order Detail Activity - Display detailed information about an order.
+ * Updated to support PENDING_PAYMENT and PAID statuses.
  */
 class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -69,7 +70,6 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun setupToolbar() {
-        // Force back to HomeActivity
         binding.toolbar.setNavigationOnClickListener {
             val intent = Intent(this, HomeActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -151,18 +151,20 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun setupQRCodeButton(status: String) {
         when (status.uppercase()) {
-            "CANCELLED" -> {
+            "CANCELLED", "PENDING_PAYMENT" -> {
                 binding.btnViewQrCode.isEnabled = false
-                binding.btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(getColor(android.R.color.darker_gray))
+                binding.btnViewQrCode.alpha = 0.5f
                 binding.btnViewQrCode.setOnClickListener(null)
             }
             "READY", "COMPLETED", "COLLECTED" -> {
                 binding.btnViewQrCode.isEnabled = true
+                binding.btnViewQrCode.alpha = 1.0f
                 binding.btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.status_confirmed))
                 binding.btnViewQrCode.setOnClickListener { navigateToQRCode() }
             }
             else -> {
                 binding.btnViewQrCode.isEnabled = true
+                binding.btnViewQrCode.alpha = 1.0f
                 binding.btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.status_pending))
                 binding.btnViewQrCode.setOnClickListener {
                     Toast.makeText(this, "Order must be ready before viewing QR code.", Toast.LENGTH_LONG).show()
@@ -183,7 +185,14 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun updateOrderStatus(status: String) {
         when (status.uppercase()) {
-            "PENDING", "ACCEPTED", "CONFIRMED" -> {
+            "PENDING_PAYMENT" -> {
+                setStatusIcon(binding.statusPaidIcon, false)
+                setStatusIcon(binding.statusReadyIcon, false)
+                setStatusIcon(binding.statusCollectedIcon, false)
+                setProgressLine(binding.progressLine1, false)
+                setProgressLine(binding.progressLine2, false)
+            }
+            "PAID", "PENDING", "ACCEPTED", "CONFIRMED" -> {
                 setStatusIcon(binding.statusPaidIcon, true)
                 setStatusIcon(binding.statusReadyIcon, false)
                 setStatusIcon(binding.statusCollectedIcon, false)

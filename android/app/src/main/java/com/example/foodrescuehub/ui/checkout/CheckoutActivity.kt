@@ -1,31 +1,20 @@
 package com.example.foodrescuehub.ui.checkout
 
-import android.R
 import android.app.TimePickerDialog
 import android.content.Intent
-import android.graphics.Color
-import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.browser.customtabs.CustomTabsIntent
-import androidx.lifecycle.lifecycleScope
-import com.example.foodrescuehub.data.api.RetrofitClient.apiService
-import com.example.foodrescuehub.data.model.CheckoutItem
-import com.example.foodrescuehub.data.model.CheckoutRequest
-import com.example.foodrescuehub.data.repository.CartManager
-import com.example.foodrescuehub.data.storage.SecurePreferences
 import com.example.foodrescuehub.databinding.ActivityCheckoutBinding
-import com.example.foodrescuehub.databinding.ActivityPaymentResultBinding
-import com.example.foodrescuehub.ui.home.HomeActivity
-import com.example.foodrescuehub.ui.orders.OrderDetailActivity
-import kotlinx.coroutines.launch
+import com.example.foodrescuehub.ui.auth.LoginActivity
+import com.example.foodrescuehub.data.repository.AuthManager
 import java.text.SimpleDateFormat
 import java.util.*
 
 /**
- * Checkout Activity - Handles order confirmation, pickup selection, and external payment
+ * Checkout Activity - Handles pickup selection and starts Stripe payment flow via WebView.
  */
 class CheckoutActivity : AppCompatActivity() {
 
@@ -37,44 +26,45 @@ class CheckoutActivity : AppCompatActivity() {
     }
 
     private lateinit var binding: ActivityCheckoutBinding
-    private lateinit var securePreferences: SecurePreferences
+    private val viewModel: CheckoutViewModel by viewModels()
 
-    private var selectedStartTime: Calendar? = null
-    private var selectedEndTime: Calendar? = null
-
-    private var allowedStartTime: Date? = null
-    private var allowedEndTime: Date? = null
+    private var allowedStartTime: Calendar? = null
+    private var allowedEndTime: Calendar? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityCheckoutBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        securePreferences = SecurePreferences(this)
-
-        parsePickupWindow()
+        parsePickupConstraints()
         setupToolbar()
         displayOrderSummary()
         setupClickListeners()
+        observeViewModel()
     }
 
-    private fun parsePickupWindow() {
+    private fun parsePickupConstraints() {
         val startStr = intent.getStringExtra(EXTRA_PICKUP_START)
         val endStr = intent.getStringExtra(EXTRA_PICKUP_END)
+        
+        val formats = listOf(
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()),
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.getDefault())
+        )
 
-        val format1 = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-        val format2 = SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.getDefault())
-
-        try {
-            if (startStr != null) {
-                allowedStartTime = try { format1.parse(startStr) } catch (e: Exception) { format2.parse(startStr) }
+        fun parse(str: String?): Calendar? {
+            if (str == null) return null
+            for (fmt in formats) {
+                try {
+                    val date = fmt.parse(str) ?: continue
+                    return Calendar.getInstance().apply { time = date }
+                } catch (e: Exception) { continue }
             }
-            if (endStr != null) {
-                allowedEndTime = try { format1.parse(endStr) } catch (e: Exception) { format2.parse(endStr) }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
+            return null
         }
+
+        allowedStartTime = parse(startStr)
+        allowedEndTime = parse(endStr)
     }
 
     private fun setupToolbar() {
@@ -84,202 +74,88 @@ class CheckoutActivity : AppCompatActivity() {
     private fun displayOrderSummary() {
         val total = intent.getDoubleExtra(EXTRA_TOTAL_AMOUNT, 0.0)
         val storeName = intent.getStringExtra(EXTRA_STORE_NAME) ?: "Store"
-        val itemCount = CartManager.getItemCount()
 
         binding.tvTotalAmount.text = "$%.2f".format(total)
         binding.tvStoreName.text = storeName
-        binding.tvItemCount.text = "$itemCount items"
-
-        if (allowedStartTime != null && allowedEndTime != null) {
-            val sdf = SimpleDateFormat("h:mm a", Locale.getDefault())
-            val windowText = "${sdf.format(allowedStartTime!!)} - ${sdf.format(allowedEndTime!!)}"
-            binding.tvAllowedWindow.text = "Available Pickup Window: $windowText"
-        } else {
-            binding.tvAllowedWindow.text = "Please select a pickup time"
+        
+        allowedStartTime?.let { start ->
+            allowedEndTime?.let { end ->
+                val sdf = SimpleDateFormat("h:mm a", Locale.getDefault())
+                binding.tvAllowedWindow.text = "Available Pickup: ${sdf.format(start.time)} - ${sdf.format(end.time)}"
+            }
         }
     }
 
     private fun setupClickListeners() {
         binding.btnSelectTime.setOnClickListener { showTimePickerDialog() }
-        binding.btnPlaceOrder.setOnClickListener { placeOrder() }
+        binding.btnPlaceOrder.setOnClickListener { 
+            binding.btnPlaceOrder.isEnabled = false
+            viewModel.startCheckout() 
+        }
     }
 
     private fun showTimePickerDialog() {
-        val calendar = Calendar.getInstance()
-        val now = calendar.time
-        allowedStartTime?.let { if (it.after(now)) calendar.time = it }
-
-        val hour = calendar.get(Calendar.HOUR_OF_DAY)
-        val minute = calendar.get(Calendar.MINUTE)
-
-        TimePickerDialog(this, { _, selectedHour, selectedMinute ->
-            val start = Calendar.getInstance().apply {
-                set(Calendar.HOUR_OF_DAY, selectedHour)
-                set(Calendar.MINUTE, selectedMinute)
+        val now = Calendar.getInstance()
+        val initial = allowedStartTime?.let { if (it.after(now)) it else now } ?: now
+        
+        TimePickerDialog(this, { _, hour, minute ->
+            val selected = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, hour)
+                set(Calendar.MINUTE, minute)
                 set(Calendar.SECOND, 0)
             }
+            
+            val end = (selected.clone() as Calendar).apply { add(Calendar.HOUR_OF_DAY, 1) }
+            allowedEndTime?.let { if (end.after(it)) end.time = it.time }
 
-            if (isTimeInWindow(start.time)) {
-                val end = (start.clone() as Calendar).apply {
-                    add(Calendar.HOUR_OF_DAY, 1)
-                    if (allowedEndTime != null && time.after(allowedEndTime)) time = allowedEndTime!!
+            viewModel.setPickupSlot(selected, end)
+            
+            val sdf = SimpleDateFormat("h:mm a", Locale.getDefault())
+            binding.tvSelectedTime.text = "Selected Slot: ${sdf.format(selected.time)} - ${sdf.format(end.time)}"
+            binding.tvSelectedTime.visibility = View.VISIBLE
+            binding.btnPlaceOrder.isEnabled = true
+        }, initial.get(Calendar.HOUR_OF_DAY), initial.get(Calendar.MINUTE), false).show()
+    }
+
+    private fun observeViewModel() {
+        viewModel.state.observe(this) { state ->
+            when (state) {
+                is CheckoutState.Loading -> {
+                    binding.loadingOverlay.visibility = View.VISIBLE
+                    binding.btnPlaceOrder.isEnabled = false
                 }
-                selectedStartTime = start
-                selectedEndTime = end
-                val sdf = SimpleDateFormat("h:mm a", Locale.getDefault())
-                binding.tvSelectedTime.text = "Your Selected Slot: ${sdf.format(start.time)} - ${sdf.format(end.time)}"
-                binding.tvSelectedTime.setTextColor(getColor(android.R.color.black))
-                binding.tvSelectedTime.visibility = View.VISIBLE
-                binding.btnSelectTime.text = "Change Time Slot"
-                binding.btnPlaceOrder.isEnabled = true
-            } else {
-                val sdf = SimpleDateFormat("h:mm a", Locale.getDefault())
-                val windowText = if (allowedStartTime != null && allowedEndTime != null) {
-                    "${sdf.format(allowedStartTime!!)} and ${sdf.format(allowedEndTime!!)}"
-                } else "the pickup window"
-                Toast.makeText(this, "Store is only open for pickup between $windowText", Toast.LENGTH_LONG).show()
-                binding.btnPlaceOrder.isEnabled = false
-                binding.tvSelectedTime.text = "Invalid selection"
-                binding.tvSelectedTime.setTextColor(getColor(android.R.color.holo_red_dark))
-                binding.tvSelectedTime.visibility = View.VISIBLE
-            }
-        }, hour, minute, false).show()
-    }
-
-    private fun isTimeInWindow(date: Date): Boolean {
-        if (allowedStartTime == null || allowedEndTime == null) return true
-        val selectedCal = Calendar.getInstance().apply { time = date }
-        val startCal = Calendar.getInstance().apply { time = allowedStartTime!! }
-        val endCal = Calendar.getInstance().apply { time = allowedEndTime!! }
-        val selectedMinutes = selectedCal.get(Calendar.HOUR_OF_DAY) * 60 + selectedCal.get(Calendar.MINUTE)
-        val startMinutes = startCal.get(Calendar.HOUR_OF_DAY) * 60 + startCal.get(Calendar.MINUTE)
-        val endMinutes = endCal.get(Calendar.HOUR_OF_DAY) * 60 + endCal.get(Calendar.MINUTE)
-        return if (startMinutes > endMinutes) selectedMinutes >= startMinutes || selectedMinutes <= endMinutes
-        else selectedMinutes in startMinutes..endMinutes
-    }
-
-    private fun placeOrder() {
-        if (selectedStartTime == null || selectedEndTime == null) return
-
-        binding.loadingOverlay.visibility = View.VISIBLE
-        binding.btnPlaceOrder.isEnabled = false
-
-        lifecycleScope.launch {
-            try {
-                // 1. Create Checkout Request from Cart
-                val cartItems = CartManager.cartItems.value ?: emptyList()
-                val checkoutItems = cartItems.map { CheckoutItem(it.listingId, it.quantity) }
-                val userId = securePreferences.getUserId()
-
-                // 2. Start Payment Process via Team's Endpoint
-                val checkoutRequest = CheckoutRequest(userId = userId, items = checkoutItems)
-                val response = apiService.startCheckout(checkoutRequest)
-
-                if (response.isSuccessful && response.body() != null) {
-                    val paymentUrl = response.body()!!.paymentUrl
-
-                    // 3. Launch external payment browser
-                    val customTabsIntent = CustomTabsIntent.Builder().build()
-                    customTabsIntent.launchUrl(this@CheckoutActivity, Uri.parse(paymentUrl))
-
-                    // Close this activity as the PaymentResultActivity will handle the deep link return
+                is CheckoutState.Success -> {
+                    binding.loadingOverlay.visibility = View.GONE
+                    launchPaymentWebView(state.paymentUrl)
+                }
+                is CheckoutState.Conflict -> {
+                    binding.loadingOverlay.visibility = View.GONE
+                    Toast.makeText(this, state.message, Toast.LENGTH_LONG).show()
                     finish()
-                } else if (response.code() == 409) {
-                    Toast.makeText(this@CheckoutActivity, "Conflict: Items sold out. Refreshing cart.", Toast.LENGTH_LONG).show()
-                    CartManager.fetchCart()
-                    finish()
-                } else {
-                    Toast.makeText(this@CheckoutActivity, "Checkout failed: ${response.message()}", Toast.LENGTH_SHORT).show()
+                }
+                is CheckoutState.Error -> {
+                    binding.loadingOverlay.visibility = View.GONE
                     binding.btnPlaceOrder.isEnabled = true
+                    Toast.makeText(this, state.message, Toast.LENGTH_SHORT).show()
                 }
-            } catch (e: Exception) {
-                Toast.makeText(this@CheckoutActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-                binding.btnPlaceOrder.isEnabled = true
-            } finally {
-                binding.loadingOverlay.visibility = View.GONE
-            }
-        }
-    }
-}
-
-/**
- * Activity to handle the result of external payments via deep links
- */
-class PaymentResultActivity : AppCompatActivity() {
-
-    private lateinit var binding: ActivityPaymentResultBinding
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityPaymentResultBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        handlePaymentResult()
-        setupClickListeners()
-    }
-
-    private fun handlePaymentResult() {
-        val data: Uri? = intent.data
-        if (data == null) {
-            showError("No payment data received.")
-            return
-        }
-
-        // Example URL: frhapp://payment?status=success&order_ids=101,102
-        val status = data.getQueryParameter("status")
-        val orderIds = data.getQueryParameter("order_ids")
-
-        if (status == "success" || data.toString().contains("success")) {
-            showSuccess(orderIds)
-        } else if (status == "cancel" || data.toString().contains("cancel")) {
-            showCancelled()
-        } else {
-            showError("Payment status unknown.")
-        }
-    }
-
-    private fun showSuccess(orderIds: String?) {
-        binding.ivStatusIcon.setImageResource(R.drawable.ic_dialog_info)
-        binding.ivStatusIcon.setColorFilter(Color.GREEN)
-        binding.tvStatus.text = "Payment Successful!"
-        binding.tvStatus.setTextColor(Color.GREEN)
-        binding.tvOrderDetails.text = if (!orderIds.isNullOrBlank()) "Orders: $orderIds" else "Your order has been placed."
-
-        // If we have a single order ID, allow user to jump to details
-        val firstOrderId = orderIds?.split(",")?.firstOrNull()?.toLongOrNull()
-        if (firstOrderId != null) {
-            binding.btnViewOrder.visibility = View.VISIBLE
-            binding.btnViewOrder.setOnClickListener {
-                val intent = Intent(this, OrderDetailActivity::class.java).apply {
-                    putExtra(OrderDetailActivity.Companion.EXTRA_ORDER_ID, firstOrderId)
+                is CheckoutState.Unauthorized -> {
+                    Toast.makeText(this, "Please login again", Toast.LENGTH_SHORT).show()
+                    AuthManager.logout()
+                    startActivity(Intent(this, LoginActivity::class.java))
+                    finishAffinity()
                 }
-                startActivity(intent)
-                finish()
+                else -> {
+                    binding.loadingOverlay.visibility = View.GONE
+                }
             }
         }
     }
 
-    private fun showCancelled() {
-        binding.ivStatusIcon.setImageResource(R.drawable.ic_dialog_alert)
-        binding.ivStatusIcon.setColorFilter(Color.RED)
-        binding.tvStatus.text = "Payment Cancelled"
-        binding.tvStatus.setTextColor(Color.RED)
-        binding.tvOrderDetails.text = "Your transaction was cancelled. No charges were made."
-    }
-
-    private fun showError(message: String) {
-        binding.ivStatusIcon.setImageResource(R.drawable.ic_dialog_alert)
-        binding.ivStatusIcon.setColorFilter(Color.GRAY)
-        binding.tvStatus.text = "Error"
-        binding.tvOrderDetails.text = message
-    }
-
-    private fun setupClickListeners() {
-        binding.btnHome.setOnClickListener {
-            val intent = Intent(this, HomeActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-            startActivity(intent)
-            finish()
+    private fun launchPaymentWebView(url: String) {
+        val intent = Intent(this, PaymentWebViewActivity::class.java).apply {
+            putExtra(PaymentWebViewActivity.EXTRA_PAYMENT_URL, url)
         }
+        startActivity(intent)
+        finish()
     }
 }

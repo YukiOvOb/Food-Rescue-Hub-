@@ -1,25 +1,4 @@
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: frh-mysql
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      TZ: Asia/Singapore
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    ports:
-      - "33306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    networks:
-      - frh-net
 
   backend:
     image: bhava0807/frh-backend:latest
@@ -27,16 +6,13 @@ services:
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Singapore
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "8080:8080"
-    depends_on:
-      mysql:
-        condition: service_healthy
     networks:
-      - frh-net
+      - app-network
 
   frontend:
     image: bhava0807/frh-frontend:latest
@@ -45,12 +21,15 @@ services:
     depends_on:
       - backend
     networks:
-      - frh-net
+      - app-network
 
   nginx:
     image: nginx:1.27-alpine
     container_name: frh-nginx
-    restart: unless-stopped
+      SPRING_PROFILES_ACTIVE: prod
+      # NOTE: Database is no longer run as a local Docker service (see commented-out `mysql` section above).
+      # Configure SPRING_DATASOURCE_URL to point to an external database, e.g.:
+      #   jdbc:mysql://db-host:3306/${MYSQL_DATABASE}?useSSL=false&serverTimezone=Asia/Singapore
     ports:
       - "80:80"
     volumes:
@@ -60,10 +39,8 @@ services:
       - backend
       - frontend
     networks:
-      - frh-net
-
-volumes:
-  mysql_data:
+      - app-network
 
 networks:
-  frh-net:
+  app-network:
+    driver: bridge

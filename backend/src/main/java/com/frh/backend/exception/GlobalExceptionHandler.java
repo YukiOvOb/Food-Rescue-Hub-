@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -57,5 +58,13 @@ public class GlobalExceptionHandler {
         errorResponse.put("message", ex.getMessage());
         errorResponse.put("currentSupplierId", ex.getCurrentSupplierId());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<Map<String, String>> handleOptimisticFailure(ObjectOptimisticLockingFailureException ex) {
+        Map<String, String> body = new HashMap<>();
+        body.put("error", "CONCURRENT_MODIFICATION");
+        body.put("message", "Concurrent modification detected. Please retry the operation.");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 }

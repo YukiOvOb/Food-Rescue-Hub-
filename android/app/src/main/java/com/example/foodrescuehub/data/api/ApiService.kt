@@ -60,23 +60,11 @@ interface ApiService {
 
     // ==================== ORDERS ====================
 
-    /**
-     * Create order from active cart (session-based)
-     * Updated to return the compact CreateOrderResponseDto as per latest backend contract.
-     */
     @POST("api/orders")
     suspend fun createOrderFromCart(
         @Query("pickupSlotStart") pickupSlotStart: String,
         @Query("pickupSlotEnd") pickupSlotEnd: String,
     ): Response<CreateOrderResponseDto>
-
-    /**
-     * Create order for a single listing (body-based)
-     */
-    @POST("api/consumer/orders")
-    suspend fun createOrderFromListing(
-        @Body request: CreateOrderRequest
-    ): Response<Order>
 
     @GET("api/orders/consumer")
     suspend fun getMyOrders(): Response<List<Order>>
@@ -109,6 +97,8 @@ interface ApiService {
     @POST("api/pickup-tokens/{orderId}/generate-qrcode")
     suspend fun generatePickupQRCode(@Path("orderId") orderId: Long): Response<Map<String, String>>
 
+
+    // =====================ML =====================
     /**
      * Get personalized store recommendations for homepage
      * GET /api/recommendations/homepage?consumerId={consumerId}&topK={topK}&lat={lat}&lng={lng}
@@ -160,7 +150,13 @@ interface ApiService {
     suspend fun recordInteraction(
         @Body request: UserInteractionRequest
     ): Response<InteractionResponse>
-    //
+
+    // ==================== MOBILE CHECKOUT ====================
+
+    /**
+     * Start mobile checkout process with external payment gateway (Stripe)
+     * Auth: session-based
+     */
     @POST("api/mobile/checkout/start")
-    suspend fun startCheckout(@Body request: CheckoutRequest): Response<CheckoutResponse>
+    suspend fun startCheckout(@Body request: CheckoutRequestDto): Response<CheckoutResponseDto>
 }
