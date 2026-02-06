@@ -22,7 +22,7 @@ import java.util.List;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WithMockUser(roles = {"CONSUMER", "SUPPLIER", "ADMIN"})
+@WithMockUser(roles = {"CONSUMER", "SUPPLIER", "ADMIN"}) //for all the user
 @AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest(SupplierOrderController.class)
 class SupplierOrderControllerTest {
