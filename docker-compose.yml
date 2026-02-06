@@ -27,7 +27,7 @@ services:
   nginx:
     image: nginx:1.27-alpine
     container_name: frh-nginx
-      SPRING_PROFILES_ACTIVE: prod
+    SPRING_PROFILES_ACTIVE: prod
       # NOTE: Database is no longer run as a local Docker service (see commented-out `mysql` section above).
       # Configure SPRING_DATASOURCE_URL to point to an external database, e.g.:
       #   jdbc:mysql://db-host:3306/${MYSQL_DATABASE}?useSSL=false&serverTimezone=Asia/Singapore
