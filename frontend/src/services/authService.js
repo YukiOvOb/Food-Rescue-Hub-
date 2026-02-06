@@ -1,13 +1,25 @@
 import axios from './axiosConfig';
 
+const normalizeUser = (user) => {
+  if (!user) return user;
+  const resolvedUserId = user.userId ?? user.supplierId ?? user.id ?? null;
+  return {
+    ...user,
+    userId: resolvedUserId,
+    supplierId: user.supplierId ?? resolvedUserId
+  };
+};
+
 const authService = {
 
   login: async (data) => {
     const res = await axios.post('/auth/login', data);
     
     if (res.data) {
-      localStorage.setItem('user', JSON.stringify(res.data));
+      const normalized = normalizeUser(res.data);
+      localStorage.setItem('user', JSON.stringify(normalized));
       localStorage.setItem('isLoggedIn', 'true');
+      return normalized;
     }
     return res.data;
   },
@@ -28,7 +40,7 @@ const authService = {
     const user = localStorage.getItem('user');
     if (user) {
       try {
-        return JSON.parse(user);
+        return normalizeUser(JSON.parse(user));
       } catch (e) {
         console.error('Failed to parse user from localStorage:', e);
       }
@@ -37,8 +49,10 @@ const authService = {
     
     const res = await axios.get('/auth/me');
     if (res.data) {
-      localStorage.setItem('user', JSON.stringify(res.data));
+      const normalized = normalizeUser(res.data);
+      localStorage.setItem('user', JSON.stringify(normalized));
       localStorage.setItem('isLoggedIn', 'true');
+      return normalized;
     }
     return res.data;
   },
@@ -63,7 +77,7 @@ const authService = {
 
   getStoredUser: () => {
     const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+    return user ? normalizeUser(JSON.parse(user)) : null;
   }
 };
 

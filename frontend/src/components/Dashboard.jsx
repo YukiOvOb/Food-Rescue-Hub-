@@ -38,7 +38,8 @@ const Dashboard = () => {
   }, [navigate]);
 
   useEffect(() => {
-    if (!user?.supplierId) {
+    const supplierId = user?.userId ?? user?.supplierId;
+    if (!supplierId) {
       return;
     }
 
@@ -48,9 +49,9 @@ const Dashboard = () => {
       setStatsLoading(true);
       try {
         const [pendingResult, completedResult, listingsResult] = await Promise.all([
-          axiosInstance.get(`/orders/supplier/${user.supplierId}/status/PENDING`),
-          axiosInstance.get(`/orders/supplier/${user.supplierId}/status/COMPLETED`),
-          axiosInstance.get(`/supplier/listings/supplier/${user.supplierId}`)
+          axiosInstance.get(`/orders/supplier/${supplierId}/status/PENDING`),
+          axiosInstance.get(`/orders/supplier/${supplierId}/status/COMPLETED`),
+          axiosInstance.get(`/supplier/listings/supplier/${supplierId}`)
         ]);
 
         const pendingOrdersList = pendingResult?.data || [];
@@ -93,7 +94,7 @@ const Dashboard = () => {
     return () => {
       cancelled = true;
     };
-  }, [user?.supplierId]);
+  }, [user?.userId, user?.supplierId]);
 
   const handleLogout = async () => {
     const confirmLogout = window.confirm('Are you sure you want to logout?');
@@ -143,7 +144,7 @@ const Dashboard = () => {
           <h2>Welcome back, {user.displayName}!</h2>
           <div className="user-info">
             <p><strong>Email:</strong> {user.email}</p>
-            <p><strong>Supplier ID:</strong> {user.supplierId}</p>
+            <p><strong>Supplier ID:</strong> {user.userId ?? user.supplierId}</p>
             <p><strong>Role:</strong> {user.role}</p>
             {user.businessName && <p><strong>Business:</strong> {user.businessName}</p>}
             {user.phone && <p><strong>Phone:</strong> {user.phone}</p>}

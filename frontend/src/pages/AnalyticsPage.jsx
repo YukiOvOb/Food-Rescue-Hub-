@@ -16,13 +16,14 @@ const AnalyticsPage = () => {
     const loadTopProducts = async () => {
       try {
         const currentUser = await authService.getCurrentUser();
-        if (!currentUser?.supplierId) {
+        const supplierId = currentUser?.userId ?? currentUser?.supplierId;
+        if (!supplierId) {
           navigate('/login');
           return;
         }
 
         const response = await axiosInstance.get(
-          `/analytics/supplier/${currentUser.supplierId}/top-products?limit=3`
+          `/analytics/supplier/${supplierId}/top-products?limit=3`
         );
 
         if (!cancelled) {

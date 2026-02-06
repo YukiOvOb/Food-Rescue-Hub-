@@ -75,15 +75,16 @@ export default function ListingsPage() {
   }, []);
 
   useEffect(() => {
-    if (user?.supplierId) {
+    if (user?.userId || user?.supplierId) {
       fetchListings();
     }
-  }, [user?.supplierId]);
+  }, [user?.userId, user?.supplierId]);
 
   const fetchListings = () => {
-    if (!user?.supplierId) return;
+    const supplierId = user?.userId ?? user?.supplierId;
+    if (!supplierId) return;
     
-    fetch(`${supplierBase}/listings/supplier/${user.supplierId}`)
+    fetch(`${supplierBase}/listings/supplier/${supplierId}`)
       .then((r) => {
         if (!r.ok) throw new Error('network');
         return r.json();

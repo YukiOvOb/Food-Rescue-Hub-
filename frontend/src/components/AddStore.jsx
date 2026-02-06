@@ -37,7 +37,7 @@ export default function AddStore() {
         const fetchUser = async () => {
             try {
                 const response = await axiosInstance.get('/auth/me');
-                setSupplierId(response.data.supplierId);
+                setSupplierId(response.data.userId ?? response.data.supplierId);
             } catch (error) {
                 navigate('/login');
             }

@@ -32,7 +32,7 @@ export default function EditStore() {
             try {
                 // 2. First, get the current logged-in user
                 const userResponse = await axiosInstance.get('/auth/me');
-                setSupplierId(userResponse.data.supplierId);
+                setSupplierId(userResponse.data.userId ?? userResponse.data.supplierId);
 
                 // 3. Then, fetch the existing store data
                 const storeResponse = await axiosInstance.get(`/stores/${storeId}`);

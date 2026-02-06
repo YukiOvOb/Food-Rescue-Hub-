@@ -14,7 +14,7 @@ export default function StoreList() {
             try {
                 // Fetch the logged-in user's details
                 const response = await axiosInstance.get('/auth/me');
-                const id = response.data.supplierId;
+                const id = response.data.userId ?? response.data.supplierId;
                 setSupplierId(id);
                 fetchStores(id); // Fetch stores for THIS specific supplier
             } catch (error) {

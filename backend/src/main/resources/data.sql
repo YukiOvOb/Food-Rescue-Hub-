@@ -5,7 +5,7 @@
 -- note that it will be populated inside ec2 server upon running
 -- Note: Fields with @CreationTimestamp and @UpdateTimestamp are auto-generated
 
--- Reset tables for deterministic seeding (commented out - using ddl-auto=create instead)
+-- Reset tables for deterministic seeding
 SET FOREIGN_KEY_CHECKS=0;
 TRUNCATE TABLE pickup_feedback;
 TRUNCATE TABLE pickup_tokens;
@@ -13,6 +13,8 @@ TRUNCATE TABLE payments;
 TRUNCATE TABLE commission_ledger;
 TRUNCATE TABLE order_items;
 TRUNCATE TABLE orders;
+TRUNCATE TABLE cart_item;
+TRUNCATE TABLE cart;
 TRUNCATE TABLE listing_dietary_tags;
 TRUNCATE TABLE listing_photos;
 TRUNCATE TABLE inventory;

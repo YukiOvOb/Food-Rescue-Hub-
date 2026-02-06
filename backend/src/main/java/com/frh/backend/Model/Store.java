@@ -24,9 +24,9 @@ public class Store {
 
     // --- Relationships ---
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supplier_id", nullable = false)
-    @JsonIgnoreProperties("store") // Prevent Supplier -> Store -> Supplier loop
+    @JsonIgnoreProperties("stores") // Prevent Supplier -> Stores -> Supplier loop
     private SupplierProfile supplierProfile;
 
     @OneToMany(mappedBy = "store", cascade = CascadeType.ALL)

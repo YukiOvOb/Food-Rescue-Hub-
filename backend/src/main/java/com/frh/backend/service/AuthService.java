@@ -97,14 +97,23 @@ public class AuthService {
         if (consumerOpt.isPresent()) {
             ConsumerProfile consumer = consumerOpt.get();
             
-            if (!encoder.matches(req.getPassword(), consumer.getPassword())) {
+            // Check password with support for both BCrypt and plain-text passwords
+            if (!verifyAndUpdatePassword(consumer.getPassword(), req.getPassword())) {
                 throw new RuntimeException("Invalid email or password");
             }
             
-            // Set session attributes for consumer
-            session.setAttribute("user", consumer);
+            // If password was plain-text, encode and save it
+            if (!isBCryptEncoded(consumer.getPassword())) {
+                consumer.setPassword(encoder.encode(req.getPassword()));
+                consumerRepo.save(consumer);
+                log.info("Consumer password upgraded to BCrypt: {}", consumer.getEmail());
+            }
+            
+            // Store only scalar session data; avoid persisting JPA entities in JDBC session
             session.setAttribute("USER_ID", consumer.getConsumerId());
             session.setAttribute("USER_ROLE", "CONSUMER");
+            session.setAttribute("USER_EMAIL", consumer.getEmail());
+            session.setAttribute("USER_DISPLAY_NAME", consumer.getDisplayName());
             
             log.info("Consumer logged in: {} (ID: {})", consumer.getEmail(), consumer.getConsumerId());
             
@@ -123,14 +132,23 @@ public class AuthService {
         if (supplierOpt.isPresent()) {
             SupplierProfile supplier = supplierOpt.get();
             
-            if (!encoder.matches(req.getPassword(), supplier.getPassword())) {
+            // Check password with support for both BCrypt and plain-text passwords
+            if (!verifyAndUpdatePassword(supplier.getPassword(), req.getPassword())) {
                 throw new RuntimeException("Invalid email or password");
             }
             
-            // Set session attributes for supplier
-            session.setAttribute("user", supplier);
+            // If password was plain-text, encode and save it
+            if (!isBCryptEncoded(supplier.getPassword())) {
+                supplier.setPassword(encoder.encode(req.getPassword()));
+                supplierRepo.save(supplier);
+                log.info("Supplier password upgraded to BCrypt: {}", supplier.getEmail());
+            }
+            
+            // Store only scalar session data; avoid persisting JPA entities in JDBC session
             session.setAttribute("USER_ID", supplier.getSupplierId());
             session.setAttribute("USER_ROLE", "SUPPLIER");
+            session.setAttribute("USER_EMAIL", supplier.getEmail());
+            session.setAttribute("USER_DISPLAY_NAME", supplier.getDisplayName());
             
             log.info("Supplier logged in: {} (ID: {})", supplier.getEmail(), supplier.getSupplierId());
             
@@ -145,6 +163,32 @@ public class AuthService {
         }
         
         throw new RuntimeException("Invalid email or password");
+    }
+    
+    /**
+     * Verify password against a stored password hash.
+     * Supports both BCrypt-encoded passwords and plain-text passwords (for backward compatibility).
+     */
+    private boolean verifyAndUpdatePassword(String storedPassword, String plainPassword) {
+        // First try BCrypt comparison (for already encoded passwords)
+        if (encoder.matches(plainPassword, storedPassword)) {
+            return true;
+        }
+        
+        // Fall back to plain-text comparison (for non-encoded passwords)
+        if (plainPassword.equals(storedPassword)) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Check if a password is BCrypt-encoded.
+     * BCrypt hashes start with "$2a$", "$2b$", or "$2y$"
+     */
+    private boolean isBCryptEncoded(String password) {
+        return password != null && (password.startsWith("$2a$") || password.startsWith("$2b$") || password.startsWith("$2y$"));
     }
 
     public SupplierProfile getSupplierByEmail(String email) {

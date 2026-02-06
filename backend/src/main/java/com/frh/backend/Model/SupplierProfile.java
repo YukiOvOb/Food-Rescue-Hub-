@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "supplier_profiles")
@@ -27,6 +28,10 @@ public class SupplierProfile {
     @JsonIgnore
     @OneToOne(mappedBy = "supplierProfile", cascade = CascadeType.ALL)
     private StoreType storeType;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "supplierProfile")
+    private List<Store> stores;
 
     @JsonIgnore
     @NotBlank(message = "Email is required")

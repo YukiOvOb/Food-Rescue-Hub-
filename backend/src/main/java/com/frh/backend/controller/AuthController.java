@@ -38,15 +38,15 @@ public class AuthController {
         AuthResponse response = authService.register(request);
 
         if ("CONSUMER".equalsIgnoreCase(request.getRole())) {
-            var consumer = authService.getConsumerByEmail(request.getEmail());
-            session.setAttribute("user", consumer);
-            session.setAttribute("USER_ID", consumer.getConsumerId());
+            session.setAttribute("USER_ID", response.getUserId());
             session.setAttribute("USER_ROLE", "CONSUMER");
+            session.setAttribute("USER_EMAIL", response.getEmail());
+            session.setAttribute("USER_DISPLAY_NAME", response.getDisplayName());
         } else {
-            var supplier = authService.getSupplierByEmail(request.getEmail());
-            session.setAttribute("user", supplier);
-            session.setAttribute("USER_ID", supplier.getSupplierId());
+            session.setAttribute("USER_ID", response.getUserId());
             session.setAttribute("USER_ROLE", "SUPPLIER");
+            session.setAttribute("USER_EMAIL", response.getEmail());
+            session.setAttribute("USER_DISPLAY_NAME", response.getDisplayName());
         }
 
         return ResponseEntity.ok(response);
@@ -71,14 +71,29 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(HttpSession session) {
 
-        Object user = session.getAttribute("user");
-        if (user == null) {
+        Long userId = (Long) session.getAttribute("USER_ID");
+        String role = (String) session.getAttribute("USER_ROLE");
+        String email = (String) session.getAttribute("USER_EMAIL");
+        String displayName = (String) session.getAttribute("USER_DISPLAY_NAME");
+
+        if (userId == null || role == null) {
             return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("message", "Not logged in"));
         }
 
-        return ResponseEntity.ok(user);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("userId", userId);
+        payload.put("id", userId); // backward compatibility for older UI code
+        payload.put("role", role);
+        payload.put("email", email);
+        payload.put("displayName", displayName);
+        // backward compatibility for existing supplier-facing code paths
+        if ("SUPPLIER".equalsIgnoreCase(role)) {
+            payload.put("supplierId", userId);
+        }
+
+        return ResponseEntity.ok(payload);
     }
 
     @PostMapping("/logout")

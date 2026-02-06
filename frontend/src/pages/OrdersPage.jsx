@@ -58,12 +58,12 @@ const OrdersPage = () => {
     setError(null);
     try {
       const storedUser = authService.getStoredUser();
-      const supplierIdFromStorage = storedUser?.supplierId;
+      const supplierIdFromStorage = storedUser?.userId ?? storedUser?.supplierId;
       let supplierId = supplierIdFromStorage;
 
       if (!supplierId) {
         const meResponse = await axios.get('/auth/me');
-        supplierId = meResponse?.data?.supplierId;
+        supplierId = meResponse?.data?.userId ?? meResponse?.data?.supplierId;
       }
       if (!supplierId) {
         setStores([]);
