@@ -28,10 +28,6 @@ env:
   SMOKE_PATH: "/api/hello"
 
 jobs:
-  # =========================================================
-  # STAGE 0: Detect project parts (safe skipping)
-  # =========================================================
-
   detect:
     name: Detect project folders
     runs-on: ubuntu-latest
