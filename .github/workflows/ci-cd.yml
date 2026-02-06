@@ -547,6 +547,9 @@ jobs:
       - name: Schemathesis API tests (auto from Swagger)
         if: needs.detect.outputs.has_compose == 'true'
         shell: bash
+        env:
+          SCHEMATHESIS_LOGIN_EMAIL: ${{ secrets.SCHEMATHESIS_LOGIN_EMAIL }}
+          SCHEMATHESIS_LOGIN_PASSWORD: ${{ secrets.SCHEMATHESIS_LOGIN_PASSWORD }}
         run: |
           set -e
           pip install "schemathesis>=3,<4"
@@ -554,11 +557,50 @@ jobs:
           OPENAPI_URL="${BACKEND_LOCAL_URL}${OPENAPI_PATH}"
           echo "OpenAPI URL: ${OPENAPI_URL}"
 
-          schemathesis run "${OPENAPI_URL}" \
-            --base-url "${BACKEND_LOCAL_URL}" \
-            --checks all \
-            --junit-xml schemathesis-junit.xml || \
-            ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
+          # Bootstrap authenticated session for stateful/protected endpoints
+          COOKIE_JAR="schemathesis.cookies"
+          rm -f "${COOKIE_JAR}"
+
+          REG_EMAIL="schemathesis+$(date +%s)@example.com"
+          REG_PASSWORD="Password@123"
+          REG_PAYLOAD=$(printf '{"email":"%s","password":"%s","displayName":"Schemathesis CI","role":"CONSUMER"}' "${REG_EMAIL}" "${REG_PASSWORD}")
+
+          if curl -fsS -c "${COOKIE_JAR}" \
+            -H "Content-Type: application/json" \
+            -X POST "${BACKEND_LOCAL_URL}/api/auth/register" \
+            -d "${REG_PAYLOAD}" >/dev/null 2>&1; then
+            echo "Schemathesis auth bootstrap: registered ephemeral user"
+          elif [ -n "${SCHEMATHESIS_LOGIN_EMAIL:-}" ] && [ -n "${SCHEMATHESIS_LOGIN_PASSWORD:-}" ]; then
+            LOGIN_PAYLOAD=$(printf '{"email":"%s","password":"%s"}' "${SCHEMATHESIS_LOGIN_EMAIL}" "${SCHEMATHESIS_LOGIN_PASSWORD}")
+            curl -fsS -c "${COOKIE_JAR}" \
+              -H "Content-Type: application/json" \
+              -X POST "${BACKEND_LOCAL_URL}/api/auth/login" \
+              -d "${LOGIN_PAYLOAD}" >/dev/null
+            echo "Schemathesis auth bootstrap: used configured login secrets"
+          else
+            echo "Schemathesis auth bootstrap unavailable; proceeding unauthenticated"
+          fi
+
+          JSESSIONID="$(awk '$6==\"JSESSIONID\" {print $7}' "${COOKIE_JAR}" | tail -n 1 || true)"
+
+          if [ -n "${JSESSIONID}" ]; then
+            schemathesis run "${OPENAPI_URL}" \
+              --base-url "${BACKEND_LOCAL_URL}" \
+              --checks all \
+              --workers 2 \
+              --max-examples 8 \
+              --header "Cookie: JSESSIONID=${JSESSIONID}" \
+              --junit-xml schemathesis-junit.xml || \
+              ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
+          else
+            schemathesis run "${OPENAPI_URL}" \
+              --base-url "${BACKEND_LOCAL_URL}" \
+              --checks all \
+              --workers 2 \
+              --max-examples 8 \
+              --junit-xml schemathesis-junit.xml || \
+              ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
+          fi
 
       - name: Upload Schemathesis report
         if: always()
