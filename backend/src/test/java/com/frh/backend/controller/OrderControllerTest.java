@@ -208,4 +208,215 @@ class OrderControllerTest {
         mockMvc.perform(delete("/api/orders/{orderId}", 1L))
                 .andExpect(status().isOk());
     }
+
+    /* -----------------------------
+       GET ORDERS BY STORE – SUCCESS
+       ----------------------------- */
+    @Test
+    void getOrdersByStore_success() throws Exception {
+
+        Order order1 = new Order();
+        order1.setOrderId(1L);
+        Order order2 = new Order();
+        order2.setOrderId(2L);
+
+        Mockito.when(orderService.getOrdersByStore(1L))
+                .thenReturn(List.of(order1, order2));
+
+        mockMvc.perform(get("/api/orders/store/{storeId}", 1L))
+                .andExpect(status().isOk());
+    }
+
+    /* -----------------------------
+       GET ORDERS BY STORE – ERROR
+       ----------------------------- */
+    @Test
+    void getOrdersByStore_error() throws Exception {
+
+        Mockito.when(orderService.getOrdersByStore(1L))
+                .thenThrow(new RuntimeException("Store not found"));
+
+        mockMvc.perform(get("/api/orders/store/{storeId}", 1L))
+                .andExpect(status().isInternalServerError());
+    }
+
+    /* -----------------------------
+       GET ORDERS BY STATUS – SUCCESS
+       ----------------------------- */
+    @Test
+    void getOrdersByStatus_success() throws Exception {
+
+        Order order1 = new Order();
+        order1.setOrderId(1L);
+
+        Mockito.when(orderService.getOrdersByStatus("COMPLETED"))
+                .thenReturn(List.of(order1));
+
+        mockMvc.perform(get("/api/orders/status/{status}", "COMPLETED"))
+                .andExpect(status().isOk());
+    }
+
+    /* -----------------------------
+       GET ORDERS BY STATUS – ERROR
+       ----------------------------- */
+    @Test
+    void getOrdersByStatus_error() throws Exception {
+
+        Mockito.when(orderService.getOrdersByStatus("INVALID"))
+                .thenThrow(new RuntimeException("Invalid status"));
+
+        mockMvc.perform(get("/api/orders/status/{status}", "INVALID"))
+                .andExpect(status().isInternalServerError());
+    }
+
+    /* -----------------------------
+       GET ORDERS BY STORE AND STATUS – SUCCESS
+       ----------------------------- */
+    @Test
+    void getOrdersByStoreAndStatus_success() throws Exception {
+
+        Order order1 = new Order();
+        order1.setOrderId(1L);
+
+        Mockito.when(orderService.getOrdersByStoreAndStatus(1L, "COMPLETED"))
+                .thenReturn(List.of(order1));
+
+        mockMvc.perform(get("/api/orders/store/{storeId}/status/{status}", 1L, "COMPLETED"))
+                .andExpect(status().isOk());
+    }
+
+    /* -----------------------------
+       GET ORDERS BY STORE AND STATUS – ERROR
+       ----------------------------- */
+    @Test
+    void getOrdersByStoreAndStatus_error() throws Exception {
+
+        Mockito.when(orderService.getOrdersByStoreAndStatus(1L, "COMPLETED"))
+                .thenThrow(new RuntimeException("Error retrieving orders"));
+
+        mockMvc.perform(get("/api/orders/store/{storeId}/status/{status}", 1L, "COMPLETED"))
+                .andExpect(status().isInternalServerError());
+    }
+
+    /* -----------------------------
+       GET ALL ORDERS – ERROR
+       ----------------------------- */
+    @Test
+    void getAllOrders_error() throws Exception {
+
+        Mockito.when(orderService.getAllOrders())
+                .thenThrow(new RuntimeException("Database error"));
+
+        mockMvc.perform(get("/api/orders"))
+                .andExpect(status().isInternalServerError());
+    }
+
+    /* -----------------------------
+       UPDATE ORDER – ERROR
+       ----------------------------- */
+    @Test
+    void updateOrder_error() throws Exception {
+
+        Mockito.when(orderService.updateOrder(Mockito.eq(1L), Mockito.any()))
+                .thenThrow(new RuntimeException("Order not found"));
+
+        mockMvc.perform(put("/api/orders/{orderId}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new Order())))
+                .andExpect(status().isBadRequest());
+    }
+
+    /* -----------------------------
+       UPDATE ORDER STATUS – ERROR
+       ----------------------------- */
+    @Test
+    void updateOrderStatus_error() throws Exception {
+
+        Mockito.when(orderService.updateOrderStatus(1L, "INVALID"))
+                .thenThrow(new RuntimeException("Invalid status"));
+
+        mockMvc.perform(patch("/api/orders/{orderId}/status", 1L)
+                        .param("status", "INVALID"))
+                .andExpect(status().isBadRequest());
+    }
+
+    /* -----------------------------
+       CANCEL ORDER – ERROR
+       ----------------------------- */
+    @Test
+    void cancelOrder_error() throws Exception {
+
+        Mockito.when(orderService.cancelOrder(Mockito.eq(1L), Mockito.any()))
+                .thenThrow(new RuntimeException("Cannot cancel order"));
+
+        mockMvc.perform(patch("/api/orders/{orderId}/cancel", 1L))
+                .andExpect(status().isBadRequest());
+    }
+
+    /* -----------------------------
+       DELETE ORDER – ERROR
+       ----------------------------- */
+    @Test
+    void deleteOrder_error() throws Exception {
+
+        Mockito.doThrow(new RuntimeException("Cannot delete order"))
+                .when(orderService)
+                .deleteOrder(1L);
+
+        mockMvc.perform(delete("/api/orders/{orderId}", 1L))
+                .andExpect(status().isBadRequest());
+    }
+
+    /* -----------------------------
+       GET ORDER BY ID – ERROR
+       ----------------------------- */
+    @Test
+    void getOrderById_error() throws Exception {
+
+        Mockito.when(orderService.getOrderById(1L))
+                .thenThrow(new RuntimeException("Database error"));
+
+        mockMvc.perform(get("/api/orders/{orderId}", 1L))
+                .andExpect(status().isNotFound());
+    }
+
+    /* -----------------------------
+       GET ORDERS BY CONSUMER – ERROR
+       ----------------------------- */
+    @Test
+    void getOrdersByConsumer_error() throws Exception {
+
+        Mockito.when(orderService.getOrdersByConsumer(1L))
+                .thenThrow(new RuntimeException("Error retrieving orders"));
+
+        mockMvc.perform(get("/api/orders/consumer")
+                        .sessionAttr("USER_ID", 1L)
+                        .sessionAttr("USER_ROLE", "CONSUMER"))
+                .andExpect(status().isInternalServerError());
+    }
+
+    /* -----------------------------
+       CREATE ORDER – NO SESSION ATTRIBUTES
+       ----------------------------- */
+    @Test
+    void createOrder_noSessionAttributes() throws Exception {
+
+        mockMvc.perform(post("/api/orders"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    /* -----------------------------
+       GET ORDERS BY CONSUMER – EMPTY LIST
+       ----------------------------- */
+    @Test
+    void getOrdersByConsumer_emptyList() throws Exception {
+
+        Mockito.when(orderService.getOrdersByConsumer(1L))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/api/orders/consumer")
+                        .sessionAttr("USER_ID", 1L)
+                        .sessionAttr("USER_ROLE", "CONSUMER"))
+                .andExpect(status().isOk());
+    }
 }
