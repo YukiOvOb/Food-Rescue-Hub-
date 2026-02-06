@@ -29,7 +29,7 @@ object RetrofitClient {
     }
 
 //  Chatbot Backend (Port 8000)
-    private const val BOT_BASE_URL = "http://10.0.2.2:8000/"
+    private const val BOT_BASE_URL = "http://13.228.183.177:8000/"
 
     // Logging interceptor for debugging API calls
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
