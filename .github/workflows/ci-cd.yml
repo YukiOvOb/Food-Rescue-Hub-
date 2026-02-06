@@ -472,13 +472,16 @@ jobs:
       - name: Start stack (Docker Compose)
         if: needs.detect.outputs.has_compose == 'true'
         shell: bash
+        env:
+          SPRING_PROFILES_ACTIVE: test
+          STRIPE_SECRET_KEY: sk_test_ci_dummy
         run: |
           set -e
           if [ -f "docker-compose.yml" ]; then
-            docker compose -f docker-compose.yml up -d
+            docker compose -f docker-compose.yml up -d --build
             docker compose -f docker-compose.yml ps
           else
-            docker compose -f compose.yml up -d
+            docker compose -f compose.yml up -d --build
             docker compose -f compose.yml ps
           fi
 
@@ -526,6 +529,22 @@ jobs:
           HEALTH_URL="${BACKEND_LOCAL_URL}${OPENAPI_PATH}"
           echo "Health check URL: ${HEALTH_URL}"
           for i in {1..60}; do
+            BACKEND_CID="$(docker compose -f "${COMPOSE_FILE}" ps -q backend || true)"
+            if [ -z "${BACKEND_CID}" ]; then
+              echo "Backend service is missing from compose runtime"
+              docker compose -f "${COMPOSE_FILE}" ps || true
+              docker compose -f "${COMPOSE_FILE}" logs --no-color || true
+              exit 1
+            fi
+
+            BACKEND_STATE="$(docker inspect -f '{{.State.Status}}' "${BACKEND_CID}" 2>/dev/null || echo unknown)"
+            if [ "${BACKEND_STATE}" = "exited" ] || [ "${BACKEND_STATE}" = "dead" ]; then
+              echo "Backend container state: ${BACKEND_STATE}"
+              docker compose -f "${COMPOSE_FILE}" ps || true
+              docker compose -f "${COMPOSE_FILE}" logs --no-color backend || true
+              exit 1
+            fi
+
             if curl -fsS --retry 3 --retry-delay 2 "${HEALTH_URL}" >/dev/null 2>&1; then
               echo "Backend is up"
               exit 0
@@ -781,7 +800,10 @@ jobs:
 
       # Start application with Docker Compose (agent mounted via volume)
       - name: Start application
-        run: docker compose up -d
+        env:
+          SPRING_PROFILES_ACTIVE: test
+          STRIPE_SECRET_KEY: sk_test_ci_dummy
+        run: docker compose up -d --build
 
       # Wait for MySQL to be accepting connections after stack is started
       - name: Wait for MySQL
