@@ -873,7 +873,25 @@ jobs:
           fi
 
           cat > k6-smoke.js <<'EOF'
+          import http from 'k6/http';
+          import { check, sleep } from 'k6';
 
+          export const options = {
+            vus: 10,
+            duration: '30s',
+            thresholds: {
+              http_req_duration: ['p(95)<500'],
+            },
+          };
+
+          export default function () {
+            const res = http.get(`${__ENV.STAGING_URL}/api/hello`);
+            check(res, {
+              'status is 200': (r) => r.status === 200,
+            });
+            sleep(1);
+          }
+          EOF
 
           k6 run --summary-export=k6-summary.json k6-smoke.js || true
 
@@ -1060,5 +1078,4 @@ jobs:
         with:
           name: ci-metrics
           path: ci-metrics/ci-metrics.json
-
 
