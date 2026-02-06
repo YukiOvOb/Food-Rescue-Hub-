@@ -126,7 +126,7 @@ class CheckoutActivity : AppCompatActivity() {
                 }
                 is CheckoutState.Success -> {
                     binding.loadingOverlay.visibility = View.GONE
-                    launchPaymentWebView(state.paymentUrl)
+                    launchPaymentWebView(state.paymentUrl, state.orderIds)
                 }
                 is CheckoutState.Conflict -> {
                     binding.loadingOverlay.visibility = View.GONE
@@ -151,9 +151,10 @@ class CheckoutActivity : AppCompatActivity() {
         }
     }
 
-    private fun launchPaymentWebView(url: String) {
+    private fun launchPaymentWebView(url: String, orderIds: List<Long>) {
         val intent = Intent(this, PaymentWebViewActivity::class.java).apply {
             putExtra(PaymentWebViewActivity.EXTRA_PAYMENT_URL, url)
+            putExtra(PaymentWebViewActivity.EXTRA_ORDER_IDS, orderIds.toLongArray())
         }
         startActivity(intent)
         finish()

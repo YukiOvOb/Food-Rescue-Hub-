@@ -35,21 +35,11 @@
         android:textSize="16sp" />
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnViewOrder"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginTop="48dp"
-        android:text="View Order Details"
-        android:textAllCaps="false"
-        android:visibility="gone"
-        app:cornerRadius="28dp" />
-
-    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnHome"
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="48dp"
         android:text="Back to Home"
         android:textAllCaps="false"
         app:cornerRadius="28dp" />

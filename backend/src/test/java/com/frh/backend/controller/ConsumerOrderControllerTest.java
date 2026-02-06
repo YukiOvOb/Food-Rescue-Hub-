@@ -40,7 +40,8 @@ class ConsumerOrderControllerTest {
         Mockito.when(consumerOrderService.getOrdersByConsumerId(1L))
                 .thenReturn(List.of(order));
 
-        mockMvc.perform(get("/api/consumer/orders/{consumerId}", 1L))
+        mockMvc.perform(get("/api/consumer/orders")
+                        .sessionAttr("USER_ID", 1L))
                 .andExpect(status().isOk());
     }
 

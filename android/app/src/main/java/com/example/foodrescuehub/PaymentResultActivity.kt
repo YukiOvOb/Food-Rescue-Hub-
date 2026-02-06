@@ -64,17 +64,13 @@ class PaymentResultActivity : AppCompatActivity() {
             }
         }
 
-        // If we have a single order ID, allow user to jump to details
         val firstOrderId = orderIds?.split(",")?.firstOrNull()?.trim()?.toLongOrNull()
         if (firstOrderId != null) {
-            binding.btnViewOrder.visibility = View.VISIBLE
-            binding.btnViewOrder.setOnClickListener {
-                val intent = Intent(this, OrderDetailActivity::class.java).apply {
-                    putExtra(OrderDetailActivity.EXTRA_ORDER_ID, firstOrderId)
-                }
-                startActivity(intent)
-                finish()
+            val intent = Intent(this, OrderDetailActivity::class.java).apply {
+                putExtra(OrderDetailActivity.EXTRA_ORDER_ID, firstOrderId)
             }
+            startActivity(intent)
+            finish()
         }
     }
 

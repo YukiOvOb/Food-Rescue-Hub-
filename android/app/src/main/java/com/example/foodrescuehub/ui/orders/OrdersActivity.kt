@@ -64,7 +64,9 @@ class OrdersActivity : AppCompatActivity() {
                     if (orders.isEmpty()) {
                         showEmptyState()
                     } else {
-                        ordersAdapter.submitList(orders)
+                        // Sort orders by ID descending so the latest order is at the top
+                        val sortedOrders = orders.sortedByDescending { it.orderId }
+                        ordersAdapter.submitList(sortedOrders)
                         showOrders()
                     }
                 } else {

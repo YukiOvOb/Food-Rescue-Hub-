@@ -2,7 +2,9 @@ package com.frh.backend.controller;
 
 import com.frh.backend.Model.Order;
 import com.frh.backend.service.ConsumerOrderService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,11 +20,15 @@ public class ConsumerOrderController {
 
     /**
      * Get all orders for a specific consumer
-     * @param consumerId the consumer's ID
      * @return list of orders for the consumer
      */
-    @GetMapping("/{consumerId}")
-    public ResponseEntity<List<Order>> getOrdersByConsumerId(@PathVariable Long consumerId) {
+    @GetMapping
+    public ResponseEntity<List<Order>> getOrdersByConsumerId(HttpSession session) {
+        Long consumerId = (Long) session.getAttribute("USER_ID");
+        if (consumerId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         List<Order> orders = consumerOrderService.getOrdersByConsumerId(consumerId);
         return ResponseEntity.ok(orders);
     }

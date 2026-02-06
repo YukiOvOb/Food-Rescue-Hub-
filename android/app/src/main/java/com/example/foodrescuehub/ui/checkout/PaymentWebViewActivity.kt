@@ -16,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.foodrescuehub.data.api.RetrofitClient.apiService
 import com.example.foodrescuehub.data.repository.CartManager
 import com.example.foodrescuehub.databinding.ActivityPaymentWebViewBinding
+import com.example.foodrescuehub.ui.orders.OrderDetailActivity
 import com.example.foodrescuehub.ui.orders.OrdersActivity
 import kotlinx.coroutines.launch
 
@@ -27,6 +28,7 @@ class PaymentWebViewActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_PAYMENT_URL = "extra_payment_url"
+        const val EXTRA_ORDER_IDS = "extra_order_ids"
     }
 
     private lateinit var binding: ActivityPaymentWebViewBinding
@@ -96,24 +98,38 @@ class PaymentWebViewActivity : AppCompatActivity() {
         // Parse order IDs from deep link: frhapp://payment/success?order_ids=101,102
         val uri = Uri.parse(successUrl)
         val orderIdsStr = uri.getQueryParameter("order_ids")
+        val orderIds = parseOrderIds(orderIdsStr).ifEmpty {
+            intent.getLongArrayExtra(EXTRA_ORDER_IDS)?.toList() ?: emptyList()
+        }
         
-        Log.d("PaymentWebView", "Success! Updating status for orders: $orderIdsStr")
+        Log.d("PaymentWebView", "Success! Updating status for orders: $orderIds")
 
         // 1. Update backend status to PAID for each order
-        orderIdsStr?.split(",")?.forEach { idStr ->
-            idStr.trim().toLongOrNull()?.let { orderId ->
-                updateOrderStatusToPaid(orderId)
-            }
+        orderIds.forEach { orderId ->
+            updateOrderStatusToPaid(orderId)
         }
 
         // 2. Clear the cart
-        CartManager.clearCart { success ->
-            // 3. Navigate to orders screen
-            val intent = Intent(this, OrdersActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-            startActivity(intent)
+        CartManager.clearCart {
+            // 3. Navigate directly to the purchased order when available
+            val firstOrderId = orderIds.firstOrNull()
+            val nextIntent = if (firstOrderId != null) {
+                Intent(this, OrderDetailActivity::class.java).apply {
+                    putExtra(OrderDetailActivity.EXTRA_ORDER_ID, firstOrderId)
+                }
+            } else {
+                Intent(this, OrdersActivity::class.java)
+            }
+            nextIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            startActivity(nextIntent)
             finish()
         }
+    }
+
+    private fun parseOrderIds(raw: String?): List<Long> {
+        if (raw.isNullOrBlank()) return emptyList()
+        return raw.split(",")
+            .mapNotNull { it.trim().toLongOrNull() }
     }
 
     private fun updateOrderStatusToPaid(orderId: Long) {
