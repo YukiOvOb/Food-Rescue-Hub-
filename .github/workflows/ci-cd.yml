@@ -24,7 +24,7 @@ env:
   ANDROID_DIR: "android"
   PROD_URL: "http://localhost:80"
   BACKEND_LOCAL_URL: "http://localhost:8080"
-  OPENAI_PATH: "/v3/api-docs"
+  OPENAPI_PATH: "/v3/api-docs"
   SMOKE_PATH: "/api/hello"
 
 jobs:
@@ -1072,4 +1072,3 @@ jobs:
         with:
           name: ci-metrics
           path: ci-metrics/ci-metrics.json
-
