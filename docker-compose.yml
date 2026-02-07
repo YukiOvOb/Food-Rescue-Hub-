@@ -1,6 +1,9 @@
 services:
 
   backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     image: bhava0807/frh-backend:latest
     container_name: frh-backend
     restart: unless-stopped
