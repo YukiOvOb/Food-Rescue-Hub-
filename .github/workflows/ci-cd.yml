@@ -971,6 +971,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [image-scan-trivy]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || 'password' }}
+      IAST_COMPOSE_FILE: docker-compose.integration.yml
     steps:
       - uses: actions/checkout@v4
 
@@ -983,18 +986,16 @@ jobs:
 
       # Start application with Docker Compose (agent mounted via volume)
       - name: Start application
-        run: docker compose up -d
+        run: docker compose -f "${IAST_COMPOSE_FILE}" up -d
 
       # Wait for MySQL to be accepting connections after stack is started
       - name: Wait for MySQL
         shell: bash
-        env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || '123456' }}
         run: |
           set -e
           echo "Waiting for MySQL container to be ready..."
           for i in {1..60}; do
-            if docker compose exec -T mysql mysqladmin ping -h localhost -uroot -p"${MYSQL_ROOT_PASSWORD}" >/dev/null 2>&1; then
+            if docker compose -f "${IAST_COMPOSE_FILE}" exec -T mysql mysqladmin ping -h localhost -uroot -p"${MYSQL_ROOT_PASSWORD}" >/dev/null 2>&1; then
               echo "MySQL is up"
               exit 0
             fi
@@ -1002,7 +1003,7 @@ jobs:
             sleep 5
           done
           echo "MySQL did not become ready"
-          docker compose logs --no-color || true
+          docker compose -f "${IAST_COMPOSE_FILE}" logs --no-color || true
           exit 1
 
       # Wait for backend
@@ -1016,7 +1017,7 @@ jobs:
             echo "Waiting for backend... ($i)"
             sleep 5
           done
-          docker compose logs
+          docker compose -f "${IAST_COMPOSE_FILE}" logs
           exit 1
 
       # IAST-style attack probes (runtime execution)
@@ -1051,7 +1052,7 @@ jobs:
         if: always()
         run: |
           mkdir -p iast-out
-          docker compose logs --no-color > iast-out/runtime.log
+          docker compose -f "${IAST_COMPOSE_FILE}" logs --no-color > iast-out/runtime.log
 
       # Detect runtime security indicators (real signals)
       - name: Detect runtime security findings
@@ -1073,7 +1074,7 @@ jobs:
 
       - name: Stop stack
         if: always()
-        run: docker compose down -v
+        run: docker compose -f "${IAST_COMPOSE_FILE}" down -v
 
 
 
