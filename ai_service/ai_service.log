@@ -114,3 +114,111 @@ role=assistant tool_calls=True
 06 role=assistant content=''
 07 role=tool content='[TextContent(type='text', text='What if I have food allergies?\nBecause the contents of Surprise Bags vary daily, we can'
 INFO:     118.200.186.10:51522 - "POST /chat HTTP/1.1" 200 OK
+INFO:     44.220.185.92:40766 - "GET / HTTP/1.1" 404 Not Found
+INFO:     14.100.37.59:54824 - "POST / HTTP/1.1" 404 Not Found
+INFO:     14.100.37.59:54855 - "POST /chat HTTP/1.1" 422 Unprocessable Entity
+[02/06/26 14:36:28] INFO     Processing request of type            server.py:720
+                             ListToolsRequest                                   
+
+--- After system prompt (count=1) ---
+00 role=system content='You are RescueBot, the dedicated AI assistant for a Food Rescue App. Follow these rules strictly: 1. IDENTITY: If asked '
+
+--- After history (count=1) ---
+00 role=system content='You are RescueBot, the dedicated AI assistant for a Food Rescue App. Follow these rules strictly: 1. IDENTITY: If asked '
+
+--- After user message (count=2) ---
+00 role=system content='You are RescueBot, the dedicated AI assistant for a Food Rescue App. Follow these rules strictly: 1. IDENTITY: If asked '
+01 role=user content='Hi'
+
+--- OpenAI assistant_msg ---
+role=assistant tool_calls=False
+INFO:     14.100.37.59:65192 - "POST /chat HTTP/1.1" 200 OK
+[02/06/26 14:51:59] INFO     Processing request of type            server.py:720
+                             ListToolsRequest                                   
+
+--- After system prompt (count=1) ---
+00 role=system content='You are RescueBot, the dedicated AI assistant for a Food Rescue App. Follow these rules strictly: 1. IDENTITY: If asked '
+
+--- After history (count=3) ---
+00 role=system content='You are RescueBot, the dedicated AI assistant for a Food Rescue App. Follow these rules strictly: 1. IDENTITY: If asked '
+01 role=assistant content='Hello! I am RescueBot. How can I help you save food today?'
+02 role=user content='Hello'
+
+--- After user message (count=4) ---
+00 role=system content='You are RescueBot, the dedicated AI assistant for a Food Rescue App. Follow these rules strictly: 1. IDENTITY: If asked '
+01 role=assistant content='Hello! I am RescueBot. How can I help you save food today?'
+02 role=user content='Hello'
+03 role=user content='Hello'
+
+--- OpenAI assistant_msg ---
+role=assistant tool_calls=False
+INFO:     14.100.37.59:57084 - "POST /chat HTTP/1.1" 200 OK
+INFO:     128.199.8.140:49917 - "GET / HTTP/1.1" 404 Not Found
+INFO:     3.22.169.65:34650 - "GET / HTTP/1.1" 404 Not Found
+INFO:     3.22.169.65:58346 - "GET / HTTP/1.1" 404 Not Found
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+INFO:     3.145.162.85:51846 - "GET / HTTP/1.1" 404 Not Found
+INFO:     3.145.162.85:52934 - "GET / HTTP/1.1" 404 Not Found
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+INFO:     18.191.97.239:48480 - "GET / HTTP/1.1" 404 Not Found
+INFO:     172.202.122.207:34228 - "GET / HTTP/1.1" 404 Not Found
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+INFO:     18.191.52.107:52734 - "GET / HTTP/1.1" 404 Not Found
+INFO:     18.191.97.239:54104 - "GET / HTTP/1.1" 404 Not Found
+WARNING:  Invalid HTTP request received.
+INFO:     18.191.52.107:55490 - "GET / HTTP/1.1" 404 Not Found
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+INFO:     3.17.146.121:41262 - "GET / HTTP/1.1" 404 Not Found
+INFO:     3.17.146.121:60524 - "GET / HTTP/1.1" 404 Not Found
+INFO:     18.219.216.206:38128 - "GET / HTTP/1.1" 404 Not Found
+WARNING:  Invalid HTTP request received.
+INFO:     18.219.216.206:44510 - "GET / HTTP/1.1" 404 Not Found
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+INFO:     204.76.203.18:57334 - "GET / HTTP/1.1" 404 Not Found
+INFO:     204.76.203.18:40114 - "GET /bins/ HTTP/1.1" 404 Not Found
+INFO:     204.76.203.18:34704 - "GET /bin/ HTTP/1.1" 404 Not Found
+INFO:     204.76.203.18:40702 - "GET /bin/ HTTP/1.1" 404 Not Found
+INFO:     204.76.203.18:42772 - "GET /backup/ HTTP/1.1" 404 Not Found
+INFO:     185.226.197.73:53465 - "GET / HTTP/1.1" 404 Not Found
+INFO:     185.180.140.109:42499 - "GET / HTTP/1.1" 404 Not Found
+INFO:     3.22.169.65:51212 - "GET / HTTP/1.1" 404 Not Found
+INFO:     18.221.103.30:48636 - "GET / HTTP/1.1" 404 Not Found
+INFO:     3.22.169.65:38698 - "GET / HTTP/1.1" 404 Not Found
+INFO:     18.221.103.30:47494 - "GET / HTTP/1.1" 404 Not Found
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+INFO:     194.187.178.50:50708 - "GET / HTTP/1.1" 404 Not Found
+INFO:     194.187.178.131:50718 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+INFO:     13.59.157.137:44002 - "GET / HTTP/1.1" 404 Not Found
+INFO:     13.59.157.137:59684 - "GET / HTTP/1.1" 404 Not Found
+WARNING:  Invalid HTTP request received.
+INFO:     18.191.106.209:50464 - "GET / HTTP/1.1" 404 Not Found
+WARNING:  Invalid HTTP request received.
+INFO:     18.191.106.209:36644 - "GET / HTTP/1.1" 404 Not Found
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+INFO:     3.135.20.78:42806 - "GET / HTTP/1.1" 404 Not Found
+INFO:     3.135.20.78:46112 - "GET / HTTP/1.1" 404 Not Found
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+INFO:     64.62.197.62:61438 - "GET / HTTP/1.1" 404 Not Found
+INFO:     64.62.197.62:32077 - "GET /?format=json HTTP/1.1" 404 Not Found
