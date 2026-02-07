@@ -24,6 +24,7 @@ env:
   ANDROID_DIR: "android"
   PROD_URL: "http://localhost:80"
   BACKEND_LOCAL_URL: "http://localhost:8080"
+  BACKEND_HEALTH_PATH: "/actuator/health"
   OPENAPI_PATH: "/v3/api-docs"
   SMOKE_PATH: "/api/hello"
 
@@ -530,7 +531,7 @@ jobs:
             COMPOSE_FILE="compose.yml"
           fi
 
-          HEALTH_URL="${BACKEND_LOCAL_URL}${OPENAPI_PATH}"
+          HEALTH_URL="${BACKEND_LOCAL_URL}${BACKEND_HEALTH_PATH}"
           echo "Health check URL: ${HEALTH_URL}"
           for i in {1..60}; do
             BACKEND_CID="$(docker compose -f "${COMPOSE_FILE}" ps -q backend || true)"
@@ -542,8 +543,9 @@ jobs:
             fi
 
             BACKEND_STATE="$(docker inspect -f '{{.State.Status}}' "${BACKEND_CID}" 2>/dev/null || echo unknown)"
-            if [ "${BACKEND_STATE}" = "exited" ] || [ "${BACKEND_STATE}" = "dead" ]; then
+            if [ "${BACKEND_STATE}" = "exited" ] || [ "${BACKEND_STATE}" = "dead" ] || [ "${BACKEND_STATE}" = "restarting" ]; then
               echo "Backend container state: ${BACKEND_STATE}"
+              docker inspect -f 'RestartCount={{.RestartCount}} ExitCode={{.State.ExitCode}} Error={{.State.Error}}' "${BACKEND_CID}" || true
               docker compose -f "${COMPOSE_FILE}" ps || true
               docker compose -f "${COMPOSE_FILE}" logs --no-color backend || true
               exit 1
@@ -843,9 +845,32 @@ jobs:
         shell: bash
         run: |
           set -e
-          HEALTH_URL="${BACKEND_LOCAL_URL}${OPENAPI_PATH}"
+          if [ -f "docker-compose.yml" ]; then
+            COMPOSE_FILE="docker-compose.yml"
+          else
+            COMPOSE_FILE="compose.yml"
+          fi
+
+          HEALTH_URL="${BACKEND_LOCAL_URL}${BACKEND_HEALTH_PATH}"
           echo "Health check URL: ${HEALTH_URL}"
           for i in {1..60}; do
+            BACKEND_CID="$(docker compose -f "${COMPOSE_FILE}" ps -q backend || true)"
+            if [ -z "${BACKEND_CID}" ]; then
+              echo "Backend service is missing from compose runtime"
+              docker compose -f "${COMPOSE_FILE}" ps || true
+              docker compose -f "${COMPOSE_FILE}" logs --no-color || true
+              exit 1
+            fi
+
+            BACKEND_STATE="$(docker inspect -f '{{.State.Status}}' "${BACKEND_CID}" 2>/dev/null || echo unknown)"
+            if [ "${BACKEND_STATE}" = "exited" ] || [ "${BACKEND_STATE}" = "dead" ] || [ "${BACKEND_STATE}" = "restarting" ]; then
+              echo "Backend container state: ${BACKEND_STATE}"
+              docker inspect -f 'RestartCount={{.RestartCount}} ExitCode={{.State.ExitCode}} Error={{.State.Error}}' "${BACKEND_CID}" || true
+              docker compose -f "${COMPOSE_FILE}" ps || true
+              docker compose -f "${COMPOSE_FILE}" logs --no-color backend || true
+              exit 1
+            fi
+
             if curl -fsS --retry 3 --retry-delay 2 "${HEALTH_URL}" >/dev/null 2>&1; then
               echo "Backend is up"
               exit 0
@@ -853,9 +878,9 @@ jobs:
             echo "Waiting for backend... ($i)"
             sleep 5
           done
-          docker compose ps || true
-          docker compose logs --no-color backend || true
-          docker compose logs --no-color || true
+          docker compose -f "${COMPOSE_FILE}" ps || true
+          docker compose -f "${COMPOSE_FILE}" logs --no-color backend || true
+          docker compose -f "${COMPOSE_FILE}" logs --no-color || true
           exit 1
 
       # IAST-style attack probes (runtime execution)
