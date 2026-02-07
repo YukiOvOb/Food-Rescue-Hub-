@@ -1076,6 +1076,7 @@ jobs:
           fi
 
       - name: Check SSH connectivity
+        if: env.EC2_HOST != '' && env.EC2_SSH_KEY != ''
         shell: bash
         run: |
           set -euo pipefail
@@ -1086,6 +1087,7 @@ jobs:
           # Handle both real newlines and escaped \n secrets; normalize CRLF.
           printf '%b' "${EC2_SSH_KEY}" | tr -d '\r' > "${KEYFILE}"
           chmod 600 "${KEYFILE}"
+          echo "EC2_KEYFILE=${KEYFILE}" >> "$GITHUB_ENV"
 
           # Validate key format early to surface secret formatting issues.
           if ! ssh-keygen -yf "${KEYFILE}" >/dev/null 2>&1; then
@@ -1103,7 +1105,6 @@ jobs:
             ssh -o BatchMode=yes -o StrictHostKeyChecking=no -i "${KEYFILE}" -o ConnectTimeout=10 ubuntu@"${EC2_HOST}" "echo connected" && FOUND=1 || FOUND=0
             if [ "${FOUND}" -eq 1 ]; then
               echo "SSH preflight succeeded"
-              rm -f "${KEYFILE}"
               exit 0
             fi
             echo "Preflight SSH failed, sleeping ${SLEEP}s"
@@ -1120,12 +1121,12 @@ jobs:
           exit 1
 
       - name: Deploy via SSH
-        if: env.EC2_HOST != '' && env.EC2_SSH_KEY != ''
+        if: env.EC2_HOST != '' && env.EC2_KEYFILE != ''
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ env.EC2_HOST }}
           username: ubuntu
-          key: ${{ env.EC2_SSH_KEY }}
+          key_path: ${{ env.EC2_KEYFILE }}
           script: |
             set -e
             cd ~/Food-Rescue-Hub-
@@ -1166,6 +1167,15 @@ jobs:
 
           echo "App never became ready"
           exit 1
+
+      - name: Cleanup SSH key file
+        if: always()
+        shell: bash
+        run: |
+          if [ -n "${EC2_KEYFILE:-}" ] && [ -f "${EC2_KEYFILE}" ]; then
+            rm -f "${EC2_KEYFILE}"
+            echo "Removed temporary SSH key file"
+          fi
   ci-metrics-summary:
       name: CI Metrics Summary (JSON)
       runs-on: ubuntu-latest
