@@ -10,10 +10,10 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_interactions", indexes = {
-    @Index(name = "idx_consumer_id", columnList = "consumer_id"),
-    @Index(name = "idx_listing_id", columnList = "listing_id"),
-    @Index(name = "idx_interaction_type", columnList = "interaction_type"),
-    @Index(name = "idx_created_at", columnList = "created_at")
+    @Index(name = "idx_user_interaction_consumer_id", columnList = "consumer_id"),
+    @Index(name = "idx_user_interaction_listing_id", columnList = "listing_id"),
+    @Index(name = "idx_user_interaction_type", columnList = "interaction_type"),
+    @Index(name = "idx_user_interaction_created_at", columnList = "created_at")
 })
 @Getter
 @Setter

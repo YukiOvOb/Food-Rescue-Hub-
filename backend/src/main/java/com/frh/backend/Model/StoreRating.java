@@ -11,10 +11,10 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "store_ratings", indexes = {
-    @Index(name = "idx_store_id", columnList = "store_id"),
-    @Index(name = "idx_consumer_id", columnList = "consumer_id"),
-    @Index(name = "idx_rating", columnList = "rating"),
-    @Index(name = "idx_created_at", columnList = "created_at")
+    @Index(name = "idx_store_rating_store_id", columnList = "store_id"),
+    @Index(name = "idx_store_rating_consumer_id", columnList = "consumer_id"),
+    @Index(name = "idx_store_rating_rating", columnList = "rating"),
+    @Index(name = "idx_store_rating_created_at", columnList = "created_at")
 })
 @Getter
 @Setter

@@ -15,9 +15,9 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "user_store_interactions", indexes = {
-    @Index(name = "idx_consumer_id", columnList = "consumer_id"),
-    @Index(name = "idx_store_id", columnList = "store_id"),
-    @Index(name = "idx_total_spend", columnList = "total_spend")
+    @Index(name = "idx_user_store_consumer_id", columnList = "consumer_id"),
+    @Index(name = "idx_user_store_store_id", columnList = "store_id"),
+    @Index(name = "idx_user_store_total_spend", columnList = "total_spend")
 })
 @IdClass(UserStoreInteraction.UserStoreInteractionId.class)
 @Getter
