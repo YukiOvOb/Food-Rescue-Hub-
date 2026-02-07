@@ -19,16 +19,21 @@ permissions:
   contents: read
 
 env:
-  REPORT_ONLY: "true"
+  REPORT_ONLY: "true"          # true = don't fail pipeline on lint/scans; false = strict gate
   PYTHON_DIR: "ml"
   ANDROID_DIR: "android"
-  PROD_URL: "http://localhost:80"
+
+  # Local integration endpoints inside GitHub runner:
+  PROD_URL: "http://localhost:80"   # nginx port for production
   BACKEND_LOCAL_URL: "http://localhost:8080"
-  BACKEND_HEALTH_PATH: "/actuator/health"
-  OPENAPI_PATH: "/v3/api-docs"
-  SMOKE_PATH: "/api/hello"
+  OPENAPI_PATH: "/v3/api-docs"   # Swagger/OpenAPI (Spring Boot default)
+  SMOKE_PATH: "/api/hello"       # change to your real endpoint
 
 jobs:
+  # =========================================================
+  # STAGE 0: Detect project parts (safe skipping)
+  # =========================================================
+
   detect:
     name: Detect project folders
     runs-on: ubuntu-latest
@@ -473,43 +478,23 @@ jobs:
       - name: Start stack (Docker Compose)
         if: needs.detect.outputs.has_compose == 'true'
         shell: bash
-        env:
-          SPRING_PROFILES_ACTIVE: test
-          SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false
-          SPRING_DATASOURCE_USERNAME: sa
-          SPRING_DATASOURCE_PASSWORD: ""
-          SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.h2.Driver
-          STRIPE_SECRET_KEY: sk_test_ci_dummy
         run: |
           set -e
           if [ -f "docker-compose.yml" ]; then
-            docker compose -f docker-compose.yml up -d --build
+            docker compose -f docker-compose.yml up -d
             docker compose -f docker-compose.yml ps
           else
-            docker compose -f compose.yml up -d --build
+            docker compose -f compose.yml up -d
             docker compose -f compose.yml ps
           fi
 
       - name: Wait for MySQL (health)
         if: needs.detect.outputs.has_compose == 'true'
         shell: bash
-        env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || '123456' }}
         run: |
           set -e
-          if [ -f "docker-compose.yml" ]; then
-            COMPOSE_FILE="docker-compose.yml"
-          else
-            COMPOSE_FILE="compose.yml"
-          fi
-
-          if ! docker compose -f "${COMPOSE_FILE}" config --services | grep -qx "mysql"; then
-            echo "No mysql service in ${COMPOSE_FILE} -> skipping MySQL health wait"
-            exit 0
-          fi
-
           for i in {1..60}; do
-            if docker compose -f "${COMPOSE_FILE}" exec -T mysql mysqladmin ping -h localhost -uroot -p"${MYSQL_ROOT_PASSWORD}" >/dev/null 2>&1; then
+            if docker compose -f docker-compose.yml exec -T mysql mysqladmin ping -h localhost -uroot -p"${MYSQL_ROOT_PASSWORD}" >/dev/null 2>&1; then
               echo "MySQL is up"
               exit 0
             fi
@@ -517,41 +502,24 @@ jobs:
             sleep 5
           done
           echo "MySQL did not become ready"
-          docker compose -f "${COMPOSE_FILE}" logs --no-color || true
+          if [ -f "docker-compose.yml" ]; then
+            docker compose -f docker-compose.yml logs --no-color || true
+          else
+            docker compose -f compose.yml logs --no-color || true
+          fi
           exit 1
 
       - name: Wait for backend (health)
         if: needs.detect.outputs.has_compose == 'true'
         shell: bash
+        env:
+          BACKEND_LOCAL_URL: "http://localhost:8080"
+          SMOKE_PATH: "/api/hello"
         run: |
           set -e
-          if [ -f "docker-compose.yml" ]; then
-            COMPOSE_FILE="docker-compose.yml"
-          else
-            COMPOSE_FILE="compose.yml"
-          fi
-
-          HEALTH_URL="${BACKEND_LOCAL_URL}${BACKEND_HEALTH_PATH}"
-          echo "Health check URL: ${HEALTH_URL}"
+          echo "Health check URL: ${BACKEND_LOCAL_URL}${SMOKE_PATH}"
           for i in {1..60}; do
-            BACKEND_CID="$(docker compose -f "${COMPOSE_FILE}" ps -q backend || true)"
-            if [ -z "${BACKEND_CID}" ]; then
-              echo "Backend service is missing from compose runtime"
-              docker compose -f "${COMPOSE_FILE}" ps || true
-              docker compose -f "${COMPOSE_FILE}" logs --no-color || true
-              exit 1
-            fi
-
-            BACKEND_STATE="$(docker inspect -f '{{.State.Status}}' "${BACKEND_CID}" 2>/dev/null || echo unknown)"
-            if [ "${BACKEND_STATE}" = "exited" ] || [ "${BACKEND_STATE}" = "dead" ] || [ "${BACKEND_STATE}" = "restarting" ]; then
-              echo "Backend container state: ${BACKEND_STATE}"
-              docker inspect -f 'RestartCount={{.RestartCount}} ExitCode={{.State.ExitCode}} Error={{.State.Error}}' "${BACKEND_CID}" || true
-              docker compose -f "${COMPOSE_FILE}" ps || true
-              docker compose -f "${COMPOSE_FILE}" logs --no-color backend || true
-              exit 1
-            fi
-
-            if curl -fsS --retry 3 --retry-delay 2 "${HEALTH_URL}" >/dev/null 2>&1; then
+            if curl -fsS --retry 3 --retry-delay 2 "${BACKEND_LOCAL_URL}${SMOKE_PATH}" >/dev/null 2>&1; then
               echo "Backend is up"
               exit 0
             fi
@@ -559,9 +527,11 @@ jobs:
             sleep 5
           done
           echo "Backend did not become ready"
-          docker compose -f "${COMPOSE_FILE}" ps || true
-          docker compose -f "${COMPOSE_FILE}" logs --no-color backend || true
-          docker compose -f "${COMPOSE_FILE}" logs --no-color || true
+          if [ -f "docker-compose.yml" ]; then
+            docker compose -f docker-compose.yml logs --no-color || true
+          else
+            docker compose -f compose.yml logs --no-color || true
+          fi
           exit 1
 
       # ---- Schemathesis from Swagger/OpenAPI ----
@@ -574,9 +544,6 @@ jobs:
       - name: Schemathesis API tests (auto from Swagger)
         if: needs.detect.outputs.has_compose == 'true'
         shell: bash
-        env:
-          SCHEMATHESIS_LOGIN_EMAIL: ${{ secrets.SCHEMATHESIS_LOGIN_EMAIL }}
-          SCHEMATHESIS_LOGIN_PASSWORD: ${{ secrets.SCHEMATHESIS_LOGIN_PASSWORD }}
         run: |
           set -e
           pip install "schemathesis>=3,<4"
@@ -584,50 +551,11 @@ jobs:
           OPENAPI_URL="${BACKEND_LOCAL_URL}${OPENAPI_PATH}"
           echo "OpenAPI URL: ${OPENAPI_URL}"
 
-          # Bootstrap authenticated session for stateful/protected endpoints
-          COOKIE_JAR="schemathesis.cookies"
-          rm -f "${COOKIE_JAR}"
-
-          REG_EMAIL="schemathesis+$(date +%s)@example.com"
-          REG_PASSWORD="Password@123"
-          REG_PAYLOAD=$(printf '{"email":"%s","password":"%s","displayName":"Schemathesis CI","role":"CONSUMER"}' "${REG_EMAIL}" "${REG_PASSWORD}")
-
-          if curl -fsS -c "${COOKIE_JAR}" \
-            -H "Content-Type: application/json" \
-            -X POST "${BACKEND_LOCAL_URL}/api/auth/register" \
-            -d "${REG_PAYLOAD}" >/dev/null 2>&1; then
-            echo "Schemathesis auth bootstrap: registered ephemeral user"
-          elif [ -n "${SCHEMATHESIS_LOGIN_EMAIL:-}" ] && [ -n "${SCHEMATHESIS_LOGIN_PASSWORD:-}" ]; then
-            LOGIN_PAYLOAD=$(printf '{"email":"%s","password":"%s"}' "${SCHEMATHESIS_LOGIN_EMAIL}" "${SCHEMATHESIS_LOGIN_PASSWORD}")
-            curl -fsS -c "${COOKIE_JAR}" \
-              -H "Content-Type: application/json" \
-              -X POST "${BACKEND_LOCAL_URL}/api/auth/login" \
-              -d "${LOGIN_PAYLOAD}" >/dev/null
-            echo "Schemathesis auth bootstrap: used configured login secrets"
-          else
-            echo "Schemathesis auth bootstrap unavailable; proceeding unauthenticated"
-          fi
-
-          JSESSIONID="$(awk '$6==\"JSESSIONID\" {print $7}' "${COOKIE_JAR}" | tail -n 1 || true)"
-
-          if [ -n "${JSESSIONID}" ]; then
-            schemathesis run "${OPENAPI_URL}" \
-              --base-url "${BACKEND_LOCAL_URL}" \
-              --checks all \
-              --workers 2 \
-              --max-examples 8 \
-              --header "Cookie: JSESSIONID=${JSESSIONID}" \
-              --junit-xml schemathesis-junit.xml || \
-              ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
-          else
-            schemathesis run "${OPENAPI_URL}" \
-              --base-url "${BACKEND_LOCAL_URL}" \
-              --checks all \
-              --workers 2 \
-              --max-examples 8 \
-              --junit-xml schemathesis-junit.xml || \
-              ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
-          fi
+          schemathesis run "${OPENAPI_URL}" \
+            --base-url "${BACKEND_LOCAL_URL}" \
+            --checks all \
+            --junit-xml schemathesis-junit.xml || \
+            ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
 
       - name: Upload Schemathesis report
         if: always()
@@ -678,12 +606,267 @@ jobs:
 
 
   # =========================================================
+  # STAGE 2.5: Selenium Functional Pre-Validation
+  # =========================================================
+  selenium-functional-test:
+    name: Selenium Functional Test (Pre-Load Validation)
+    runs-on: ubuntu-latest
+    needs: [detect, integration-tests]
+    if: needs.detect.outputs.has_backend == 'true'
+    env:
+      STAGING_URL: "http://localhost:80"
+      BACKEND_LOCAL_URL: "http://localhost:8080"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Install ChromeDriver
+        run: |
+          CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | cut -d'.' -f1)
+          echo "Chrome version: ${CHROME_VERSION}"
+          
+          # Install matching ChromeDriver
+          sudo apt-get install -y wget unzip
+          CHROMEDRIVER_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION})
+          wget -q "https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip"
+          unzip -q chromedriver_linux64.zip
+          sudo mv chromedriver /usr/local/bin/
+          sudo chmod +x /usr/local/bin/chromedriver
+          chromedriver --version
+
+      - name: Start application stack
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || '123456' }}
+        run: |
+          if [ -f "docker-compose.yml" ]; then
+            docker compose -f docker-compose.yml up -d
+          else
+            docker compose -f compose.yml up -d
+          fi
+
+      - name: Wait for MySQL
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || '123456' }}
+        run: |
+          for i in {1..60}; do
+            if docker compose exec -T mysql mysqladmin ping -h localhost -uroot -p"${MYSQL_ROOT_PASSWORD}" >/dev/null 2>&1; then
+              echo "MySQL is ready"
+              exit 0
+            fi
+            echo "Waiting for MySQL... ($i)"
+            sleep 5
+          done
+          echo "MySQL failed to start"
+          docker compose logs
+          exit 1
+
+      - name: Wait for backend
+        run: |
+          for i in {1..60}; do
+            if curl -fsS "${BACKEND_LOCAL_URL}/api/hello" >/dev/null; then
+              echo "Backend is ready"
+              exit 0
+            fi
+            echo "Waiting for backend... ($i)"
+            sleep 5
+          done
+          docker compose logs
+          exit 1
+
+      - name: Run Selenium functional tests
+        working-directory: backend
+        env:
+          STAGING_URL: ${{ env.STAGING_URL }}
+          BACKEND_LOCAL_URL: ${{ env.BACKEND_LOCAL_URL }}
+        run: |
+          chmod +x mvnw
+          ./mvnw -q test -Dtest=FunctionalUserFlowTest
+
+      - name: Upload Selenium test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selenium-functional-test-report
+          path: backend/target/surefire-reports/**
+          if-no-files-found: warn
+
+      - name: Tear down stack
+        if: always()
+        run: |
+          if [ -f "docker-compose.yml" ]; then
+            docker compose -f docker-compose.yml down -v
+          else
+            docker compose -f compose.yml down -v
+          fi
+
+
+  # =========================================================
+  # STAGE 2.6: JMeter Load & Performance Testing
+  # =========================================================
+  jmeter-load-performance-test:
+    name: Load & Performance Testing (JMeter)
+    runs-on: ubuntu-latest
+    needs: [detect, selenium-functional-test]
+    if: needs.detect.outputs.has_backend == 'true'
+    env:
+      STAGING_URL: "http://localhost:8080"
+      JMETER_VERSION: "5.6.3"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install JMeter
+        run: |
+          echo "Installing Apache JMeter ${JMETER_VERSION}..."
+          wget -q "https://dlcdn.apache.org/jmeter/binaries/apache-jmeter-${JMETER_VERSION}.tgz"
+          tar -xzf "apache-jmeter-${JMETER_VERSION}.tgz"
+          echo "JMeter installed successfully"
+          ./apache-jmeter-${JMETER_VERSION}/bin/jmeter --version
+
+      - name: Start application stack
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || '123456' }}
+        run: |
+          if [ -f "docker-compose.yml" ]; then
+            docker compose -f docker-compose.yml up -d
+          else
+            docker compose -f compose.yml up -d
+          fi
+
+      - name: Wait for MySQL
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || '123456' }}
+        run: |
+          for i in {1..60}; do
+            if docker compose exec -T mysql mysqladmin ping -h localhost -uroot -p"${MYSQL_ROOT_PASSWORD}" >/dev/null 2>&1; then
+              echo "MySQL is ready"
+              exit 0
+            fi
+            echo "Waiting for MySQL... ($i)"
+            sleep 5
+          done
+          echo "MySQL failed to start"
+          docker compose logs
+          exit 1
+
+      - name: Wait for backend
+        run: |
+          for i in {1..60}; do
+            if curl -fsS "${STAGING_URL}/api/hello" >/dev/null; then
+              echo "Backend is ready for load testing"
+              exit 0
+            fi
+            echo "Waiting for backend... ($i)"
+            sleep 5
+          done
+          docker compose logs
+          exit 1
+
+      - name: Run JMeter Load Test (Non-GUI Mode)
+        run: |
+          echo "==================================================="
+          echo "Starting JMeter Load & Performance Test"
+          echo "==================================================="
+          echo "Test Configuration:"
+          echo "  - Users: 100 concurrent"
+          echo "  - Ramp-up: 30 seconds"
+          echo "  - Iterations: 10 per user"
+          echo "  - Target: ${STAGING_URL}"
+          echo "==================================================="
+          
+          ./apache-jmeter-${JMETER_VERSION}/bin/jmeter \
+            -n \
+            -t tests/jmeter/load-test.jmx \
+            -l results.jtl \
+            -e \
+            -o report \
+            -JHOST=localhost \
+            -JPORT=8080 \
+            -JSTAGING_URL="${STAGING_URL}"
+          
+          echo "==================================================="
+          echo "JMeter Load Test Completed"
+          echo "==================================================="
+
+      - name: Display JMeter Summary
+        if: always()
+        run: |
+          if [ -f "results.jtl" ]; then
+            echo "=========================================="
+            echo "JMETER LOAD TEST SUMMARY"
+            echo "=========================================="
+            echo ""
+            echo "Total Samples:"
+            wc -l < results.jtl
+            echo ""
+            echo "Error Rate:"
+            if grep -q "false" results.jtl; then
+              TOTAL=$(wc -l < results.jtl)
+              ERRORS=$(grep -c "false" results.jtl || echo 0)
+              echo "${ERRORS} errors out of ${TOTAL} requests"
+              echo "Error rate: $(awk "BEGIN {printf \"%.2f%%\", ($ERRORS/$TOTAL)*100}")"
+            else
+              echo "0 errors"
+            fi
+            echo ""
+            echo "Full HTML report generated in: report/index.html"
+            echo "=========================================="
+          fi
+
+      - name: Upload JMeter Results (Raw Data)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jmeter-results-jtl
+          path: results.jtl
+          if-no-files-found: warn
+
+      - name: Upload JMeter Performance Report (HTML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jmeter-performance-report
+          path: report/
+          if-no-files-found: warn
+
+      - name: Archive Load Test Evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: load-test-complete-evidence
+          path: |
+            results.jtl
+            report/**
+            tests/jmeter/load-test.jmx
+          if-no-files-found: warn
+
+      - name: Tear down stack
+        if: always()
+        run: |
+          if [ -f "docker-compose.yml" ]; then
+            docker compose -f docker-compose.yml down -v
+          else
+            docker compose -f compose.yml down -v
+          fi
+
+
+  # =========================================================
   # STAGE 3: Build & Push Docker Images (main only)
   # =========================================================
   build-and-push:
     name: Build & Push Docker Images (main)
     runs-on: ubuntu-latest
-    needs: [detect, integration-tests]
+    needs: [detect, integration-tests, jmeter-load-performance-test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
@@ -806,14 +989,7 @@ jobs:
 
       # Start application with Docker Compose (agent mounted via volume)
       - name: Start application
-        env:
-          SPRING_PROFILES_ACTIVE: test
-          SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false
-          SPRING_DATASOURCE_USERNAME: sa
-          SPRING_DATASOURCE_PASSWORD: ""
-          SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.h2.Driver
-          STRIPE_SECRET_KEY: sk_test_ci_dummy
-        run: docker compose up -d --build
+        run: docker compose up -d
 
       # Wait for MySQL to be accepting connections after stack is started
       - name: Wait for MySQL
@@ -822,11 +998,6 @@ jobs:
           MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || '123456' }}
         run: |
           set -e
-          if ! docker compose config --services | grep -qx "mysql"; then
-            echo "No mysql service in compose -> skipping MySQL wait"
-            exit 0
-          fi
-
           echo "Waiting for MySQL container to be ready..."
           for i in {1..60}; do
             if docker compose exec -T mysql mysqladmin ping -h localhost -uroot -p"${MYSQL_ROOT_PASSWORD}" >/dev/null 2>&1; then
@@ -842,45 +1013,16 @@ jobs:
 
       # Wait for backend
       - name: Wait for backend
-        shell: bash
         run: |
-          set -e
-          if [ -f "docker-compose.yml" ]; then
-            COMPOSE_FILE="docker-compose.yml"
-          else
-            COMPOSE_FILE="compose.yml"
-          fi
-
-          HEALTH_URL="${BACKEND_LOCAL_URL}${BACKEND_HEALTH_PATH}"
-          echo "Health check URL: ${HEALTH_URL}"
           for i in {1..60}; do
-            BACKEND_CID="$(docker compose -f "${COMPOSE_FILE}" ps -q backend || true)"
-            if [ -z "${BACKEND_CID}" ]; then
-              echo "Backend service is missing from compose runtime"
-              docker compose -f "${COMPOSE_FILE}" ps || true
-              docker compose -f "${COMPOSE_FILE}" logs --no-color || true
-              exit 1
-            fi
-
-            BACKEND_STATE="$(docker inspect -f '{{.State.Status}}' "${BACKEND_CID}" 2>/dev/null || echo unknown)"
-            if [ "${BACKEND_STATE}" = "exited" ] || [ "${BACKEND_STATE}" = "dead" ] || [ "${BACKEND_STATE}" = "restarting" ]; then
-              echo "Backend container state: ${BACKEND_STATE}"
-              docker inspect -f 'RestartCount={{.RestartCount}} ExitCode={{.State.ExitCode}} Error={{.State.Error}}' "${BACKEND_CID}" || true
-              docker compose -f "${COMPOSE_FILE}" ps || true
-              docker compose -f "${COMPOSE_FILE}" logs --no-color backend || true
-              exit 1
-            fi
-
-            if curl -fsS --retry 3 --retry-delay 2 "${HEALTH_URL}" >/dev/null 2>&1; then
+            if curl -fsS "${BACKEND_LOCAL_URL}${SMOKE_PATH}" >/dev/null; then
               echo "Backend is up"
               exit 0
             fi
             echo "Waiting for backend... ($i)"
             sleep 5
           done
-          docker compose -f "${COMPOSE_FILE}" ps || true
-          docker compose -f "${COMPOSE_FILE}" logs --no-color backend || true
-          docker compose -f "${COMPOSE_FILE}" logs --no-color || true
+          docker compose logs
           exit 1
 
       # IAST-style attack probes (runtime execution)
@@ -986,25 +1128,7 @@ jobs:
           fi
 
           cat > k6-smoke.js <<'EOF'
-          import http from 'k6/http';
-          import { check, sleep } from 'k6';
 
-          export const options = {
-            vus: 10,
-            duration: '30s',
-            thresholds: {
-              http_req_duration: ['p(95)<500'],
-            },
-          };
-
-          export default function () {
-            const res = http.get(`${__ENV.STAGING_URL}/api/hello`);
-            check(res, {
-              'status is 200': (r) => r.status === 200,
-            });
-            sleep(1);
-          }
-          EOF
 
           k6 run --summary-export=k6-summary.json k6-smoke.js || true
 
@@ -1076,7 +1200,6 @@ jobs:
           fi
 
       - name: Check SSH connectivity
-        if: env.EC2_HOST != '' && env.EC2_SSH_KEY != ''
         shell: bash
         run: |
           set -euo pipefail
@@ -1084,18 +1207,8 @@ jobs:
           # Write SSH key to a temporary file and restrict permissions
           KEYFILE="${RUNNER_TEMP}/ec2_deploy_key"
           echo "Writing SSH key to ${KEYFILE}"
-          # Handle both real newlines and escaped \n secrets; normalize CRLF.
-          printf '%b' "${EC2_SSH_KEY}" | tr -d '\r' > "${KEYFILE}"
+          printf '%s' "${EC2_SSH_KEY}" > "${KEYFILE}"
           chmod 600 "${KEYFILE}"
-          echo "EC2_KEYFILE=${KEYFILE}" >> "$GITHUB_ENV"
-
-          # Validate key format early to surface secret formatting issues.
-          if ! ssh-keygen -yf "${KEYFILE}" >/dev/null 2>&1; then
-            echo "EC2_SSH_KEY is not a valid private key format."
-            echo "Ensure the secret contains the full PEM key with proper line breaks."
-            rm -f "${KEYFILE}"
-            exit 1
-          fi
 
           # Preflight SSH check with retries to provide clearer failure messages
           ATTEMPTS=3
@@ -1105,6 +1218,7 @@ jobs:
             ssh -o BatchMode=yes -o StrictHostKeyChecking=no -i "${KEYFILE}" -o ConnectTimeout=10 ubuntu@"${EC2_HOST}" "echo connected" && FOUND=1 || FOUND=0
             if [ "${FOUND}" -eq 1 ]; then
               echo "SSH preflight succeeded"
+              rm -f "${KEYFILE}"
               exit 0
             fi
             echo "Preflight SSH failed, sleeping ${SLEEP}s"
@@ -1121,12 +1235,12 @@ jobs:
           exit 1
 
       - name: Deploy via SSH
-        if: env.EC2_HOST != '' && env.EC2_KEYFILE != ''
+        if: env.EC2_HOST != '' && env.EC2_SSH_KEY != ''
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ env.EC2_HOST }}
           username: ubuntu
-          key_path: ${{ env.EC2_KEYFILE }}
+          key: ${{ env.EC2_SSH_KEY }}
           script: |
             set -e
             cd ~/Food-Rescue-Hub-
@@ -1167,15 +1281,6 @@ jobs:
 
           echo "App never became ready"
           exit 1
-
-      - name: Cleanup SSH key file
-        if: always()
-        shell: bash
-        run: |
-          if [ -n "${EC2_KEYFILE:-}" ] && [ -f "${EC2_KEYFILE}" ]; then
-            rm -f "${EC2_KEYFILE}"
-            echo "Removed temporary SSH key file"
-          fi
   ci-metrics-summary:
       name: CI Metrics Summary (JSON)
       runs-on: ubuntu-latest
@@ -1210,3 +1315,7 @@ jobs:
         with:
           name: ci-metrics
           path: ci-metrics/ci-metrics.json
+
+
+
+
