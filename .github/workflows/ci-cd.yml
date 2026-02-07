@@ -632,24 +632,8 @@ jobs:
           distribution: "temurin"
           cache: maven
 
-      - name: Install Chrome
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
-
-      - name: Install ChromeDriver
-        run: |
-          CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | cut -d'.' -f1)
-          echo "Chrome version: ${CHROME_VERSION}"
-          
-          # Install matching ChromeDriver
-          sudo apt-get install -y wget unzip
-          CHROMEDRIVER_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION})
-          wget -q "https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip"
-          unzip -q chromedriver_linux64.zip
-          sudo mv chromedriver /usr/local/bin/
-          sudo chmod +x /usr/local/bin/chromedriver
-          chromedriver --version
+      - name: Set up ChromeDriver
+        uses: nanasess/setup-chromedriver@v2
 
       - name: Start application stack
         env:
