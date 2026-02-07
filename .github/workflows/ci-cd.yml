@@ -1083,8 +1083,17 @@ jobs:
           # Write SSH key to a temporary file and restrict permissions
           KEYFILE="${RUNNER_TEMP}/ec2_deploy_key"
           echo "Writing SSH key to ${KEYFILE}"
-          printf '%s' "${EC2_SSH_KEY}" > "${KEYFILE}"
+          # Handle both real newlines and escaped \n secrets; normalize CRLF.
+          printf '%b' "${EC2_SSH_KEY}" | tr -d '\r' > "${KEYFILE}"
           chmod 600 "${KEYFILE}"
+
+          # Validate key format early to surface secret formatting issues.
+          if ! ssh-keygen -yf "${KEYFILE}" >/dev/null 2>&1; then
+            echo "EC2_SSH_KEY is not a valid private key format."
+            echo "Ensure the secret contains the full PEM key with proper line breaks."
+            rm -f "${KEYFILE}"
+            exit 1
+          fi
 
           # Preflight SSH check with retries to provide clearer failure messages
           ATTEMPTS=3
