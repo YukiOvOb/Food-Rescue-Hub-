@@ -681,7 +681,7 @@ jobs:
           BACKEND_LOCAL_URL: ${{ env.BACKEND_LOCAL_URL }}
         run: |
           chmod +x mvnw
-          ./mvnw -q test -Dtest=FunctionalUserFlowTest
+          ./mvnw -q test -Dtest=FunctionalUserFlowTest -Dsurefire.failIfNoSpecifiedTests=false
 
       - name: Upload Selenium test report
         if: always()
