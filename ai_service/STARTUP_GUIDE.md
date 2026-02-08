@@ -1,95 +1,95 @@
-# 🤖 RescueBot AI Service 启动指南
+# RescueBot AI Service Startup Guide
 
-## 📋 前置要求
+## Prerequisites
 
-✅ Python 3.8+ (已验证: Python 3.12.3)
-✅ OpenAI API Key
-✅ 虚拟环境（自动创建）
+1. Python 3.8+ (verified: Python 3.12.3)
+2. OpenAI API key
+3. Virtual environment (created automatically by `start.sh`)
 
 ---
 
-## 🚀 快速启动
+## Quick Start
 
-### 方式1: 使用启动脚本（推荐）
+### Option 1: Use the startup script (recommended)
 
 ```bash
 cd /home/ubuntu/Food-Rescue-Hub-/ai_service
 
-# 第一步: 配置OpenAI API Key
-# 编辑 .env 文件，替换你的实际API Key
+# Step 1: Configure your OpenAI API key
+# Edit .env and replace with your real key
 nano .env
 
-# 第二步: 运行启动脚本
+# Step 2: Run the startup script
 ./start.sh
 ```
 
-### 方式2: 手动启动
+### Option 2: Start manually
 
 ```bash
 cd /home/ubuntu/Food-Rescue-Hub-/ai_service
 
-# 创建虚拟环境
+# Create virtual environment
 python3 -m venv venv
 source venv/bin/activate
 
-# 安装依赖
+# Install dependencies
 pip install -r requirements.txt
 
-# 数据预处理（首次运行）
+# Preprocess data (first run only)
 python3 ingest.py
 
-# 启动API服务
+# Start API service
 python3 api.py
 ```
 
 ---
 
-## 🔑 配置OpenAI API Key
+## Configure OpenAI API Key
 
-### 获取API Key
+### Get an API key
 
-1. 访问 https://platform.openai.com/api-keys
-2. 登录OpenAI账户（或创建新账户）
-3. 点击 "Create new secret key"
-4. 复制生成的API Key
+1. Go to https://platform.openai.com/api-keys
+2. Sign in to your OpenAI account (or create one)
+3. Click `Create new secret key`
+4. Copy the generated key
 
-### 配置到项目
+### Add it to the project
 
-编辑 `/home/ubuntu/Food-Rescue-Hub-/ai_service/.env`：
+Edit `/home/ubuntu/Food-Rescue-Hub-/ai_service/.env`:
 
 ```dotenv
-# 替换为你的实际API Key
-OPENAI_API_KEY=sk-proj-你的真实密钥
+# Replace with your real API key
+OPENAI_API_KEY=sk-proj-your-real-key
 ```
 
 ---
 
-## 📱 服务地址
+## Service URLs
 
-启动后，AI服务将在以下地址运行：
+After startup, the AI service runs at:
 
-| 用途 | 地址 | 说明 |
+| Purpose | URL | Notes |
 |------|------|------|
-| **API端点** | `http://0.0.0.0:8000` | 服务主地址 |
-| **聊天接口** | `http://localhost:8000/chat` | 本地测试 |
-| **API文档** | `http://localhost:8000/docs` | Swagger文档 |
-| **Android模拟器** | `http://10.0.2.2:8000` | 模拟器访问PC |
-| **Android真机** | `http://[你的PC IP]:8000` | 真机访问 |
+| API endpoint | `http://0.0.0.0:8000` | Main service address |
+| Chat endpoint | `http://localhost:8000/chat` | Local testing |
+| API docs | `http://localhost:8000/docs` | Swagger UI |
+| Android emulator | `http://10.0.2.2:8000` | Emulator -> host machine |
+| Android device | `http://[YOUR_PC_IP]:8000` | Real device -> host machine |
 
 ---
 
-## 🧪 测试API连接
+## Test API Connectivity
 
-### 测试1: 健康检查
+### Test 1: Health check
 
 ```bash
-# 使用curl
+# Using curl
 curl -v http://localhost:8000/
 
-# 预期响应: 404 (正常，因为没有根路由)
+# Expected response: 404 (normal, there is no root route)
 ```
 
-### 测试2: 完整聊天流程
+### Test 2: Full chat flow
 
 ```bash
 curl -X POST http://localhost:8000/chat \
@@ -100,16 +100,16 @@ curl -X POST http://localhost:8000/chat \
   }'
 ```
 
-**预期响应:**
+Expected response:
 ```json
 {
   "reply": "A Surprise Bag is a collection of surplus food from a merchant..."
 }
 ```
 
-### 测试3: 使用Python脚本
+### Test 3: Python script
 
-创建 `test_rescuebot.py`：
+Create `test_rescuebot.py`:
 
 ```python
 import requests
@@ -122,13 +122,13 @@ def test_chat():
         "message": "Can I cancel my order?",
         "history": []
     }
-    
+
     response = requests.post(
         f"{BASE_URL}/chat",
         json=payload,
         headers={"Content-Type": "application/json"}
     )
-    
+
     print("Status:", response.status_code)
     print("Response:", json.dumps(response.json(), indent=2, ensure_ascii=False))
 
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     test_chat()
 ```
 
-运行测试：
+Run test:
 ```bash
 pip install requests
 python3 test_rescuebot.py
@@ -144,96 +144,98 @@ python3 test_rescuebot.py
 
 ---
 
-## 📊 服务组件说明
+## Service Components
 
-### 1. **api.py** - FastAPI服务器
-- 提供 `/chat` 端点
-- 管理OpenAI对话流程
-- 负责工具调用和响应生成
+### 1. `api.py` - FastAPI server
+- Exposes `/chat` endpoint
+- Manages OpenAI conversation flow
+- Handles tool calls and response generation
 
-### 2. **server.py** - MCP服务器
-- 管理FAQ知识库查询
-- 使用ChromaDB存储向量数据
-- 提供 `search_faq_knowledge_base` 工具
+### 2. `server.py` - MCP server
+- Handles FAQ knowledge-base search
+- Uses ChromaDB for vector storage
+- Exposes `search_faq_knowledge_base` tool
 
-### 3. **ingest.py** - 数据处理
-- 解析 `data/faq.md` 文件
-- 生成向量嵌入
-- 存储到ChromaDB
+### 3. `ingest.py` - Data ingestion
+- Parses `data/faq.md`
+- Creates embeddings
+- Stores vectors in ChromaDB
 
-### 4. **data/chroma_db/** - 向量数据库
-- 存储FAQ的向量表示
-- 支持相似度搜索
-- 首次运行自动创建
+### 4. `data/chroma_db/` - Vector database
+- Stores vector representations of FAQs
+- Supports similarity search
+- Auto-created on first run
 
 ---
 
-## ⚙️ 依赖包
+## Dependencies
 
-| 包名 | 用途 |
+| Package | Purpose |
 |------|------|
-| `mcp` | Model Context Protocol (工具调用) |
-| `chromadb` | 向量数据库 |
-| `openai` | OpenAI API客户端 |
-| `fastapi` | Web框架 |
-| `uvicorn` | ASGI服务器 |
-| `python-dotenv` | 环境变量管理 |
-| `httpx` | HTTP客户端 |
+| `mcp` | Model Context Protocol (tool calling) |
+| `chromadb` | Vector database |
+| `openai` | OpenAI API client |
+| `fastapi` | Web framework |
+| `uvicorn` | ASGI server |
+| `python-dotenv` | Environment variable management |
+| `httpx` | HTTP client |
 
 ---
 
-## 🔍 常见问题
+## Troubleshooting
 
-### Q1: "Incorrect API key" 错误
+### Q1: "Incorrect API key" error
 
-**解决方案:**
+Solution:
 ```bash
-# 检查.env文件
+# Check .env file
 cat .env
 
-# 确保API Key格式正确
-# 应该是: sk-proj-xxxxx...
+# Ensure key format is correct
+# Should be: sk-proj-xxxxx...
 ```
 
 ### Q2: "ChromaDB not found"
 
-**解决方案:**
+Solution:
 ```bash
-# 手动运行数据摄取
+# Run ingestion manually
 python3 ingest.py
 
-# 或使用启动脚本自动处理
+# Or let startup script handle it
 ./start.sh
 ```
 
 ### Q3: "MCP Server not ready"
 
-**原因:** server.py启动失败
-**解决方案:**
+Cause: `server.py` failed to start.
+
+Solution:
 ```bash
-# 检查OpenAI API Key是否正确
-# 检查依赖是否完整安装
+# Verify OpenAI API key is correct
+# Verify dependencies are fully installed
 pip install -r requirements.txt --upgrade
 ```
 
-### Q4: Android连接超时
+### Q4: Android connection timeout
 
-**原因:** 网络配置错误
-**解决方案:**
+Cause: Network configuration issue.
+
+Solution:
 ```bash
-# 检查服务是否运行
+# Check if service is running
 lsof -i :8000
 
-# 检查防火墙
-# 模拟器使用: http://10.0.2.2:8000
-# 真机使用: http://[PC_IP]:8000 (如: http://192.168.1.100:8000)
+# Check firewall/network rules
+# Emulator: http://10.0.2.2:8000
+# Real device: http://[PC_IP]:8000 (example: http://192.168.1.100:8000)
 ```
 
 ---
 
-## 📝 日志输出说明
+## Startup Logs
 
-启动时会看到：
+You should see output like:
 
 ```
 ============================================
@@ -241,19 +243,19 @@ RescueBot AI Service Startup
 ============================================
 
 [1/5] Checking Python version...
-✓ Python 3.12.3 found
++ Python 3.12.3 found
 
 [2/5] Setting up virtual environment...
-✓ Virtual environment activated
++ Virtual environment activated
 
 [3/5] Installing dependencies...
-✓ Dependencies installed
++ Dependencies installed
 
 [4/5] Checking environment configuration...
-✓ Environment configuration found
++ Environment configuration found
 
 [5/5] Checking ChromaDB knowledge base...
-✓ ChromaDB knowledge base found
++ ChromaDB knowledge base found
 
 ============================================
 Starting RescueBot AI Service...
@@ -267,32 +269,32 @@ Service Info:
 
 ---
 
-## 🛑 停止服务
+## Stop Service
 
 ```bash
-# 在运行的终端中按 Ctrl+C
-# 或在另一个终端执行:
+# Press Ctrl+C in the running terminal
+# Or run in another terminal:
 pkill -f "python3 api.py"
 ```
 
 ---
 
-## ✅ 启动检查清单
+## Startup Checklist
 
-- [ ] Python 3.8+ 已安装
-- [ ] OpenAI API Key 已获取
-- [ ] `.env` 文件已配置真实API Key
-- [ ] `start.sh` 脚本有执行权限
-- [ ] ChromaDB数据已生成
-- [ ] 服务在 `http://localhost:8000` 运行
-- [ ] API文档可访问 `http://localhost:8000/docs`
-- [ ] 聊天接口测试成功
+- [ ] Python 3.8+ installed
+- [ ] OpenAI API key created
+- [ ] `.env` configured with real API key
+- [ ] `start.sh` has execute permission
+- [ ] ChromaDB data generated
+- [ ] Service running at `http://localhost:8000`
+- [ ] API docs available at `http://localhost:8000/docs`
+- [ ] Chat endpoint test successful
 
 ---
 
-## 🔗 相关文档
+## Related Docs
 
-- [OpenAI API文档](https://platform.openai.com/docs/api-reference)
-- [FastAPI文档](https://fastapi.tiangolo.com/)
-- [ChromaDB文档](https://docs.trychroma.com/)
-- [MCP文档](https://modelcontextprotocol.io/)
+- [OpenAI API Docs](https://platform.openai.com/docs/api-reference)
+- [FastAPI Docs](https://fastapi.tiangolo.com/)
+- [ChromaDB Docs](https://docs.trychroma.com/)
+- [MCP Docs](https://modelcontextprotocol.io/)
