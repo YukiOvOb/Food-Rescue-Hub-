@@ -21,11 +21,8 @@ public class HelloController {
 
         String sql = "SELECT * FROM users WHERE username = ?";
 
-        try (Connection connection = DriverManager.getConnection("jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1");
-             Statement statement = connection.createStatement();
+        try (Connection connection = DriverManager.getConnection("jdbc:h2:mem:testdb");
              PreparedStatement ps = connection.prepareStatement(sql)) {
-
-            statement.execute("CREATE TABLE IF NOT EXISTS users (username VARCHAR(255))");
 
             ps.setString(1, username);
 

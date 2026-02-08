@@ -77,7 +77,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
         String msg = ex.getMessage() == null ? "" : ex.getMessage().toLowerCase();
-        HttpStatus status = HttpStatus.BAD_REQUEST;
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 
         if (msg.contains("not found")) {
             status = HttpStatus.NOT_FOUND;

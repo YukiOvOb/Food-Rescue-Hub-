@@ -51,9 +51,9 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleRuntimeException_badRequestFallback() {
+    void handleRuntimeException_internalServerErrorFallback() {
         ResponseEntity<Map<String, String>> response = handler.handleRuntimeException(new RuntimeException("Unexpected"));
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertEquals("Unexpected", response.getBody().get("error"));
     }
 

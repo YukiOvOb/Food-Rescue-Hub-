@@ -59,7 +59,7 @@ public class InteractionController {
             if (e.getMessage() != null && e.getMessage().toLowerCase().contains("not found")) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
             }
-            return ResponseEntity.badRequest().body(errorResponse);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
@@ -92,7 +92,7 @@ public class InteractionController {
             errorResponse.put("error", e.getMessage());
             errorResponse.put("message", "Failed to record batch interactions");
 
-            return ResponseEntity.badRequest().body(errorResponse);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 

@@ -35,7 +35,8 @@ public class AnalyticsController {
             if (e.getMessage() != null && e.getMessage().toLowerCase().contains("not found")) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(List.of());
             }
-            return ResponseEntity.badRequest().body(List.of());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to retrieve top selling products");
         }
     }
 }
