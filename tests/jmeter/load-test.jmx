@@ -264,7 +264,7 @@
           <ThroughputController guiclass="ThroughputControllerGui" testclass="ThroughputController" testname="70% - GET /api/listings" enabled="true">
             <intProp name="ThroughputController.style">1</intProp>
             <boolProp name="ThroughputController.perThread">true</boolProp>
-            <floatProp name="ThroughputController.maxThroughput">70.0</floatProp>
+            <intProp name="ThroughputController.maxThroughput">70</intProp>
           </ThroughputController>
           <hashTree>
             <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET /api/listings" enabled="true">
@@ -289,7 +289,7 @@
           <ThroughputController guiclass="ThroughputControllerGui" testclass="ThroughputController" testname="20% - GET /api/listings/category/All" enabled="true">
             <intProp name="ThroughputController.style">1</intProp>
             <boolProp name="ThroughputController.perThread">true</boolProp>
-            <floatProp name="ThroughputController.maxThroughput">20.0</floatProp>
+            <intProp name="ThroughputController.maxThroughput">20</intProp>
           </ThroughputController>
           <hashTree>
             <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET /api/listings/category/All" enabled="true">
@@ -314,7 +314,7 @@
           <ThroughputController guiclass="ThroughputControllerGui" testclass="ThroughputController" testname="10% - GET /api/listings/nearby" enabled="true">
             <intProp name="ThroughputController.style">1</intProp>
             <boolProp name="ThroughputController.perThread">true</boolProp>
-            <floatProp name="ThroughputController.maxThroughput">10.0</floatProp>
+            <intProp name="ThroughputController.maxThroughput">10</intProp>
           </ThroughputController>
           <hashTree>
             <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET /api/listings/nearby" enabled="true">

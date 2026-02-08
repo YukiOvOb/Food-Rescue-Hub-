@@ -714,6 +714,19 @@ jobs:
     env:
       STAGING_URL: "http://localhost:8080"
       JMETER_VERSION: "5.6.3"
+      JMETER_WARMUP_USERS: "8"
+      JMETER_WARMUP_LOOPS: "3"
+      JMETER_WARMUP_RAMP_SECONDS: "10"
+      JMETER_LOAD_USERS: "100"
+      JMETER_LOAD_LOOPS: "10"
+      JMETER_LOAD_RAMP_SECONDS: "30"
+      JMETER_THINK_TIME_MS: "350"
+      JMETER_CONNECT_TIMEOUT_MS: "10000"
+      JMETER_RESPONSE_TIMEOUT_MS: "10000"
+      JMETER_MAX_RESPONSE_MS: "5000"
+      JMETER_LAT: "1.3521"
+      JMETER_LNG: "103.8198"
+      JMETER_RADIUS_KM: "5.0"
     steps:
       - uses: actions/checkout@v4
 
@@ -770,9 +783,10 @@ jobs:
           echo "Starting JMeter Load & Performance Test"
           echo "==================================================="
           echo "Test Configuration:"
-          echo "  - Users: 100 concurrent"
-          echo "  - Ramp-up: 30 seconds"
-          echo "  - Iterations: 10 per user"
+          echo "  - Warm-up: ${JMETER_WARMUP_USERS} users x ${JMETER_WARMUP_LOOPS} loops (ramp ${JMETER_WARMUP_RAMP_SECONDS}s)"
+          echo "  - Main load: ${JMETER_LOAD_USERS} users x ${JMETER_LOAD_LOOPS} loops (ramp ${JMETER_LOAD_RAMP_SECONDS}s)"
+          echo "  - Weighted mix: 70% /api/listings, 20% /api/listings/category/All, 10% /api/listings/nearby"
+          echo "  - Max response time assertion: ${JMETER_MAX_RESPONSE_MS}ms"
           echo "  - Target: ${STAGING_URL}"
           echo "==================================================="
           
@@ -784,7 +798,20 @@ jobs:
             -o report \
             -JHOST=localhost \
             -JPORT=8080 \
-            -JSTAGING_URL="${STAGING_URL}"
+            -JPROTOCOL=http \
+            -JWARMUP_USERS="${JMETER_WARMUP_USERS}" \
+            -JWARMUP_LOOPS="${JMETER_WARMUP_LOOPS}" \
+            -JWARMUP_RAMP_SECONDS="${JMETER_WARMUP_RAMP_SECONDS}" \
+            -JLOAD_USERS="${JMETER_LOAD_USERS}" \
+            -JLOAD_LOOPS="${JMETER_LOAD_LOOPS}" \
+            -JLOAD_RAMP_SECONDS="${JMETER_LOAD_RAMP_SECONDS}" \
+            -JTHINK_TIME_MS="${JMETER_THINK_TIME_MS}" \
+            -JCONNECT_TIMEOUT_MS="${JMETER_CONNECT_TIMEOUT_MS}" \
+            -JRESPONSE_TIMEOUT_MS="${JMETER_RESPONSE_TIMEOUT_MS}" \
+            -JMAX_RESPONSE_MS="${JMETER_MAX_RESPONSE_MS}" \
+            -JLAT="${JMETER_LAT}" \
+            -JLNG="${JMETER_LNG}" \
+            -JRADIUS_KM="${JMETER_RADIUS_KM}"
           
           echo "==================================================="
           echo "JMeter Load Test Completed"
