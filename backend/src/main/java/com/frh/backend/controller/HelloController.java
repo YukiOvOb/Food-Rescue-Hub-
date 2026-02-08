@@ -14,11 +14,18 @@ public class HelloController {
     }
 
     @GetMapping("/login-safe-jdbc")
-    public String loginSafeJdbc(@RequestParam String username) throws SQLException {
+    public String loginSafeJdbc(@RequestParam(required = false, defaultValue = "") String username) {
+        if (username == null || username.isBlank()) {
+            return "user not found";
+        }
+
         String sql = "SELECT * FROM users WHERE username = ?";
 
-        try (Connection connection = DriverManager.getConnection("jdbc:h2:mem:testdb");
+        try (Connection connection = DriverManager.getConnection("jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1");
+             Statement statement = connection.createStatement();
              PreparedStatement ps = connection.prepareStatement(sql)) {
+
+            statement.execute("CREATE TABLE IF NOT EXISTS users (username VARCHAR(255))");
 
             ps.setString(1, username);
 
@@ -28,6 +35,8 @@ public class HelloController {
                     return "user found";
                 }
             }
+        } catch (SQLException ignored) {
+            return "user not found";
         }
 
         return "user not found";

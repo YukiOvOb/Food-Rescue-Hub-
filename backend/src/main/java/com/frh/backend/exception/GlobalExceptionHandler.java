@@ -1,13 +1,22 @@
 package com.frh.backend.exception;
 
+import org.springframework.core.convert.ConversionFailedException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.validation.BindException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.HashMap;
 import java.util.Map;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -33,22 +42,59 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
-    // 404 / 500 -Generic runtime
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, String>> handleResponseStatusException(ResponseStatusException ex) {
+        HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
+        if (status == null) {
+            status = HttpStatus.BAD_REQUEST;
+        }
+        String message = ex.getReason() != null ? ex.getReason() : ex.getMessage();
+        return buildError(status, message);
+    }
+
+    @ExceptionHandler({
+        HttpMessageNotReadableException.class,
+        MethodArgumentTypeMismatchException.class,
+        ConversionFailedException.class,
+        MissingServletRequestPartException.class,
+        MissingServletRequestParameterException.class,
+        MethodArgumentNotValidException.class,
+        BindException.class,
+        ServletRequestBindingException.class
+    })
+    public ResponseEntity<Map<String, String>> handleBadRequest(Exception ex) {
+        return buildError(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, String>> handleDataIntegrity(DataIntegrityViolationException ex) {
+        return buildError(HttpStatus.CONFLICT, ex.getMostSpecificCause() != null
+            ? ex.getMostSpecificCause().getMessage()
+            : ex.getMessage());
+    }
+
+    // Generic runtime fallback for uncaught domain errors.
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
-        Map<String, String> error = new HashMap<>();
         String msg = ex.getMessage() == null ? "" : ex.getMessage().toLowerCase();
-        error.put("error", ex.getMessage());
+        HttpStatus status = HttpStatus.BAD_REQUEST;
 
         if (msg.contains("not found")) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+            status = HttpStatus.NOT_FOUND;
+        } else if (msg.contains("invalid email or password")
+            || msg.contains("invalid credentials")
+            || msg.contains("unauthorized")
+            || msg.contains("not authorised")
+            || msg.contains("not authenticated")) {
+            status = HttpStatus.UNAUTHORIZED;
+        } else if (msg.contains("forbidden") || msg.contains("only consumers")) {
+            status = HttpStatus.FORBIDDEN;
+        } else if (msg.contains("already registered")
+            || msg.contains("already exists")
+            || msg.contains("duplicate")) {
+            status = HttpStatus.CONFLICT;
         }
-
-        if (msg.contains("invalid email or password") || msg.contains("invalid credentials")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-        }
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        return buildError(status, ex.getMessage());
     }
 
     @ExceptionHandler(CrossStoreException.class)
@@ -66,5 +112,12 @@ public class GlobalExceptionHandler {
         body.put("error", "CONCURRENT_MODIFICATION");
         body.put("message", "Concurrent modification detected. Please retry the operation.");
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    private ResponseEntity<Map<String, String>> buildError(HttpStatus status, String message) {
+        Map<String, String> body = new HashMap<>();
+        String safeMessage = (message == null || message.isBlank()) ? status.getReasonPhrase() : message;
+        body.put("error", safeMessage);
+        return ResponseEntity.status(status).body(body);
     }
 }

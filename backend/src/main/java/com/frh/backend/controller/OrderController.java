@@ -41,7 +41,7 @@ public class OrderController {
             // Get consumerId from session
             Long consumerId = (Long) session.getAttribute("USER_ID");
             String user_role = (String) session.getAttribute("USER_ROLE");
-            if (consumerId == null || !user_role.equals("CONSUMER")) {
+            if (consumerId == null || !"CONSUMER".equals(user_role)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "User not authorised"));
             }
@@ -62,8 +62,8 @@ public class OrderController {
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error creating order", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to create order: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Failed to create order: " + e.getMessage()));
         }
     }
 
@@ -83,8 +83,8 @@ public class OrderController {
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error retrieving order", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve order: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Failed to retrieve order: " + e.getMessage()));
         }
     }
 
@@ -102,8 +102,8 @@ public class OrderController {
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error retrieving orders", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve orders: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Failed to retrieve orders: " + e.getMessage()));
         }
     }
 
@@ -114,6 +114,11 @@ public class OrderController {
     public ResponseEntity<?> getOrdersByConsumer(HttpSession session) {
         Long consumerId = (Long) session.getAttribute("USER_ID");
         String user_role = (String) session.getAttribute("USER_ROLE");
+
+        if (consumerId == null || user_role == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "User not authorised"));
+        }
 
         if (!user_role.equals("CONSUMER"))   {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -128,8 +133,8 @@ public class OrderController {
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error retrieving consumer orders", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve orders: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Failed to retrieve orders: " + e.getMessage()));
         }
     }
 
@@ -147,8 +152,8 @@ public class OrderController {
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error retrieving store orders", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve orders: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Failed to retrieve orders: " + e.getMessage()));
         }
     }
 
@@ -166,8 +171,8 @@ public class OrderController {
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error retrieving orders by status", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve orders: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Failed to retrieve orders: " + e.getMessage()));
         }
     }
 
@@ -187,8 +192,8 @@ public class OrderController {
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error retrieving store orders by status", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve orders: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Failed to retrieve orders: " + e.getMessage()));
         }
     }
 
@@ -210,8 +215,8 @@ public class OrderController {
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error updating order", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to update order: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Failed to update order: " + e.getMessage()));
         }
     }
 
@@ -233,8 +238,8 @@ public class OrderController {
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error updating order status", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to update order status: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Failed to update order status: " + e.getMessage()));
         }
     }
 
@@ -256,8 +261,8 @@ public class OrderController {
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error cancelling order", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to cancel order: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Failed to cancel order: " + e.getMessage()));
         }
     }   
 
@@ -276,8 +281,8 @@ public class OrderController {
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
         } catch (Exception e) {
             log.error("Error deleting order", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to delete order: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Failed to delete order: " + e.getMessage()));
         }
     }
 

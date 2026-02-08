@@ -26,6 +26,13 @@ public class InteractionService {
      */
     @Transactional
     public UserInteraction recordInteraction(UserInteractionRequest request) {
+        if (request == null
+                || request.getConsumerId() == null
+                || request.getListingId() == null
+                || request.getInteractionType() == null) {
+            throw new IllegalArgumentException("consumerId, listingId, and interactionType are required");
+        }
+
         // Validate consumer exists
         ConsumerProfile consumer = consumerProfileRepository.findById(request.getConsumerId())
                 .orElseThrow(() -> new RuntimeException("Consumer not found: " + request.getConsumerId()));
@@ -107,8 +114,10 @@ public class InteractionService {
     /**
      * Batch record multiple interactions (for optimization)
      */
-    @Transactional
     public void recordInteractionsBatch(java.util.List<UserInteractionRequest> requests) {
+        if (requests == null || requests.isEmpty()) {
+            throw new IllegalArgumentException("At least one interaction is required");
+        }
         for (UserInteractionRequest request : requests) {
             try {
                 recordInteraction(request);

@@ -5,6 +5,7 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
@@ -50,10 +51,20 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleRuntimeException_internalServerError() {
+    void handleRuntimeException_badRequestFallback() {
         ResponseEntity<Map<String, String>> response = handler.handleRuntimeException(new RuntimeException("Unexpected"));
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("Unexpected", response.getBody().get("error"));
+    }
+
+    @Test
+    void handleResponseStatusException_propagatesStatus() {
+        ResponseStatusException ex = new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
+
+        ResponseEntity<Map<String, String>> response = handler.handleResponseStatusException(ex);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("Not authenticated", response.getBody().get("error"));
     }
 
     @Test

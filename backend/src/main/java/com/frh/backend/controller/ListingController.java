@@ -72,7 +72,7 @@ public ResponseEntity<?> createListing(
     } catch (Exception ex) {
         ex.printStackTrace();
         String msg = "Unexpected server error: " + ex.getMessage();
-        return ResponseEntity.status(500).body(msg);
+        return ResponseEntity.badRequest().body(msg);
     }
 }
     // ==========================================

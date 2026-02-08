@@ -4,6 +4,7 @@ import com.frh.backend.Model.UserInteraction;
 import com.frh.backend.dto.UserInteractionRequest;
 import com.frh.backend.service.InteractionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -55,7 +56,10 @@ public class InteractionController {
             errorResponse.put("error", e.getMessage());
             errorResponse.put("message", "Failed to record interaction");
 
-            return ResponseEntity.status(500).body(errorResponse);
+            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            }
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
@@ -88,7 +92,7 @@ public class InteractionController {
             errorResponse.put("error", e.getMessage());
             errorResponse.put("message", "Failed to record batch interactions");
 
-            return ResponseEntity.status(500).body(errorResponse);
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
