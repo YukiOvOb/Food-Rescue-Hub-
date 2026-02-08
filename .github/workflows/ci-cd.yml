@@ -555,6 +555,35 @@ jobs:
             docker compose -f compose.yml logs --no-color || true
           fi
           exit 1
+      
+      - name: Probe OpenAPI schema endpoints
+        if: needs.detect.outputs.has_compose == 'true'
+        shell: bash
+        env:
+          BACKEND_LOCAL_URL: "http://localhost:8080"
+        run: |
+          set +e
+          echo "== Probing OpenAPI endpoints =="
+          echo "GET ${BACKEND_LOCAL_URL}/v3/api-docs"
+          curl -i "${BACKEND_LOCAL_URL}/v3/api-docs" | head -200
+          echo
+          echo "GET ${BACKEND_LOCAL_URL}/api/v3/api-docs"
+          curl -i "${BACKEND_LOCAL_URL}/api/v3/api-docs" | head -200
+          echo
+          echo "GET ${BACKEND_LOCAL_URL}/swagger-ui/index.html"
+          curl -i "${BACKEND_LOCAL_URL}/swagger-ui/index.html" | head -80
+
+      - name: Backend logs (OpenAPI failure debug)
+        if: needs.detect.outputs.has_compose == 'true'
+        shell: bash
+        run: |
+          if [ -f "docker-compose.integration.yml" ]; then
+            docker compose -f docker-compose.integration.yml logs --no-color --tail=300 || true
+          elif [ -f "docker-compose.yml" ]; then
+            docker compose -f docker-compose.yml logs --no-color --tail=300 || true
+          else
+            docker compose -f compose.yml logs --no-color --tail=300 || true
+          fi
 
       # ---- Schemathesis from Swagger/OpenAPI ----
       - name: Setup Python (Schemathesis)
