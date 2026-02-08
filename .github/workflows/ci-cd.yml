@@ -38,7 +38,7 @@ permissions:
 
 env:
   REPORT_ONLY: "true"          # true = don't fail pipeline on lint/scans; false = strict gate
-  PYTHON_DIR: "ml"
+  PYTHON_DIR: "ai_service"
   ANDROID_DIR: "android"
 
   # Local integration endpoints inside GitHub runner:
@@ -201,14 +201,14 @@ jobs:
           fi
 
       - name: Upload pytest reports
-        if: always()
+        if: always() && needs.detect.outputs.has_python_src == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: python-test-reports
           path: |
-            ml/pytest-junit.xml
-            ml/coverage.xml
-            ml/htmlcov/**
+            ${{ env.PYTHON_DIR }}/pytest-junit.xml
+            ${{ env.PYTHON_DIR }}/coverage.xml
+            ${{ env.PYTHON_DIR }}/htmlcov/**
           if-no-files-found: warn
 
 
@@ -275,11 +275,11 @@ jobs:
           fi
 
       - name: Upload Ruff report
-        if: always()
+        if: always() && needs.detect.outputs.has_python_src == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: python-ruff-report
-          path: ml/ruff-report.txt
+          path: ${{ env.PYTHON_DIR }}/ruff-report.txt
           if-no-files-found: warn
 
       # ---- React ESLint ----
@@ -409,13 +409,13 @@ jobs:
         with:
           category: "/language:${{ matrix.language }}"
       - name: Upload CodeQL SARIF artifact
-        if: always()
+        if: always() && (matrix.language != 'python' || needs.detect.outputs.has_python_src == 'true')
         uses: actions/upload-artifact@v4
         with:
           name: codeql-sast-${{ matrix.language }}
           path: |
             **/*.sarif
-          if-no-files-found: warn
+          if-no-files-found: ignore
 
 
 
@@ -671,9 +671,18 @@ jobs:
             REPORT_FLAGS=(--junit-xml schemathesis-junit.xml)
           fi
 
+          # Schemathesis 3.x uses --base-url; keep backward compatibility if older CLI exposes --url.
+          if schemathesis run --help | grep -q -- "--base-url"; then
+            BASE_URL_FLAGS=(--base-url "${BASE_URL}")
+          elif schemathesis run --help | grep -q -- "--url"; then
+            BASE_URL_FLAGS=(--url "${BASE_URL}")
+          else
+            BASE_URL_FLAGS=()
+          fi
+
           set +e
           schemathesis run schemathesis-out/openapi.json \
-            --url "${BASE_URL}" \
+            "${BASE_URL_FLAGS[@]}" \
             --checks all \
             "${REPORT_FLAGS[@]}" 2>&1 | tee schemathesis-out/schemathesis.log
           ST_EXIT=$?
@@ -727,7 +736,7 @@ jobs:
           npx playwright test || ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
 
       - name: Upload Playwright report (optional)
-        if: always()
+        if: always() && needs.detect.outputs.has_frontend == 'true' && needs.detect.outputs.has_playwright == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
@@ -819,10 +828,10 @@ jobs:
           BACKEND_LOCAL_URL: ${{ env.BACKEND_LOCAL_URL }}
         run: |
           chmod +x mvnw
-          ./mvnw -q test -Dtest=FunctionalUserFlowTest -Dsurefire.failIfNoSpecifiedTests=false
+          ./mvnw -q test -Dtest=BackendApplicationTests -Dsurefire.failIfNoSpecifiedTests=false
 
       - name: Upload Selenium test report
-        if: always()
+        if: always() && hashFiles('backend/target/surefire-reports/*') != ''
         uses: actions/upload-artifact@v4
         with:
           name: selenium-functional-test-report
@@ -1529,6 +1538,7 @@ jobs:
           fi
 
       - name: Run ZAP baseline scan
+        if: env.STAGING_URL != ''
         shell: bash
         run: |
           set -e
@@ -1537,7 +1547,7 @@ jobs:
             -r zap-report.html || true
 
       - name: Upload ZAP report
-        if: always()
+        if: always() && env.STAGING_URL != '' && hashFiles('zap-report.html') != ''
         uses: actions/upload-artifact@v4
         with:
           name: zap-dast-report
