@@ -671,6 +671,16 @@ jobs:
             REPORT_FLAGS=(--junit-xml schemathesis-junit.xml)
           fi
 
+          # Schemathesis <4 requires an explicit experimental flag for OpenAPI 3.1 schemas.
+          EXPERIMENT_FLAGS=()
+          if grep -Eq '"openapi"[[:space:]]*:[[:space:]]*"3\.1(\.[0-9]+)?"' schemathesis-out/openapi.json; then
+            echo "Detected OpenAPI 3.1 schema."
+            if schemathesis run --help | grep -q -- "--experimental"; then
+              EXPERIMENT_FLAGS=(--experimental=openapi-3.1)
+              echo "Enabling Schemathesis experimental OpenAPI 3.1 support."
+            fi
+          fi
+
           # Schemathesis 3.x uses --base-url; keep backward compatibility if older CLI exposes --url.
           if schemathesis run --help | grep -q -- "--base-url"; then
             BASE_URL_FLAGS=(--base-url "${BASE_URL}")
@@ -683,6 +693,7 @@ jobs:
           set +e
           schemathesis run schemathesis-out/openapi.json \
             "${BASE_URL_FLAGS[@]}" \
+            "${EXPERIMENT_FLAGS[@]}" \
             --checks all \
             "${REPORT_FLAGS[@]}" 2>&1 | tee schemathesis-out/schemathesis.log
           ST_EXIT=$?

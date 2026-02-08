@@ -22,7 +22,9 @@ public class SecurityConfig {
 
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
+                // Keep CSRF protection enabled by default and explicitly exempt API endpoints.
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/api/**"))
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
