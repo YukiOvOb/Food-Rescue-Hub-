@@ -10,6 +10,24 @@ on:
     branches: 
       - main
   workflow_dispatch:
+    inputs:
+      jmeter_target_host:
+        description: "Optional. Host or domain for deployment load test (example: ec2-xx-xx-xx-xx.compute-1.amazonaws.com)"
+        required: false
+        type: string
+      jmeter_target_port:
+        description: "Optional. Port for deployment load test."
+        required: false
+        default: "8080"
+        type: string
+      jmeter_target_protocol:
+        description: "Optional. Protocol for deployment load test."
+        required: false
+        default: "http"
+        type: choice
+        options:
+          - http
+          - https
 
 concurrency:
   group: frh-${{ github.workflow }}-${{ github.ref }}
@@ -712,7 +730,12 @@ jobs:
     needs: [detect, selenium-functional-test]
     if: needs.detect.outputs.has_backend == 'true'
     env:
-      STAGING_URL: "http://localhost:8080"
+      WF_JMETER_TARGET_HOST: ${{ inputs.jmeter_target_host }}
+      WF_JMETER_TARGET_PORT: ${{ inputs.jmeter_target_port }}
+      WF_JMETER_TARGET_PROTOCOL: ${{ inputs.jmeter_target_protocol }}
+      VAR_JMETER_TARGET_HOST: ${{ vars.JMETER_TARGET_HOST }}
+      VAR_JMETER_TARGET_PORT: ${{ vars.JMETER_TARGET_PORT }}
+      VAR_JMETER_TARGET_PROTOCOL: ${{ vars.JMETER_TARGET_PROTOCOL }}
       JMETER_VERSION: "5.6.3"
       JMETER_WARMUP_USERS: "8"
       JMETER_WARMUP_LOOPS: "3"
@@ -727,8 +750,45 @@ jobs:
       JMETER_LAT: "1.3521"
       JMETER_LNG: "103.8198"
       JMETER_RADIUS_KM: "5.0"
+      METRICS_SAMPLE_SECONDS: "5"
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Resolve JMeter target
+        id: jmeter_target
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TARGET_HOST="${WF_JMETER_TARGET_HOST:-${VAR_JMETER_TARGET_HOST:-localhost}}"
+          TARGET_PORT="${WF_JMETER_TARGET_PORT:-${VAR_JMETER_TARGET_PORT:-8080}}"
+          TARGET_PROTOCOL="${WF_JMETER_TARGET_PROTOCOL:-${VAR_JMETER_TARGET_PROTOCOL:-http}}"
+          RUN_MODE="deployed"
+          if [ "${TARGET_HOST}" = "localhost" ] || [ "${TARGET_HOST}" = "127.0.0.1" ]; then
+            RUN_MODE="local"
+          fi
+          TARGET_URL="${TARGET_PROTOCOL}://${TARGET_HOST}:${TARGET_PORT}"
+
+          {
+            echo "target_host=${TARGET_HOST}"
+            echo "target_port=${TARGET_PORT}"
+            echo "target_protocol=${TARGET_PROTOCOL}"
+            echo "target_url=${TARGET_URL}"
+            echo "run_mode=${RUN_MODE}"
+          } >> "${GITHUB_OUTPUT}"
+
+          {
+            echo "run_mode=${RUN_MODE}"
+            echo "target_url=${TARGET_URL}"
+            echo "target_host=${TARGET_HOST}"
+            echo "target_port=${TARGET_PORT}"
+            echo "target_protocol=${TARGET_PROTOCOL}"
+            echo "resolved_at_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } > jmeter-target.txt
+
+          cat jmeter-target.txt
 
       - name: Install JMeter
         run: |
@@ -739,21 +799,29 @@ jobs:
           ./apache-jmeter-${JMETER_VERSION}/bin/jmeter --version
 
       - name: Start application stack
+        id: local_stack
+        if: steps.jmeter_target.outputs.run_mode == 'local'
         env:
           MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || 'password' }}
         run: |
           if [ -f "docker-compose.integration.yml" ]; then
-            docker compose -f docker-compose.integration.yml up -d
+            COMPOSE_FILE="docker-compose.integration.yml"
+          elif [ -f "docker-compose.yml" ]; then
+            COMPOSE_FILE="docker-compose.yml"
           else
-            docker compose -f docker-compose.yml up -d
+            COMPOSE_FILE="compose.yml"
           fi
+          echo "compose_file=${COMPOSE_FILE}" >> "${GITHUB_OUTPUT}"
+          docker compose -f "${COMPOSE_FILE}" up -d
 
       - name: Wait for MySQL
+        if: steps.jmeter_target.outputs.run_mode == 'local'
         env:
           MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || 'password' }}
         run: |
+          COMPOSE_FILE="${{ steps.local_stack.outputs.compose_file }}"
           for i in {1..120}; do
-            if docker compose -f docker-compose.integration.yml exec -T mysql mysqladmin ping -h localhost -uroot -p"${MYSQL_ROOT_PASSWORD}" --silent; then
+            if docker compose -f "${COMPOSE_FILE}" exec -T mysql mysqladmin ping -h localhost -uroot -p"${MYSQL_ROOT_PASSWORD}" --silent; then
               echo "MySQL is ready"
               exit 0
             fi
@@ -761,13 +829,14 @@ jobs:
             sleep 2
           done
           echo "MySQL failed to start"
-          docker compose -f docker-compose.integration.yml logs
+          docker compose -f "${COMPOSE_FILE}" logs
           exit 1
 
-      - name: Wait for backend
+      - name: Wait for local backend
+        if: steps.jmeter_target.outputs.run_mode == 'local'
         run: |
           for i in {1..60}; do
-            if curl -fsS "${STAGING_URL}/api/hello" >/dev/null; then
+            if curl -fsS "${{ steps.jmeter_target.outputs.target_url }}/api/hello" >/dev/null; then
               echo "Backend is ready for load testing"
               exit 0
             fi
@@ -776,6 +845,71 @@ jobs:
           done
           docker compose logs
           exit 1
+
+      - name: Wait for deployed backend
+        if: steps.jmeter_target.outputs.run_mode == 'deployed'
+        shell: bash
+        run: |
+          TARGET_URL="${{ steps.jmeter_target.outputs.target_url }}"
+          for i in {1..30}; do
+            if curl -fsS "${TARGET_URL}/api/hello" >/dev/null; then
+              echo "Deployed backend is reachable at ${TARGET_URL}"
+              exit 0
+            fi
+            echo "Waiting for deployed backend... ($i)"
+            sleep 5
+          done
+          echo "Deployed target did not become ready: ${TARGET_URL}"
+          exit 1
+
+      - name: Start local metrics sampling
+        if: steps.jmeter_target.outputs.run_mode == 'local'
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "# local docker stats sampling"
+            echo "# started_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "timestamp_utc,container_name,cpu_perc,mem_perc,mem_usage,net_io,block_io,pids"
+          } > system-metrics-local.log
+
+          (
+            while true; do
+              TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+              docker stats --no-stream --format "{{.Name}},{{.CPUPerc}},{{.MemPerc}},{{.MemUsage}},{{.NetIO}},{{.BlockIO}},{{.PIDs}}" \
+                | sed "s/^/${TS},/" >> system-metrics-local.log
+              sleep "${METRICS_SAMPLE_SECONDS}"
+            done
+          ) &
+          echo $! > .metrics_local_pid
+
+      - name: Start remote metrics sampling
+        if: steps.jmeter_target.outputs.run_mode == 'deployed'
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET_HOST="${{ steps.jmeter_target.outputs.target_host }}"
+
+          if [ -z "${EC2_HOST}" ] || [ -z "${EC2_SSH_KEY}" ] || [ "${TARGET_HOST}" != "${EC2_HOST}" ]; then
+            echo "Skipping remote metrics: requires EC2_HOST/EC2_SSH_KEY and target host == EC2_HOST" | tee system-metrics-remote.log
+            exit 0
+          fi
+
+          KEYFILE="${RUNNER_TEMP}/ec2_jmeter_metrics_key"
+          printf '%s' "${EC2_SSH_KEY}" > "${KEYFILE}"
+          chmod 600 "${KEYFILE}"
+          echo "remote_keyfile=${KEYFILE}" > .remote_metrics_ctx
+          echo "remote_host=${TARGET_HOST}" >> .remote_metrics_ctx
+          echo "started_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> .remote_metrics_ctx
+
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=no -i "${KEYFILE}" ubuntu@"${TARGET_HOST}" \
+            "nohup bash -lc 'echo \"# remote docker stats sampling\" > /tmp/frh-jmeter-remote-metrics.log; \
+             echo \"# started_utc=\$(date -u +%Y-%m-%dT%H:%M:%SZ)\" >> /tmp/frh-jmeter-remote-metrics.log; \
+             while true; do \
+               echo \"--- \$(date -u +%Y-%m-%dT%H:%M:%SZ) ---\" >> /tmp/frh-jmeter-remote-metrics.log; \
+               docker stats --no-stream >> /tmp/frh-jmeter-remote-metrics.log 2>&1; \
+               sleep ${METRICS_SAMPLE_SECONDS}; \
+             done' >/dev/null 2>&1 & echo \$! > /tmp/frh-jmeter-remote-metrics.pid"
 
       - name: Run JMeter Load Test (Non-GUI Mode)
         run: |
@@ -787,7 +921,7 @@ jobs:
           echo "  - Main load: ${JMETER_LOAD_USERS} users x ${JMETER_LOAD_LOOPS} loops (ramp ${JMETER_LOAD_RAMP_SECONDS}s)"
           echo "  - Weighted mix: 70% /api/listings, 20% /api/listings/category/All, 10% /api/listings/nearby"
           echo "  - Max response time assertion: ${JMETER_MAX_RESPONSE_MS}ms"
-          echo "  - Target: ${STAGING_URL}"
+          echo "  - Target: ${{ steps.jmeter_target.outputs.target_url }}"
           echo "==================================================="
           
           ./apache-jmeter-${JMETER_VERSION}/bin/jmeter \
@@ -796,9 +930,9 @@ jobs:
             -l results.jtl \
             -e \
             -o report \
-            -JHOST=localhost \
-            -JPORT=8080 \
-            -JPROTOCOL=http \
+            -JHOST="${{ steps.jmeter_target.outputs.target_host }}" \
+            -JPORT="${{ steps.jmeter_target.outputs.target_port }}" \
+            -JPROTOCOL="${{ steps.jmeter_target.outputs.target_protocol }}" \
             -JWARMUP_USERS="${JMETER_WARMUP_USERS}" \
             -JWARMUP_LOOPS="${JMETER_WARMUP_LOOPS}" \
             -JWARMUP_RAMP_SECONDS="${JMETER_WARMUP_RAMP_SECONDS}" \
@@ -816,6 +950,34 @@ jobs:
           echo "==================================================="
           echo "JMeter Load Test Completed"
           echo "==================================================="
+
+      - name: Stop local metrics sampling
+        if: always() && steps.jmeter_target.outputs.run_mode == 'local'
+        shell: bash
+        run: |
+          if [ -f ".metrics_local_pid" ]; then
+            kill "$(cat .metrics_local_pid)" || true
+          fi
+
+      - name: Stop and collect remote metrics
+        if: always() && steps.jmeter_target.outputs.run_mode == 'deployed'
+        shell: bash
+        run: |
+          set +e
+          if [ ! -f ".remote_metrics_ctx" ]; then
+            echo "No remote metrics context found." | tee -a system-metrics-remote.log
+            exit 0
+          fi
+
+          KEYFILE="$(grep '^remote_keyfile=' .remote_metrics_ctx | cut -d= -f2-)"
+          TARGET_HOST="$(grep '^remote_host=' .remote_metrics_ctx | cut -d= -f2-)"
+
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=no -i "${KEYFILE}" ubuntu@"${TARGET_HOST}" \
+            "if [ -f /tmp/frh-jmeter-remote-metrics.pid ]; then kill \$(cat /tmp/frh-jmeter-remote-metrics.pid) 2>/dev/null || true; fi"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=no -i "${KEYFILE}" ubuntu@"${TARGET_HOST}" \
+            "cat /tmp/frh-jmeter-remote-metrics.log 2>/dev/null || echo 'No remote metrics log found'" \
+            > system-metrics-remote.log
+          rm -f "${KEYFILE}" .remote_metrics_ctx
 
       - name: Display JMeter Summary
         if: always()
@@ -858,27 +1020,40 @@ jobs:
           path: report/
           if-no-files-found: warn
 
+      - name: Upload Runtime Metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jmeter-runtime-metrics
+          path: |
+            jmeter-target.txt
+            system-metrics-local.log
+            system-metrics-remote.log
+          if-no-files-found: warn
+
       - name: Archive Load Test Evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: load-test-complete-evidence
           path: |
+            jmeter-target.txt
             results.jtl
             report/**
+            system-metrics-local.log
+            system-metrics-remote.log
             tests/jmeter/load-test.jmx
           if-no-files-found: warn
 
       - name: Tear down stack
         if: always()
         run: |
-          if [ -f "docker-compose.integration.yml" ]; then
-            docker compose -f docker-compose.integration.yml down -v
-          elif [ -f "docker-compose.yml" ]; then
-            docker compose -f docker-compose.yml down -v
-          else
-            docker compose -f compose.yml down -v
+          if [ "${{ steps.jmeter_target.outputs.run_mode }}" != "local" ]; then
+            echo "No local stack teardown needed for deployed target mode."
+            exit 0
           fi
+          COMPOSE_FILE="${{ steps.local_stack.outputs.compose_file }}"
+          docker compose -f "${COMPOSE_FILE}" down -v
 
 
   # =========================================================
@@ -1128,6 +1303,18 @@ jobs:
             exit 0
           fi
 
+      - name: Validate k6 target URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET="${STAGING_URL%/}"
+          if [[ ! "${TARGET}" =~ ^https?://[^[:space:]/]+(:[0-9]+)?$ ]]; then
+            echo "Invalid STAGING_URL format: ${STAGING_URL}"
+            exit 1
+          fi
+          echo "k6 target: ${TARGET}"
+          curl -fsS "${TARGET}/api/hello" >/dev/null
+
       - name: Install k6
         shell: bash
         run: |
@@ -1139,42 +1326,41 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y k6
 
-      - name: Run k6 (smoke)
+      - name: Run k6 (HTTP smoke + thresholds)
         shell: bash
         run: |
-          set -e
-
-          if [ -f "tests/k6/script.js" ]; then
-            k6 run --summary-export=k6-summary.json tests/k6/script.js || true
-            exit 0
+          set -euo pipefail
+          if [ ! -f "tests/k6/script.js" ]; then
+            echo "Missing tests/k6/script.js"
+            exit 1
           fi
 
-          cat > k6-smoke.js <<'EOF'
-          import http from 'k6/http';
-          import { check, sleep } from 'k6';
+          TARGET="${STAGING_URL%/}"
+          echo "Running k6 against ${TARGET}"
 
-          export const options = {
-            vus: 5,
-            duration: '15s'
-          };
-
-          const baseUrl = __ENV.STAGING_URL || 'http://localhost:8080';
-
-          export default function () {
-            const res = http.get(`${baseUrl}/api/hello`);
-            check(res, { 'status is 200': (r) => r.status === 200 });
-            sleep(1);
-          }
-          EOF
-
-          k6 run --summary-export=k6-summary.json k6-smoke.js || true
+          if [ "${REPORT_ONLY}" = "true" ]; then
+            k6 run \
+              --summary-export=k6-summary.json \
+              -e BASE_URL="${TARGET}" \
+              -e STAGING_URL="${TARGET}" \
+              tests/k6/script.js 2>&1 | tee k6-run.log || true
+          else
+            k6 run \
+              --summary-export=k6-summary.json \
+              -e BASE_URL="${TARGET}" \
+              -e STAGING_URL="${TARGET}" \
+              tests/k6/script.js 2>&1 | tee k6-run.log
+          fi
 
       - name: Upload k6 report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: k6-report
-          path: k6-summary.json
+          path: |
+            k6-summary.json
+            k6-run.log
+            tests/k6/script.js
           if-no-files-found: warn
 
 
