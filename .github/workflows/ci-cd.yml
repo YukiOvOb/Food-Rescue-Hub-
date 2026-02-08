@@ -570,36 +570,65 @@ jobs:
           set -euo pipefail
           pip install "schemathesis>=3,<4"
 
-          OPENAPI_URL="${BACKEND_LOCAL_URL}${OPENAPI_PATH}"
-          echo "OpenAPI URL: ${OPENAPI_URL}"
           mkdir -p schemathesis-out
 
           schemathesis --version | tee schemathesis-out/version.txt
 
-          # Fetch schema first to separate "schema unavailable" from "test failures".
-          if ! curl -fsS --retry 6 --retry-delay 3 "${OPENAPI_URL}" -o schemathesis-out/openapi.json; then
-            echo "Failed to download OpenAPI schema from ${OPENAPI_URL}" | tee schemathesis-out/schemathesis.log
+          BASE_URL="${SCHEMATHESIS_BASE_URL:-${BACKEND_LOCAL_URL}}"
+          PRIMARY_OPENAPI_URL="${BASE_URL}${OPENAPI_PATH}"
+          ALT_OPENAPI_URL="${BASE_URL}/api${OPENAPI_PATH}"
+          OPENAPI_URL=""
+
+          echo "Schemathesis base URL: ${BASE_URL}"
+          echo "OpenAPI candidate URLs:"
+          echo " - ${PRIMARY_OPENAPI_URL}"
+          echo " - ${ALT_OPENAPI_URL}"
+
+          # Wait for OpenAPI to be reachable and valid JSON schema.
+          for candidate in "${PRIMARY_OPENAPI_URL}" "${ALT_OPENAPI_URL}"; do
+            for i in {1..20}; do
+              HTTP_CODE="$(curl -sS -o schemathesis-out/openapi.json -w "%{http_code}" "${candidate}" || true)"
+              if [ "${HTTP_CODE}" = "200" ] && grep -Eq '"(openapi|swagger)"[[:space:]]*:' schemathesis-out/openapi.json; then
+                OPENAPI_URL="${candidate}"
+                echo "OpenAPI schema fetched from ${OPENAPI_URL}"
+                break 2
+              fi
+              echo "Waiting for OpenAPI schema at ${candidate}... (${i}/20, http=${HTTP_CODE})"
+              sleep 3
+            done
+          done
+
+          if [ -z "${OPENAPI_URL}" ]; then
+            echo "Failed to download OpenAPI schema from ${PRIMARY_OPENAPI_URL} (also tried ${ALT_OPENAPI_URL})" | tee schemathesis-out/schemathesis.log
+
+            {
+              echo "== Probe: ${PRIMARY_OPENAPI_URL} =="
+              curl -sS -i "${PRIMARY_OPENAPI_URL}" | head -n 80 || true
+              echo
+              echo "== Probe: ${ALT_OPENAPI_URL} =="
+              curl -sS -i "${ALT_OPENAPI_URL}" | head -n 80 || true
+              echo
+              echo "== Probe: ${BACKEND_LOCAL_URL}${SMOKE_PATH} =="
+              curl -sS -i "${BACKEND_LOCAL_URL}${SMOKE_PATH}" | head -n 40 || true
+              echo
+              echo "== Probe: ${BACKEND_LOCAL_URL}/actuator/health =="
+              curl -sS -i "${BACKEND_LOCAL_URL}/actuator/health" | head -n 40 || true
+            } >> schemathesis-out/schemathesis.log
+
+            if [ -f "docker-compose.integration.yml" ]; then
+              docker compose -f docker-compose.integration.yml logs --no-color backend >> schemathesis-out/schemathesis.log || true
+            elif [ -f "docker-compose.yml" ]; then
+              docker compose -f docker-compose.yml logs --no-color backend >> schemathesis-out/schemathesis.log || true
+            else
+              docker compose -f compose.yml logs --no-color backend >> schemathesis-out/schemathesis.log || true
+            fi
+
             cat > schemathesis-junit.xml <<'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <testsuites tests="1" failures="1" errors="0" skipped="0">
             <testsuite name="schemathesis" tests="1" failures="1" errors="0" skipped="0">
               <testcase name="schema-fetch">
-                <failure message="Failed to fetch OpenAPI schema">OpenAPI endpoint was not reachable in CI.</failure>
-              </testcase>
-            </testsuite>
-          </testsuites>
-          EOF
-            [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1
-          fi
-
-          if ! grep -Eq '"(openapi|swagger)"[[:space:]]*:' schemathesis-out/openapi.json; then
-            echo "Downloaded schema does not look like OpenAPI JSON" | tee schemathesis-out/schemathesis.log
-            cat > schemathesis-junit.xml <<'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <testsuites tests="1" failures="1" errors="0" skipped="0">
-            <testsuite name="schemathesis" tests="1" failures="1" errors="0" skipped="0">
-              <testcase name="schema-validate">
-                <failure message="Invalid OpenAPI document">Downloaded content is not a valid OpenAPI schema.</failure>
+                <failure message="Failed to fetch OpenAPI schema">OpenAPI endpoint was not reachable in CI. Checked primary and /api fallback paths.</failure>
               </testcase>
             </testsuite>
           </testsuites>
@@ -615,7 +644,7 @@ jobs:
 
           set +e
           schemathesis run schemathesis-out/openapi.json \
-            --url "${BACKEND_LOCAL_URL}" \
+            --url "${BASE_URL}" \
             --checks all \
             "${REPORT_FLAGS[@]}" 2>&1 | tee schemathesis-out/schemathesis.log
           ST_EXIT=$?
