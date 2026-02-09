@@ -54,8 +54,8 @@ codeql database create codeql-db --language=python --source-root=./ai_service
 # Run analysis
 codeql database analyze codeql-db --format=sarif-latest --output=results.sarif
 
-# View results
-codeql sarif analyze results.sarif
+# View results (open results.sarif in a text editor or SARIF viewer)
+# Or upload to GitHub for visualization in the Security tab
 ```
 
 ## Customization
