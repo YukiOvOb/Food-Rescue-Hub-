@@ -74,3 +74,6 @@ ENV/
 # Vector Database (Chroma)
 chroma_db/
 .env
+
+# Track root .env intentionally (CI/deploy use-case)
+!.env
