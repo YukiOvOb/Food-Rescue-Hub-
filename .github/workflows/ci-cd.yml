@@ -1468,17 +1468,31 @@ jobs:
         run: |
           echo "k6 stage skipped (${{ steps.k6_target.outputs.reason }}). Set secret STAGING_URL to enable this optional stage."
 
-      - name: Validate k6 target URL
+      - name: Probe k6 target URL
+        id: k6_probe
         if: steps.k6_target.outputs.should_run == 'true'
         shell: bash
         run: |
           set -euo pipefail
           TARGET="${{ steps.k6_target.outputs.target }}"
           echo "k6 target: ${TARGET}"
-          curl -fsS "${TARGET}/api/hello" >/dev/null
+          if curl -fsS --connect-timeout 5 --max-time 15 --retry 2 --retry-connrefused "${TARGET}/api/hello" >/dev/null; then
+            echo "should_run=true" >> "${GITHUB_OUTPUT}"
+            echo "reason=reachable" >> "${GITHUB_OUTPUT}"
+          else
+            echo "should_run=false" >> "${GITHUB_OUTPUT}"
+            echo "reason=unreachable_target" >> "${GITHUB_OUTPUT}"
+            echo "k6 skipped: target is unreachable from this GitHub runner."
+          fi
+
+      - name: Print k6 probe skip reason
+        if: steps.k6_target.outputs.should_run == 'true' && steps.k6_probe.outputs.should_run != 'true'
+        shell: bash
+        run: |
+          echo "k6 stage skipped (${{ steps.k6_probe.outputs.reason }}). Ensure STAGING_URL is reachable from GitHub-hosted runners."
 
       - name: Install k6
-        if: steps.k6_target.outputs.should_run == 'true'
+        if: steps.k6_target.outputs.should_run == 'true' && steps.k6_probe.outputs.should_run == 'true'
         shell: bash
         run: |
           set -e
@@ -1490,7 +1504,7 @@ jobs:
           sudo apt-get install -y k6
 
       - name: Run k6 (HTTP smoke + thresholds)
-        if: steps.k6_target.outputs.should_run == 'true'
+        if: steps.k6_target.outputs.should_run == 'true' && steps.k6_probe.outputs.should_run == 'true'
         shell: bash
         run: |
           set -euo pipefail
