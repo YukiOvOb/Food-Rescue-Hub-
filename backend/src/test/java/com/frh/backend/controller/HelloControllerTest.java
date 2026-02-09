@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.anyString;
@@ -72,6 +73,34 @@ class HelloControllerTest {
 
             assertEquals("user not found", result);
             Mockito.verify(preparedStatement).setString(1, "bob");
+        }
+    }
+
+    @Test
+    void loginSafeJdbc_returnsUserNotFound_whenUsernameIsBlank() {
+        String result = helloController.loginSafeJdbc("   ");
+
+        assertEquals("user not found", result);
+    }
+
+    @Test
+    void loginSafeJdbc_returnsUserNotFound_whenUsernameIsNull() {
+        String result = helloController.loginSafeJdbc(null);
+
+        assertEquals("user not found", result);
+    }
+
+    @Test
+    void loginSafeJdbc_returnsUserNotFound_whenSqlExceptionOccurs() throws Exception {
+        SQLException sqlException = new SQLException("DB down");
+
+        try (MockedStatic<DriverManager> driverManagerMock = Mockito.mockStatic(DriverManager.class)) {
+            driverManagerMock.when(() -> DriverManager.getConnection("jdbc:h2:mem:testdb"))
+                .thenThrow(sqlException);
+
+            String result = helloController.loginSafeJdbc("alice");
+
+            assertEquals("user not found", result);
         }
     }
 }

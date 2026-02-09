@@ -1,10 +1,16 @@
 package com.frh.backend.exception;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.core.convert.ConversionFailedException;
+import org.springframework.core.convert.TypeDescriptor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
@@ -58,6 +64,44 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void handleRuntimeException_forbidden() {
+        ResponseEntity<Map<String, String>> response = handler.handleRuntimeException(new RuntimeException("Only consumers can checkout"));
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    }
+
+    @Test
+    void handleRuntimeException_conflict() {
+        ResponseEntity<Map<String, String>> response = handler.handleRuntimeException(new RuntimeException("Email already exists"));
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+    }
+
+    @Test
+    void handleRuntimeException_unauthorized_withNotAuthorisedMessage() {
+        ResponseEntity<Map<String, String>> response = handler.handleRuntimeException(new RuntimeException("User not authorised"));
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void handleRuntimeException_conflict_withDuplicateMessage() {
+        ResponseEntity<Map<String, String>> response = handler.handleRuntimeException(new RuntimeException("Duplicate account"));
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+    }
+
+    @Test
+    void handleRuntimeException_blankMessage_usesReasonPhrase() {
+        ResponseEntity<Map<String, String>> response = handler.handleRuntimeException(new RuntimeException("   "));
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals("Internal Server Error", response.getBody().get("error"));
+    }
+
+    @Test
+    void handleRuntimeException_nullMessage_usesReasonPhrase() {
+        ResponseEntity<Map<String, String>> response = handler.handleRuntimeException(new RuntimeException((String) null));
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals("Internal Server Error", response.getBody().get("error"));
+    }
+
+    @Test
     void handleResponseStatusException_propagatesStatus() {
         ResponseStatusException ex = new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
 
@@ -65,6 +109,76 @@ class GlobalExceptionHandlerTest {
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertEquals("Not authenticated", response.getBody().get("error"));
+    }
+
+    @Test
+    void handleResponseStatusException_unknownStatus_defaultsToBadRequest() {
+        ResponseStatusException ex = new ResponseStatusException(HttpStatusCode.valueOf(499), null);
+
+        ResponseEntity<Map<String, String>> response = handler.handleResponseStatusException(ex);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals(ex.getMessage(), response.getBody().get("error"));
+    }
+
+    @Test
+    void handleBadRequest_returnsBadRequest() {
+        ResponseEntity<Map<String, String>> response =
+            handler.handleBadRequest(new HttpMessageNotReadableException("Malformed JSON"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Malformed JSON", response.getBody().get("error"));
+    }
+
+    @Test
+    void handleBadRequest_withTypeMismatchException() {
+        ConversionFailedException conversionFailedException = new ConversionFailedException(
+            TypeDescriptor.valueOf(String.class),
+            TypeDescriptor.valueOf(Long.class),
+            "abc",
+            new IllegalArgumentException("invalid number")
+        );
+
+        ResponseEntity<Map<String, String>> response = handler.handleBadRequest(conversionFailedException);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals(conversionFailedException.getMessage(), response.getBody().get("error"));
+    }
+
+    @Test
+    void handleBadRequest_withMissingParameterException() {
+        MissingServletRequestParameterException exception = new MissingServletRequestParameterException("storeId", "Long");
+
+        ResponseEntity<Map<String, String>> response = handler.handleBadRequest(exception);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals(exception.getMessage(), response.getBody().get("error"));
+    }
+
+    @Test
+    void handleDataIntegrity_usesMostSpecificCauseMessage() {
+        DataIntegrityViolationException exception =
+            new DataIntegrityViolationException("conflict", new RuntimeException("duplicate key value"));
+
+        ResponseEntity<Map<String, String>> response = handler.handleDataIntegrity(exception);
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertEquals("duplicate key value", response.getBody().get("error"));
+    }
+
+    @Test
+    void handleDataIntegrity_fallsBackToExceptionMessageWhenCauseMissing() {
+        DataIntegrityViolationException exception = new DataIntegrityViolationException("conflict fallback") {
+            @Override
+            public Throwable getMostSpecificCause() {
+                return null;
+            }
+        };
+
+        ResponseEntity<Map<String, String>> response = handler.handleDataIntegrity(exception);
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertEquals("conflict fallback", response.getBody().get("error"));
     }
 
     @Test

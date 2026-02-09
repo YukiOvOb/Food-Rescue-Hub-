@@ -27,9 +27,9 @@ services:
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
       RECOMMENDATION_SERVICE_URL: ${RECOMMENDATION_SERVICE_URL:-http://13.228.183.177:5000}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
     ports:
@@ -41,6 +41,9 @@ services:
       - app-network
 
   frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
     image: bhava0807/frh-frontend:latest
     container_name: frh-frontend
     restart: unless-stopped

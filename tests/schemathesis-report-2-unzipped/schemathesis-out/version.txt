@@ -1,1 +1,0 @@
-schemathesis, version 3.39.16

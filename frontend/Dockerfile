@@ -23,7 +23,8 @@ RUN rm -rf /usr/share/nginx/html/* \
     && apk update \
     && apk upgrade --no-cache \
     && mkdir -p /tmp/nginx /var/cache/nginx \
-    && chown -R nginx:nginx /usr/share/nginx/html /etc/nginx/conf.d /tmp/nginx /var/cache/nginx
+    && chown -R nginx:nginx /usr/share/nginx/html /etc/nginx/conf.d /tmp/nginx /var/cache/nginx \
+    && sed -i 's|pid /var/run/nginx.pid;|pid /tmp/nginx.pid;|' /etc/nginx/nginx.conf
 
 # Copy built static files from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
@@ -48,4 +49,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD wget -q -O /dev/null http://127.0.0.1:8080/healthz || exit 1
 
 USER nginx
-CMD ["nginx", "-g", "pid /tmp/nginx.pid; daemon off;"]
+CMD ["nginx", "-g", "daemon off;"]
