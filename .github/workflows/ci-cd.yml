@@ -1668,6 +1668,10 @@ jobs:
 
             if [ -d .git ]; then
               git fetch --all --prune
+              if [ -n "$(git status --porcelain)" ]; then
+                echo "EC2 repo has local changes; stashing before deploy sync"
+                git stash push --include-untracked -m "ci-deploy-$(date -u +%Y%m%dT%H%M%SZ)" || true
+              fi
               git checkout main
               git pull --ff-only origin main
             else
