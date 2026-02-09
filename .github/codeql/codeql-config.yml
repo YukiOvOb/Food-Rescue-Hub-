@@ -7,10 +7,15 @@ paths-ignore:
   - '**/tests/**'
   - '**/*.test.js'
   - '**/*.test.jsx'
+  - '**/*.test.py'
   - '**/node_modules/**'
   - '**/target/**'
   - '**/build/**'
   - '**/dist/**'
+  - '**/__pycache__/**'
+  - '**/*.pyc'
+  - '**/venv/**'
+  - '**/.venv/**'
 
 # 指定要运行的查询套件
 queries:
