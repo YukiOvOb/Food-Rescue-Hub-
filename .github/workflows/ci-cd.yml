@@ -1567,16 +1567,29 @@ jobs:
         shell: bash
         run: |
           set -e
-          docker run --rm -t owasp/zap2docker-stable zap-baseline.py \
-            -t "${STAGING_URL}" \
-            -r zap-report.html || true
+          mkdir -p zap-out
+          docker pull ghcr.io/zaproxy/zaproxy:stable
+
+          docker run --rm \
+            --user 0:0 \
+            -v "$PWD/zap-out:/zap/wrk:rw" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py \
+              -t "${STAGING_URL}" \
+              -J report_json.json \
+              -w report_md.md \
+              -r report_html.html \
+              -a | tee zap-out/zap-console.log || true
+
+          echo "ZAP output files:"
+          ls -lah zap-out || true
 
       - name: Upload ZAP report
-        if: always() && env.STAGING_URL != '' && hashFiles('zap-report.html') != ''
+        if: always() && env.STAGING_URL != ''
         uses: actions/upload-artifact@v4
         with:
           name: zap-dast-report
-          path: zap-report.html
+          path: zap-out/
           if-no-files-found: warn
 
 
