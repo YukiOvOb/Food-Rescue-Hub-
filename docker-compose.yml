@@ -44,6 +44,7 @@ services:
     image: bhava0807/frh-frontend:latest
     container_name: frh-frontend
     restart: unless-stopped
+    command: ["nginx", "-g", "pid /tmp/nginx.pid; daemon off;"]
     depends_on:
       - backend
     networks:
