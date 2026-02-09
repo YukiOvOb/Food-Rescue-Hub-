@@ -49,6 +49,7 @@ jobs:
       run: |
         cd backend
         chmod +x ./mvnw
+        # Skip tests during build as CodeQL only needs compiled code, not test results
         ./mvnw clean install -DskipTests
 
     # JavaScript/TypeScript does not require compilation, CodeQL analyzes automatically
@@ -65,7 +66,11 @@ jobs:
       if: matrix.language == 'python'
       run: |
         cd ai_service
-        pip install -r requirements.txt
+        if [ -f requirements.txt ]; then
+          pip install -r requirements.txt
+        else
+          echo "Warning: requirements.txt not found, skipping dependency installation"
+        fi
 
     # Perform CodeQL Analysis
     - name: Perform CodeQL Analysis
