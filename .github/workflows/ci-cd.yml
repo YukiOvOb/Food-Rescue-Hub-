@@ -42,8 +42,8 @@ env:
   ANDROID_DIR: "android"
 
   # Local integration endpoints inside GitHub runner:
-  PROD_URL: "http://localhost:80"   # nginx port for production
-  BACKEND_LOCAL_URL: "http://localhost:8080"
+  PROD_URL: "http://13.228.183.177:80"   # nginx port for production
+  BACKEND_LOCAL_URL: "http://13.228.183.177:8080"
   OPENAPI_PATH: "/v3/api-docs"   # Swagger/OpenAPI (Spring Boot default)
   SMOKE_PATH: "/api/hello"       # change to your real endpoint
 
