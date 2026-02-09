@@ -1636,6 +1636,25 @@ jobs:
           rm -f "${KEYFILE}"
           exit 1
 
+      - name: Resolve deploy smoke target
+        id: deploy_target
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          RAW_URL="$(printf '%s' "${PROD_URL:-}" | tr -d '[:space:]')"
+          if [ -z "${RAW_URL}" ] || [ "${RAW_URL}" = "***" ]; then
+            RAW_URL="http://${EC2_HOST}"
+          fi
+
+          TARGET_URL="${RAW_URL%/}"
+          if [ -n "${TARGET_URL}" ] && [[ ! "${TARGET_URL}" =~ ^https?:// ]]; then
+            TARGET_URL="http://${TARGET_URL}"
+          fi
+
+          echo "target_url=${TARGET_URL}" >> "${GITHUB_OUTPUT}"
+          echo "Resolved deploy smoke target: ${TARGET_URL}"
+
       - name: Deploy via SSH
         if: env.EC2_HOST != '' && env.EC2_SSH_KEY != ''
         uses: appleboy/ssh-action@v1
@@ -1666,23 +1685,124 @@ jobs:
 
       - name: Post-deploy smoke test (wait & verify)
         shell: bash
+        env:
+          TARGET_URL: ${{ steps.deploy_target.outputs.target_url }}
         run: |
-          if [ -z "${PROD_URL}" ]; then
-            echo "PROD_URL not set -> skipping smoke test"
+          set -euo pipefail
+
+          if [ -z "${TARGET_URL}" ]; then
+            echo "Target URL not resolved -> skipping smoke test"
             exit 0
           fi
 
-          for i in {1..30}; do
-            if curl -fsS "${PROD_URL}${SMOKE_PATH}"; then
-              echo "App is up!"
-              exit 0
+          declare -a CANDIDATES=("${TARGET_URL}")
+          if [ -n "${EC2_HOST}" ]; then
+            CANDIDATES+=("http://${EC2_HOST}" "http://${EC2_HOST}:8080")
+          fi
+
+          declare -a TARGETS=()
+          for candidate in "${CANDIDATES[@]}"; do
+            candidate="${candidate%/}"
+            duplicate=0
+            for existing in "${TARGETS[@]}"; do
+              if [ "${existing}" = "${candidate}" ]; then
+                duplicate=1
+                break
+              fi
+            done
+            if [ "${duplicate}" -eq 0 ]; then
+              TARGETS+=("${candidate}")
             fi
+          done
+
+          echo "Smoke targets:"
+          for base in "${TARGETS[@]}"; do
+            echo " - ${base}${SMOKE_PATH}"
+          done
+
+          for i in {1..30}; do
+            for base in "${TARGETS[@]}"; do
+              if curl -fsS --connect-timeout 5 --max-time 15 --retry 1 --retry-connrefused "${base}${SMOKE_PATH}" >/dev/null; then
+                echo "App is up at ${base}${SMOKE_PATH}"
+                exit 0
+              fi
+            done
             echo "Waiting for app... ($i)"
             sleep 5
           done
 
-          echo "App never became ready"
+          echo "App never became ready from the GitHub runner."
+          echo "Check secret PROD_URL, EC2 Security Group ingress (TCP 80/8080), and container status on the host."
           exit 1
+
+      - name: Verify app on EC2 localhost
+        if: always() && env.EC2_HOST != '' && env.EC2_SSH_KEY != ''
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ubuntu
+          key: ${{ env.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd ~/Food-Rescue-Hub-
+
+            if [ -f docker-compose.yml ]; then
+              COMPOSE_FILE="docker-compose.yml"
+            elif [ -f compose.yml ]; then
+              COMPOSE_FILE="compose.yml"
+            else
+              echo "No compose file on server in ~/Food-Rescue-Hub-"
+              exit 1
+            fi
+
+            for i in {1..30}; do
+              if curl -fsS --connect-timeout 3 --max-time 10 "http://127.0.0.1${SMOKE_PATH}" >/dev/null; then
+                echo "EC2 localhost smoke passed via nginx"
+                exit 0
+              fi
+              if curl -fsS --connect-timeout 3 --max-time 10 "http://127.0.0.1:8080${SMOKE_PATH}" >/dev/null; then
+                echo "EC2 localhost smoke passed via backend"
+                exit 0
+              fi
+              echo "Waiting for local app on EC2... ($i)"
+              sleep 5
+            done
+
+            docker compose -f "${COMPOSE_FILE}" ps || true
+            docker compose -f "${COMPOSE_FILE}" logs --tail=80 nginx backend frontend mysql || true
+            exit 1
+
+      - name: Remote diagnostics on smoke failure
+        if: failure() && env.EC2_HOST != '' && env.EC2_SSH_KEY != ''
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ubuntu
+          key: ${{ env.EC2_SSH_KEY }}
+          script: |
+            set +e
+            cd ~/Food-Rescue-Hub-
+
+            if [ -f docker-compose.yml ]; then
+              COMPOSE_FILE="docker-compose.yml"
+            elif [ -f compose.yml ]; then
+              COMPOSE_FILE="compose.yml"
+            else
+              echo "No compose file on server in ~/Food-Rescue-Hub-"
+              exit 0
+            fi
+
+            echo "== docker compose ps =="
+            docker compose -f "${COMPOSE_FILE}" ps || true
+
+            echo "== localhost probe via nginx =="
+            curl -sS -i --connect-timeout 3 --max-time 10 "http://127.0.0.1${SMOKE_PATH}" | head -n 30 || true
+
+            echo "== localhost probe direct backend =="
+            curl -sS -i --connect-timeout 3 --max-time 10 "http://127.0.0.1:8080${SMOKE_PATH}" | head -n 30 || true
+
+            echo "== recent logs (nginx/backend/frontend/mysql) =="
+            docker compose -f "${COMPOSE_FILE}" logs --tail=80 nginx backend frontend mysql || true
   ci-metrics-summary:
       name: CI Metrics Summary (JSON)
       runs-on: ubuntu-latest
