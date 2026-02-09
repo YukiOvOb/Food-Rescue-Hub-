@@ -1768,6 +1768,15 @@ jobs:
           script: |
             set -e
             cd ~/Food-Rescue-Hub-
+            SMOKE_PATH="${{ env.SMOKE_PATH }}"
+            if [ -z "${SMOKE_PATH}" ]; then
+              SMOKE_PATH="/api/hello"
+            fi
+            case "${SMOKE_PATH}" in
+              /*) ;;
+              *) SMOKE_PATH="/${SMOKE_PATH}" ;;
+            esac
+            echo "Using local SMOKE_PATH=${SMOKE_PATH}"
 
             if [ -f docker-compose.yml ]; then
               COMPOSE_FILE="docker-compose.yml"
@@ -1805,6 +1814,15 @@ jobs:
           script: |
             set +e
             cd ~/Food-Rescue-Hub-
+            SMOKE_PATH="${{ env.SMOKE_PATH }}"
+            if [ -z "${SMOKE_PATH}" ]; then
+              SMOKE_PATH="/api/hello"
+            fi
+            case "${SMOKE_PATH}" in
+              /*) ;;
+              *) SMOKE_PATH="/${SMOKE_PATH}" ;;
+            esac
+            echo "Using local SMOKE_PATH=${SMOKE_PATH}"
 
             if [ -f docker-compose.yml ]; then
               COMPOSE_FILE="docker-compose.yml"
