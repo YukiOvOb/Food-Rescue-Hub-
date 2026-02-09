@@ -1666,13 +1666,32 @@ jobs:
             set -e
             cd ~/Food-Rescue-Hub-
 
+            if [ -d .git ]; then
+              git fetch --all --prune
+              git checkout main
+              git pull --ff-only origin main
+            else
+              echo "Directory ~/Food-Rescue-Hub- is not a git repository"
+              exit 1
+            fi
+
             if [ -f docker-compose.yml ]; then
               docker compose -f docker-compose.yml config >/dev/null
+              if ! docker compose -f docker-compose.yml config --services | grep -qx 'mysql'; then
+                echo "docker-compose.yml on EC2 does not contain required service: mysql"
+                docker compose -f docker-compose.yml config --services || true
+                exit 1
+              fi
               docker compose -f docker-compose.yml pull
               docker compose -f docker-compose.yml up -d
               docker compose -f docker-compose.yml ps
             elif [ -f compose.yml ]; then
               docker compose -f compose.yml config >/dev/null
+              if ! docker compose -f compose.yml config --services | grep -qx 'mysql'; then
+                echo "compose.yml on EC2 does not contain required service: mysql"
+                docker compose -f compose.yml config --services || true
+                exit 1
+              fi
               docker compose -f compose.yml pull
               docker compose -f compose.yml up -d
               docker compose -f compose.yml ps
