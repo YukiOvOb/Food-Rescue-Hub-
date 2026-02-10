@@ -364,11 +364,54 @@ jobs:
   sonarcloud:
     name: SonarCloud SAST
     runs-on: ubuntu-latest
-    needs: [backend-junit, python-tests, lint-code-quality]
+    needs: [detect, backend-junit, python-tests, lint-code-quality]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0   # REQUIRED
+
+      - name: Download JaCoCo report artifact (for coverage in Sonar)
+        if: needs.detect.outputs.has_backend == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: jacoco-report
+          path: .artifacts/jacoco-report
+
+      - name: Place JaCoCo XML where Sonar expects
+        if: needs.detect.outputs.has_backend == 'true'
+        shell: bash
+        run: |
+          set -e
+          # The artifact contains backend/target/site/jacoco/**
+          if [ -f ".artifacts/jacoco-report/backend/target/site/jacoco/jacoco.xml" ]; then
+            mkdir -p backend/target/site/jacoco
+            cp -r .artifacts/jacoco-report/backend/target/site/jacoco/* backend/target/site/jacoco/
+          else
+            echo "JaCoCo artifact missing jacoco.xml; Sonar coverage may be empty."
+          fi
+
+      - name: Download Python coverage artifact (for coverage in Sonar)
+        if: needs.detect.outputs.has_python_src == 'true'
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: python-test-reports
+          path: .artifacts/python-test-reports
+
+      - name: Place Python coverage reports where Sonar expects
+        if: needs.detect.outputs.has_python_src == 'true'
+        shell: bash
+        run: |
+          set -e
+          # The artifact contains ai_service/coverage.xml and ai_service/pytest-junit.xml
+          if [ -f ".artifacts/python-test-reports/ai_service/coverage.xml" ]; then
+            mkdir -p ai_service
+            cp -f .artifacts/python-test-reports/ai_service/coverage.xml ai_service/coverage.xml
+          fi
+          if [ -f ".artifacts/python-test-reports/ai_service/pytest-junit.xml" ]; then
+            mkdir -p ai_service
+            cp -f .artifacts/python-test-reports/ai_service/pytest-junit.xml ai_service/pytest-junit.xml
+          fi
 
       - name: Set up JDK 17 (for build)
         uses: actions/setup-java@v4
