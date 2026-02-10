@@ -15,6 +15,9 @@ interface ApiService {
     @POST("api/auth/login")
     suspend fun login(@Body loginRequest: LoginRequest): Response<User>
 
+    @POST("api/auth/register")
+    suspend fun register(@Body registerRequest: RegisterRequest): Response<User>
+
     @POST("api/auth/logout")
     suspend fun logout(): Response<Void>
 
@@ -159,4 +162,12 @@ interface ApiService {
      */
     @POST("api/mobile/checkout/start")
     suspend fun startCheckout(@Body request: CheckoutRequestDto): Response<CheckoutResponseDto>
+
+    // ==================== LISTING REVIEWS ====================
+
+    @POST("api/reviews")
+    suspend fun submitReview(@Body request: ReviewRequest): Response<ListingReview>
+
+    @GET("api/reviews/listing/{listingId}")
+    suspend fun getListingReviews(@Path("listingId") listingId: Long): Response<List<ListingReview>>
 }

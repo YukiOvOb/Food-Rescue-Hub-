@@ -2,6 +2,11 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    jacoco
+}
+
+jacoco {
+    toolVersion = "0.8.13"
 }
 
 android {
@@ -31,6 +36,10 @@ productFlavors {
     }
 
     buildTypes {
+        debug {
+            // Enables unit-test coverage data generation for JVM tests.
+            isTestCoverageEnabled = true
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -52,6 +61,52 @@ productFlavors {
         viewBinding = true
         buildConfig = true
     }
+}
+
+// ---- JaCoCo report for unit tests (devDebug) ----
+// Produces:
+// - app/build/reports/jacoco/jacocoDevDebugUnitTestReport/html/
+// - app/build/reports/jacoco/jacocoDevDebugUnitTestReport/jacocoDevDebugUnitTestReport.xml
+tasks.register<JacocoReport>("jacocoDevDebugUnitTestReport") {
+    dependsOn("testDevDebugUnitTest")
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+
+    val fileFilter = listOf(
+        "**/R.class",
+        "**/R\$*.class",
+        "**/BuildConfig.*",
+        "**/Manifest*.*",
+        "**/*Test*.*",
+        "android/**/*.*",
+        "**/*\$Companion*.*",
+        "**/*\$Lambda\$*.*",
+        "**/*\$inlined\$*.*"
+    )
+
+    val kotlinClasses = fileTree("$buildDir/tmp/kotlin-classes/devDebug") {
+        exclude(fileFilter)
+    }
+    val javaClasses = fileTree("$buildDir/intermediates/javac/devDebug/classes") {
+        exclude(fileFilter)
+    }
+
+    classDirectories.setFrom(files(kotlinClasses, javaClasses))
+    sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
+
+    executionData.setFrom(
+        fileTree(buildDir) {
+            include(
+                "jacoco/testDevDebugUnitTest.exec",
+                "outputs/unit_test_code_coverage/devDebugUnitTest/testDevDebugUnitTest.exec",
+                "outputs/unit_test_code_coverage/devDebugUnitTest/testDevDebugUnitTest.ec"
+            )
+        }
+    )
 }
 
 dependencies {

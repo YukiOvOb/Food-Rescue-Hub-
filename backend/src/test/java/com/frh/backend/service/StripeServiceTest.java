@@ -57,7 +57,7 @@ class StripeServiceTest {
             () -> service.createCheckoutSession(List.of(lineItem), "1,2")
         );
 
-        assertEquals("Stripe is not configured", ex.getMessage());
+        assertEquals("Stripe is not configured. Set STRIPE_SECRET_KEY.", ex.getMessage());
         assertEquals("Bread", lineItem.title);
         assertEquals(2, lineItem.quantity);
         assertEquals(new BigDecimal("3.50"), lineItem.unitPrice);

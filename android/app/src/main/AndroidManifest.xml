@@ -27,15 +27,15 @@
 
         <activity
             android:name=".MainActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.home.HomeActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.home.HomeActivity"
+            android:exported="false" />
 
         <!-- Payment Result Deep Link Handler -->
         <activity
@@ -72,9 +72,15 @@
         <activity android:name=".ui.checkout.CheckoutActivity" android:exported="false" android:label="Checkout" android:parentActivityName=".ui.cart.CartActivity" />
         <activity android:name=".ui.chatbot.ChatActivity" android:exported="false" android:label="Chatbot" android:parentActivityName=".ui.profile.ProfileActivity" />
         <activity
+            android:name=".ui.review.ReviewActivity"
+            android:exported="false"
+            android:label="Review Listing"
+            android:parentActivityName=".ui.orders.OrderDetailActivity" />
+        <activity
             android:name=".ui.checkout.PaymentWebViewActivity"
             android:exported="false"
             android:label="Secure Payment" />
+        <activity android:name=".ui.auth.RegisterActivity" android:exported="false" />
     </application>
 
 </manifest>
