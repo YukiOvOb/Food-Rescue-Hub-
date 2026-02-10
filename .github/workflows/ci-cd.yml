@@ -864,13 +864,139 @@ jobs:
 
 
   # =========================================================
+  # STAGE 2.4: IAST (OpenTelemetry-based, open-source)
+  # =========================================================
+
+  iast-opentelemetry:
+    name: IAST (OpenTelemetry runtime – open source)
+    runs-on: ubuntu-latest
+    needs: [detect, integration-tests]
+    if: >
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.detect.outputs.has_backend == 'true' &&
+      needs.detect.outputs.has_compose == 'true'
+    env:
+      MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || 'password' }}
+      IAST_COMPOSE_FILE: docker-compose.integration.yml
+    steps:
+      - uses: actions/checkout@v4
+
+      # Download OpenTelemetry Java agent (runner side)
+      - name: Prepare OpenTelemetry agent
+        run: |
+          mkdir -p otel
+          curl -L -o otel/opentelemetry-javaagent.jar \
+            https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
+
+      # Start application with Docker Compose (agent mounted via volume)
+      - name: Start application
+        run: docker compose -f "${IAST_COMPOSE_FILE}" up -d
+
+      # Wait for MySQL to be accepting connections after stack is started
+      - name: Wait for MySQL
+        shell: bash
+        run: |
+          set -e
+          echo "Waiting for MySQL container to be ready..."
+          for i in {1..60}; do
+            if docker compose -f "${IAST_COMPOSE_FILE}" exec -T mysql mysqladmin ping -h localhost -uroot -p"${MYSQL_ROOT_PASSWORD}" >/dev/null 2>&1; then
+              echo "MySQL is up"
+              exit 0
+            fi
+            echo "Waiting for MySQL... ($i)"
+            sleep 5
+          done
+          echo "MySQL did not become ready"
+          docker compose -f "${IAST_COMPOSE_FILE}" logs --no-color || true
+          exit 1
+
+      # Wait for backend
+      - name: Wait for backend
+        run: |
+          for i in {1..60}; do
+            if curl -fsS "${BACKEND_LOCAL_URL}${SMOKE_PATH}" >/dev/null; then
+              echo "Backend is up"
+              exit 0
+            fi
+            echo "Waiting for backend... ($i)"
+            sleep 5
+          done
+          docker compose -f "${IAST_COMPOSE_FILE}" logs
+          exit 1
+
+      # IAST-style attack probes (runtime execution)
+      - name: Run IAST probes
+        env:
+          BACKEND_LOCAL_URL: ${{ env.BACKEND_LOCAL_URL }}
+          SMOKE_PATH: ${{ env.SMOKE_PATH }}
+        run: |
+          set -euo pipefail
+          echo "IAST base URL: [${BACKEND_LOCAL_URL}] [${SMOKE_PATH}] -> ${BACKEND_LOCAL_URL}${SMOKE_PATH}"
+          if [ -z "${BACKEND_LOCAL_URL}" ]; then echo "BACKEND_LOCAL_URL not set"; exit 1; fi
+          if [ -z "${SMOKE_PATH}" ]; then echo "SMOKE_PATH not set"; exit 1; fi
+
+          base="${BACKEND_LOCAL_URL}${SMOKE_PATH}"
+
+          # URL-encoded payloads to avoid spaces/quotes in raw URL
+          p1="%27%20OR%20%271%27%3D%271%27"          # ' OR '1'='1
+          p2="..%2F..%2Fetc%2Fpasswd"                  # ../../etc/passwd
+          p3="%3Cscript%3Ealert(1)%3C%2Fscript%3E"    # <script>alert(1)</script>
+
+          echo "Probing: ${base}?x=${p1}"
+          curl --fail --show-error --silent -- "${base}?x=${p1}" || true
+
+          echo "Probing: ${base}?file=${p2}"
+          curl --fail --show-error --silent -- "${base}?file=${p2}" || true
+
+          echo "Probing: ${base}?name=${p3}"
+          curl --fail --show-error --silent -- "${base}?name=${p3}" || true
+
+      # Collect runtime logs
+      - name: Collect runtime logs
+        if: always()
+        run: |
+          mkdir -p iast-out
+          docker compose -f "${IAST_COMPOSE_FILE}" logs --no-color > iast-out/runtime.log
+
+      # Detect runtime security indicators (real signals)
+      - name: Detect runtime security findings
+        run: |
+          if grep -Ei \
+            "SQLSyntaxErrorException|SQLException.*' OR|HibernateException|FileNotFoundException.*\.\./|Whitelabel Error Page|path traversal|directory traversal|NullPointerException|ClassCastException.*XSS|eval\(|<script>" \
+            iast-out/runtime.log; then
+            echo "IAST runtime issue detected"
+            exit 1
+          fi
+          echo "No runtime security indicators detected"
+
+      - name: Upload IAST evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iast-opentelemetry-report
+          path: iast-out
+
+      - name: Stop stack
+        if: always()
+        run: docker compose -f "${IAST_COMPOSE_FILE}" down -v
+
+
+  # =========================================================
   # STAGE 2.5: Selenium Functional Pre-Validation
   # =========================================================
   selenium-functional-test:
     name: Selenium Functional Test (Pre-Load Validation)
     runs-on: ubuntu-latest
-    needs: [detect, integration-tests]
-    if: needs.detect.outputs.has_backend == 'true'
+    needs: [detect, integration-tests, iast-opentelemetry]
+    if: >
+      always() &&
+      needs.detect.outputs.has_backend == 'true' &&
+      needs.integration-tests.result == 'success' &&
+      (
+        github.ref != 'refs/heads/main' ||
+        needs.iast-opentelemetry.result == 'success'
+      )
     env:
       STAGING_URL: "http://localhost:80"
       BACKEND_LOCAL_URL: "http://localhost:8080"
@@ -916,14 +1042,14 @@ jobs:
       - name: Wait for backend
         run: |
           for i in {1..60}; do
-            if curl -fsS "${{ steps.jmeter_target.outputs.target_url }}/api/hello" >/dev/null; then
+            if curl -fsS "${BACKEND_LOCAL_URL}${SMOKE_PATH}" >/dev/null; then
               echo "Backend is ready"
               exit 0
             fi
             echo "Waiting for backend... ($i)"
             sleep 5
           done
-          docker compose logs
+          docker compose -f docker-compose.integration.yml logs
           exit 1
 
       - name: Run Selenium functional tests
@@ -1289,122 +1415,6 @@ jobs:
           COMPOSE_FILE="${{ steps.local_stack.outputs.compose_file }}"
           docker compose -f "${COMPOSE_FILE}" down -v
 
-
-  # =========================================================
-  # STAGE 3: IAST (OpenTelemetry-based, open-source)
-  # =========================================================
-
-  iast-opentelemetry:
-    name: IAST (OpenTelemetry runtime – open source)
-    runs-on: ubuntu-latest
-    needs: [image-scan-trivy]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    env:
-      MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || 'password' }}
-      IAST_COMPOSE_FILE: docker-compose.integration.yml
-    steps:
-      - uses: actions/checkout@v4
-
-      # Download OpenTelemetry Java agent (runner side)
-      - name: Prepare OpenTelemetry agent
-        run: |
-          mkdir -p otel
-          curl -L -o otel/opentelemetry-javaagent.jar \
-            https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
-
-      # Start application with Docker Compose (agent mounted via volume)
-      - name: Start application
-        run: docker compose -f "${IAST_COMPOSE_FILE}" up -d
-
-      # Wait for MySQL to be accepting connections after stack is started
-      - name: Wait for MySQL
-        shell: bash
-        run: |
-          set -e
-          echo "Waiting for MySQL container to be ready..."
-          for i in {1..60}; do
-            if docker compose -f "${IAST_COMPOSE_FILE}" exec -T mysql mysqladmin ping -h localhost -uroot -p"${MYSQL_ROOT_PASSWORD}" >/dev/null 2>&1; then
-              echo "MySQL is up"
-              exit 0
-            fi
-            echo "Waiting for MySQL... ($i)"
-            sleep 5
-          done
-          echo "MySQL did not become ready"
-          docker compose -f "${IAST_COMPOSE_FILE}" logs --no-color || true
-          exit 1
-
-      # Wait for backend
-      - name: Wait for backend
-        run: |
-          for i in {1..60}; do
-            if curl -fsS "${BACKEND_LOCAL_URL}${SMOKE_PATH}" >/dev/null; then
-              echo "Backend is up"
-              exit 0
-            fi
-            echo "Waiting for backend... ($i)"
-            sleep 5
-          done
-          docker compose -f "${IAST_COMPOSE_FILE}" logs
-          exit 1
-
-      # IAST-style attack probes (runtime execution)
-      - name: Run IAST probes
-        env:
-          BACKEND_LOCAL_URL: ${{ env.BACKEND_LOCAL_URL }}
-          SMOKE_PATH: ${{ env.SMOKE_PATH }}
-        run: |
-          set -euo pipefail
-          echo "IAST base URL: [${BACKEND_LOCAL_URL}] [${SMOKE_PATH}] -> ${BACKEND_LOCAL_URL}${SMOKE_PATH}"
-          if [ -z "${BACKEND_LOCAL_URL}" ]; then echo "BACKEND_LOCAL_URL not set"; exit 1; fi
-          if [ -z "${SMOKE_PATH}" ]; then echo "SMOKE_PATH not set"; exit 1; fi
-
-          base="${BACKEND_LOCAL_URL}${SMOKE_PATH}"
-
-          # URL-encoded payloads to avoid spaces/quotes in raw URL
-          p1="%27%20OR%20%271%27%3D%271%27"          # ' OR '1'='1
-          p2="..%2F..%2Fetc%2Fpasswd"                  # ../../etc/passwd
-          p3="%3Cscript%3Ealert(1)%3C%2Fscript%3E"    # <script>alert(1)</script>
-
-          echo "Probing: ${base}?x=${p1}"
-          curl --fail --show-error --silent -- "${base}?x=${p1}" || true
-
-          echo "Probing: ${base}?file=${p2}"
-          curl --fail --show-error --silent -- "${base}?file=${p2}" || true
-
-          echo "Probing: ${base}?name=${p3}"
-          curl --fail --show-error --silent -- "${base}?name=${p3}" || true
-
-      # Collect runtime logs
-      - name: Collect runtime logs
-        if: always()
-        run: |
-          mkdir -p iast-out
-          docker compose -f "${IAST_COMPOSE_FILE}" logs --no-color > iast-out/runtime.log
-
-      # Detect runtime security indicators (real signals)
-      - name: Detect runtime security findings
-        run: |
-          if grep -Ei \
-            "SQLSyntaxErrorException|SQLException.*' OR|HibernateException|FileNotFoundException.*\.\./|Whitelabel Error Page|path traversal|directory traversal|NullPointerException|ClassCastException.*XSS|eval\(|<script>" \
-            iast-out/runtime.log; then
-            echo "IAST runtime issue detected"
-            exit 1
-          fi
-          echo "No runtime security indicators detected"
-
-      - name: Upload IAST evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: iast-opentelemetry-report
-          path: iast-out
-
-      - name: Stop stack
-        if: always()
-        run: docker compose -f "${IAST_COMPOSE_FILE}" down -v
-
-
   # =========================================================
   # STAGE 3: Build & Push Docker Images (main only)
   # =========================================================
@@ -1520,7 +1530,7 @@ jobs:
   perf-k6:
     name: Performance (k6) - optional
     runs-on: ubuntu-latest
-    needs: [iast-opentelemetry]
+    needs: [iast-opentelemetry, image-scan-trivy]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
       STAGING_URL: ${{ secrets.STAGING_URL }}

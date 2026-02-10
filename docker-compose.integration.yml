@@ -11,7 +11,7 @@ services:
       test: ["CMD-SHELL", "MYSQL_PWD=$${MYSQL_ROOT_PASSWORD} mysqladmin ping -h localhost -uroot --silent"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 20
     networks:
       - app-network
 
