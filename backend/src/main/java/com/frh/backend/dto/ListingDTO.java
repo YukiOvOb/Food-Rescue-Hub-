@@ -36,6 +36,12 @@ public class ListingDTO {
     // Store type/category
     private String category;
 
+    //CO2 TRACKING
+    private List<Long> categoryIds;
+    private List<String> categoryNames;
+    private List<ListingCategoryWeightDTO> categoryWeights;
+    private BigDecimal estimatedWeightKg;
+
     // Inventory
     private Integer qtyAvailable;
     private Integer qtyReserved;

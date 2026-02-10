@@ -1,9 +1,10 @@
 package com.frh.backend.controller;
 
 import com.frh.backend.Model.Listing;
-import com.frh.backend.Model.Store;
+import com.frh.backend.dto.ListingDTO;
 import com.frh.backend.repository.ListingRepository;
 import com.frh.backend.repository.StoreRepository;
+import com.frh.backend.service.ListingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,33 +26,30 @@ public class ListingController {
     @Autowired
     private StoreRepository storeRepository;
 
+    @Autowired
+    private ListingService listingService;
+
     // ==========================================
     // CREATE
     // expects: POST /api/supplier/listings?storeId=1
     // body: Listing JSON (title, prices, pickupStart, pickupEnd, expiryAt, ...)
     // ==========================================
-@PostMapping
-public ResponseEntity<?> createListing(
-        @RequestParam(name = "storeId", required = false) Long storeId,
-        @RequestBody Listing listing) {
+    @PostMapping
+    public ResponseEntity<?> createListing(
+            @RequestParam(name = "storeId", required = false) Long storeId,
+            @RequestBody ListingDTO listingDto) {
 
-    List<String> errors = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
 
-    // 1) Validate / resolve store
-    if (storeId == null) {
-        errors.add("Store is required");
-    } else {
-        Optional<Store> storeOpt = storeRepository.findById(storeId);
-        if (storeOpt.isEmpty()) {
+        // 1) Validate store
+        if (storeId == null) {
+            errors.add("Store is required");
+        } else if (!storeRepository.existsById(storeId)) {
             errors.add("Store not found with id: " + storeId);
-        } else {
-            // attach store to listing so it can be persisted
-            listing.setStore(storeOpt.get());
         }
-    }
 
-    // 2) Validate listing fields (title, prices, pickup window, expiry)
-    errors.addAll(validateListing(listing));
+        // 2) Validate listing fields (title, prices, pickup window, expiry)
+        errors.addAll(validateListingDto(listingDto));
 
     if (!errors.isEmpty()) {
         // 400 with validation messages
@@ -60,7 +58,7 @@ public ResponseEntity<?> createListing(
 
     // 3) Save – catch DB errors so they become readable 400s instead of generic 500
     try {
-        Listing savedListing = listingRepository.save(listing);
+        ListingDTO savedListing = listingService.createListing(listingDto, storeId);
         return ResponseEntity.ok(savedListing);
 
     } catch (DataIntegrityViolationException ex) {
@@ -88,8 +86,8 @@ public ResponseEntity<?> createListing(
     // READ ALL BY SUPPLIER
     // ==========================================
     @GetMapping("/supplier/{supplierId}")
-    public ResponseEntity<List<Listing>> getListingsBySupplier(@PathVariable Long supplierId) {
-        List<Listing> listings = listingRepository.findByStore_SupplierProfile_SupplierId(supplierId);
+    public ResponseEntity<List<ListingDTO>> getListingsBySupplier(@PathVariable Long supplierId) {
+        List<ListingDTO> listings = listingService.getListingsBySupplier(supplierId);
         return ResponseEntity.ok(listings);
     }
 
@@ -203,6 +201,55 @@ public ResponseEntity<?> createListing(
 
         // expiry must be after pickup end
         if (listing.getExpiryAt().isBefore(listing.getPickupEnd())) {
+            errors.add("Expiry time must be after pickup end time");
+        }
+
+        return errors;
+    }
+
+    private List<String> validateListingDto(ListingDTO listingDto) {
+        List<String> errors = new ArrayList<>();
+
+        if (listingDto.getTitle() == null || listingDto.getTitle().trim().isEmpty()) {
+            errors.add("Title is required");
+        }
+        if (listingDto.getOriginalPrice() == null) {
+            errors.add("Original price is required");
+        } else if (listingDto.getOriginalPrice().doubleValue() <= 0) {
+            errors.add("Original price must be greater than 0");
+        }
+        if (listingDto.getRescuePrice() == null) {
+            errors.add("Rescue price is required");
+        } else if (listingDto.getRescuePrice().doubleValue() < 0) {
+            errors.add("Rescue price cannot be negative");
+        }
+        if (listingDto.getPickupStart() == null) {
+            errors.add("Pickup start time is required");
+        }
+        if (listingDto.getPickupEnd() == null) {
+            errors.add("Pickup end time is required");
+        }
+        if (listingDto.getExpiryAt() == null) {
+            errors.add("Expiry time is required");
+        }
+
+        if (!errors.isEmpty()) {
+            return errors;
+        }
+
+        if (listingDto.getRescuePrice().compareTo(listingDto.getOriginalPrice()) >= 0) {
+            errors.add("Rescue price must be lower than original price");
+        }
+
+        if (listingDto.getPickupStart().isBefore(LocalDateTime.now())) {
+            errors.add("Pickup start time must be in the future");
+        }
+
+        if (listingDto.getPickupEnd().isBefore(listingDto.getPickupStart())) {
+            errors.add("Pickup end time cannot be before start time");
+        }
+
+        if (listingDto.getExpiryAt().isBefore(listingDto.getPickupEnd())) {
             errors.add("Expiry time must be after pickup end time");
         }
 
