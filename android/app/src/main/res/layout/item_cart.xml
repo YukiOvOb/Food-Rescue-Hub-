@@ -1,151 +1,127 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="2dp">
+    android:orientation="horizontal"
+    android:padding="16dp"
+    android:gravity="center_vertical">
 
+    <!-- Product Image - Circular like reference -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        app:cardCornerRadius="35dp"
+        app:cardElevation="0dp"
+        app:cardBackgroundColor="#FFFFFF">
+
+        <ImageView
+            android:id="@+id/ivCartItemImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="Cart Item Image"
+            android:scaleType="centerCrop"
+            tools:src="@drawable/ic_launcher_foreground" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Item Details -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="12dp">
+        android:layout_weight="1"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:orientation="vertical">
 
-        <!-- Item Image -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="0dp">
-
-            <ImageView
-                android:id="@+id/ivCartItemImage"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="Item Image"
-                android:scaleType="centerCrop"
-                tools:src="@drawable/ic_launcher_foreground" />
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Item Details -->
-        <LinearLayout
-            android:layout_width="0dp"
+        <!-- Item Title -->
+        <TextView
+            android:id="@+id/tvCartItemTitle"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:textColor="#1A1A1A"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="Melting Cheese Pizza" />
 
-            <!-- Title and Remove Button -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+        <!-- Store Name -->
+        <TextView
+            android:id="@+id/tvCartStoreName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="#999999"
+            android:textSize="12sp"
+            tools:text="Pizza Italiano" />
 
-                <TextView
-                    android:id="@+id/tvCartItemTitle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:ellipsize="end"
-                    android:maxLines="2"
-                    android:textColor="#000000"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    tools:text="Bakery Mystery Box" />
+        <!-- Price -->
+        <TextView
+            android:id="@+id/tvCartItemPrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="#1A1A1A"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            tools:text="$11.88" />
 
-                <ImageButton
-                    android:id="@+id/btnRemoveItem"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Remove Item"
-                    android:padding="4dp"
-                    android:src="@android:drawable/ic_menu_delete"
-                    android:tint="#FF5252" />
-            </LinearLayout>
+        <!-- Hidden Subtotal (required by adapter) -->
+        <TextView
+            android:id="@+id/tvCartSubtotal"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/tvCartStoreName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textColor="#666666"
-                android:textSize="12sp"
-                tools:text="Bhawna Bakery" />
-
-            <TextView
-                android:id="@+id/tvCartItemPrice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textColor="#8BC34A"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                tools:text="$5.99" />
-
-            <!-- Quantity Control -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@android:drawable/dialog_holo_light_frame"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingStart="4dp"
-                    android:paddingEnd="4dp">
-
-                    <ImageButton
-                        android:id="@+id/btnDecreaseQuantity"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Decrease"
-                        android:src="@android:drawable/ic_delete"
-                        android:tint="#666666" />
-
-                    <TextView
-                        android:id="@+id/tvCartQuantity"
-                        android:layout_width="40dp"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:textColor="#000000"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        tools:text="1" />
-
-                    <ImageButton
-                        android:id="@+id/btnIncreaseQuantity"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Increase"
-                        android:src="@android:drawable/ic_input_add"
-                        android:tint="#666666" />
-                </LinearLayout>
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/tvCartSubtotal"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="#000000"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    tools:text="$11.98" />
-            </LinearLayout>
-        </LinearLayout>
+        <!-- Hidden Remove Button (required by adapter) -->
+        <ImageButton
+            android:id="@+id/btnRemoveItem"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            android:contentDescription="Remove Item" />
     </LinearLayout>
-</com.google.android.material.card.MaterialCardView>
+
+    <!-- Quantity Controls - Exactly like reference -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/cart_quantity_background">
+
+        <!-- Decrease Button -->
+        <ImageButton
+            android:id="@+id/btnDecreaseQuantity"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Decrease"
+            android:src="@android:drawable/ic_delete"
+            android:tint="#FFFFFF"
+            android:padding="8dp" />
+
+        <!-- Quantity -->
+        <TextView
+            android:id="@+id/tvCartQuantity"
+            android:layout_width="32dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="#FFFFFF"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            tools:text="1" />
+
+        <!-- Increase Button -->
+        <ImageButton
+            android:id="@+id/btnIncreaseQuantity"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Increase"
+            android:src="@android:drawable/ic_input_add"
+            android:tint="#FFFFFF"
+            android:padding="8dp" />
+    </LinearLayout>
+</LinearLayout>
