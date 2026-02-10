@@ -11,7 +11,7 @@ public class Review {
     private Long id;
 
     private int rating; // 1 to 5
-    private String comment; // 评语
+    private String comment;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 

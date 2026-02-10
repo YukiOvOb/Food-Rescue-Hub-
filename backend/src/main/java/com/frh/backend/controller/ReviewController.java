@@ -39,7 +39,7 @@ public class ReviewController {
     // all users can get comment
     @GetMapping("/list/{listingId}")
     public ResponseEntity<?> getReviewsByListing(@PathVariable Long listingId) {
-        // 如果这里报错，请检查 ReviewRepository 里有没有 findByListing_ListingId 方法
+
         List<Review> reviews = reviewRepository.findByListing_ListingId(listingId);
         return ResponseEntity.ok(reviews);
     }
