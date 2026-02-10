@@ -14,6 +14,7 @@
 
         <!-- Top Bar -->
         <RelativeLayout
+            android:layout_marginTop="40dp"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:background="#FFFFFF"
@@ -29,7 +30,7 @@
                 android:background="@drawable/circle_background"
                 android:contentDescription="Back"
                 android:src="@android:drawable/ic_menu_close_clear_cancel"
-                android:tint="#000000" />
+                app:tint="#000000" />
 
             <ImageButton
                 android:id="@+id/btnShare"
@@ -40,7 +41,7 @@
                 android:background="@drawable/circle_background"
                 android:contentDescription="Share"
                 android:src="@android:drawable/ic_menu_share"
-                android:tint="#000000" />
+                app:tint="#000000" />
         </RelativeLayout>
 
         <!-- Product Image -->
@@ -93,7 +94,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="20dp"
+                    android:layout_marginBottom="12dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
 
@@ -142,7 +143,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="24dp"
+                    android:layout_marginBottom="12dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
 
@@ -151,7 +152,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textColor="#1A1A1A"
-                        android:textSize="36sp"
+                        android:textSize="30sp"
                         android:textStyle="bold"
                         tools:text="$5.99" />
 
@@ -176,15 +177,18 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="24dp"
+                    android:layout_marginBottom="20dp"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="0dp"
-                    app:cardBackgroundColor="#F8F9FA">
+                    android:background="@drawable/savings_badge_background"
+                    app:cardBackgroundColor="#F8F9FA"
+                    >
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
+                        android:layout_marginTop="4dp"
                         android:padding="20dp">
 
                         <!-- Pickup Window & Contents -->
@@ -312,7 +316,6 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
                     android:text="Reliability"
                     android:textColor="#1A1A1A"
                     android:textSize="20sp"
@@ -321,7 +324,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="24dp"
+                    android:layout_marginBottom="8dp"
                     android:orientation="horizontal"
                     android:background="@drawable/reliability_background"
                     android:padding="20dp">
@@ -338,12 +341,12 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="😊"
-                            android:textSize="36sp" />
+                            android:textSize="30sp" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginTop="4dp"
                             android:text="Listing accuracy"
                             android:textColor="#999999"
                             android:textSize="12sp"
@@ -353,7 +356,6 @@
                             android:id="@+id/tvListingAccuracy"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
                             android:textColor="#1A1A1A"
                             android:textSize="20sp"
                             android:textStyle="bold"
@@ -372,12 +374,12 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="⏰"
-                            android:textSize="36sp" />
+                            android:textSize="30sp" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginTop="4dp"
                             android:text="On-time pickup"
                             android:textColor="#999999"
                             android:textSize="12sp"
@@ -387,7 +389,6 @@
                             android:id="@+id/tvOnTimePickup"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
                             android:textColor="#1A1A1A"
                             android:textSize="20sp"
                             android:textStyle="bold"
