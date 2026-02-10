@@ -43,6 +43,9 @@ public class Listing {
     @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ListingPhoto> photos = new ArrayList<>();
 
+    @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ListingFoodCategory> listingFoodCategories = new ArrayList<>();
+
     // --- Basic Details ---
 
     @Column(name = "title", nullable = false, length = 200)
@@ -50,6 +53,9 @@ public class Listing {
 
     @Column(name = "description", length = 800)
     private String description;
+
+    @Column(name = "estimated_weight_kg", precision = 10, scale = 3)
+    private BigDecimal estimatedWeightKg;
 
     // --- Pricing ---
     // Using BigDecimal for currency is best practice to avoid floating point errors.

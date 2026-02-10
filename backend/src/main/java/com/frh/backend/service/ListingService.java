@@ -1,23 +1,36 @@
 package com.frh.backend.service;
 
 import com.frh.backend.Model.Listing;
+import com.frh.backend.Model.ListingFoodCategory;
 import com.frh.backend.Model.ListingPhoto;
+import com.frh.backend.dto.ListingCategoryWeightDTO;
 import com.frh.backend.dto.ListingDTO;
+import com.frh.backend.repository.FoodCategoryRepository;
 import com.frh.backend.repository.ListingRepository;
+import com.frh.backend.repository.StoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import java.math.BigDecimal;
 
 @Service
 public class ListingService {
 
     @Autowired
     private ListingRepository listingRepository;
+
+    @Autowired
+    private FoodCategoryRepository foodCategoryRepository;
+
+    @Autowired
+    private StoreRepository storeRepository;
 
     /**
      * Get all active listings with available inventory
@@ -42,6 +55,17 @@ public class ListingService {
             radius = 5.0; // Default 5km radius
         }
         List<Listing> listings = listingRepository.findNearbyListings(lat, lng, radius);
+        return listings.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get listings for a supplier (DTO-safe)
+     */
+    @Transactional(readOnly = true)
+    public List<ListingDTO> getListingsBySupplier(Long supplierId) {
+        List<Listing> listings = listingRepository.findByStore_SupplierProfile_SupplierId(supplierId);
         return listings.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -111,6 +135,28 @@ public class ListingService {
             dto.setPhotoUrls(photoUrls);
         }
 
+        // Map the CO2 categories to the DTO
+        if (listing.getListingFoodCategories() != null) {
+            dto.setCategoryIds(listing.getListingFoodCategories().stream()
+                    .map(lfc -> lfc.getCategory().getId())
+                    .collect(Collectors.toList()));
+
+            dto.setCategoryNames(listing.getListingFoodCategories().stream()
+                    .map(lfc -> lfc.getCategory().getName())
+                    .collect(Collectors.toList()));
+
+            dto.setCategoryWeights(listing.getListingFoodCategories().stream()
+                    .map(lfc -> {
+                        ListingCategoryWeightDTO w = new ListingCategoryWeightDTO();
+                        w.setCategoryId(lfc.getCategory().getId());
+                        w.setCategoryName(lfc.getCategory().getName());
+                        w.setWeightKg(lfc.getWeightKg());
+                        return w;
+                    })
+                    .collect(Collectors.toList()));
+        }
+        dto.setEstimatedWeightKg(listing.getEstimatedWeightKg());
+
         // Calculated fields
         dto.setTimeRemaining(calculateTimeRemaining(listing.getPickupEnd()));
         dto.setSavingsAmount(listing.getOriginalPrice().subtract(listing.getRescuePrice()));
@@ -153,5 +199,77 @@ public class ListingService {
         } else {
             return minutes + "m left";
         }
+    }
+
+    @Transactional
+    public ListingDTO createListing(ListingDTO dto, Long storeId) {
+        Listing listing = new Listing();
+
+        // 1. Map fields from DTO
+        listing.setTitle(dto.getTitle());
+        listing.setDescription(dto.getDescription());
+        listing.setOriginalPrice(dto.getOriginalPrice());
+        listing.setRescuePrice(dto.getRescuePrice());
+        listing.setPickupStart(dto.getPickupStart());
+        listing.setPickupEnd(dto.getPickupEnd());
+        listing.setExpiryAt(dto.getExpiryAt());
+        listing.setEstimatedWeightKg(dto.getEstimatedWeightKg());
+
+        // 2. Map the Food Categories for CO2 tracking (per-category weights)
+        if (dto.getCategoryWeights() != null && !dto.getCategoryWeights().isEmpty()) {
+            List<Long> ids = dto.getCategoryWeights().stream()
+                    .map(ListingCategoryWeightDTO::getCategoryId)
+                    .distinct()
+                    .collect(Collectors.toList());
+            Map<Long, com.frh.backend.Model.FoodCategory> categoryMap = foodCategoryRepository.findAllById(ids).stream()
+                    .collect(Collectors.toMap(com.frh.backend.Model.FoodCategory::getId, c -> c));
+
+            List<ListingFoodCategory> links = new ArrayList<>();
+            BigDecimal totalWeight = BigDecimal.ZERO;
+
+            for (ListingCategoryWeightDTO item : dto.getCategoryWeights()) {
+                if (item.getCategoryId() == null) continue;
+                com.frh.backend.Model.FoodCategory category = categoryMap.get(item.getCategoryId());
+                if (category == null) continue;
+
+                ListingFoodCategory link = new ListingFoodCategory();
+                link.setListing(listing);
+                link.setCategory(category);
+                link.setWeightKg(item.getWeightKg());
+                links.add(link);
+
+                if (item.getWeightKg() != null) {
+                    totalWeight = totalWeight.add(item.getWeightKg());
+                }
+            }
+
+            listing.setListingFoodCategories(links);
+            if (totalWeight.compareTo(BigDecimal.ZERO) > 0) {
+                listing.setEstimatedWeightKg(totalWeight);
+            }
+        } else if (dto.getCategoryIds() != null && !dto.getCategoryIds().isEmpty()) {
+            List<com.frh.backend.Model.FoodCategory> categories = foodCategoryRepository.findAllById(dto.getCategoryIds());
+            List<ListingFoodCategory> links = new ArrayList<>();
+            for (com.frh.backend.Model.FoodCategory category : categories) {
+                ListingFoodCategory link = new ListingFoodCategory();
+                link.setListing(listing);
+                link.setCategory(category);
+                link.setWeightKg(null);
+                links.add(link);
+            }
+            listing.setListingFoodCategories(links);
+        }
+
+        // 3. Initialize Inventory via your existing helper
+        listing.setAvailableQty(dto.getQtyAvailable() != null ? dto.getQtyAvailable() : 1);
+
+        // 4. Link to Store
+        if (storeId == null) {
+            throw new IllegalArgumentException("Store is required");
+        }
+        listing.setStore(storeRepository.getReferenceById(storeId));
+
+        Listing savedListing = listingRepository.save(listing);
+        return convertToDTO(savedListing);
     }
 }

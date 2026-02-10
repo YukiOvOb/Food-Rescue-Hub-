@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpSession;
@@ -242,6 +243,29 @@ class CartServiceTest {
     }
 
     @Test
+    void updateQuantity_positive_updatesItemAndReturnsCart() {
+        MockHttpSession session = consumerSession(1L);
+        ConsumerProfile consumer = consumer(1L);
+        Store store = store(10L, "Store A");
+        Listing listing = listing(9L, store, "Rice", new BigDecimal("8.00"), new BigDecimal("5.00"));
+        Cart activeCart = cart(901L, consumer, store);
+        CartItem existing = cartItem(activeCart, listing, 2);
+
+        when(consumerProfileRepository.findById(1L)).thenReturn(Optional.of(consumer));
+        when(cartRepository.findFirstByConsumer_ConsumerIdAndStatusOrderByCreatedAtDesc(1L, "ACTIVE"))
+            .thenReturn(Optional.of(activeCart));
+        when(cartItemRepository.findByCart_CartIdAndListing_ListingId(901L, 9L)).thenReturn(Optional.of(existing));
+        when(cartItemRepository.save(any(CartItem.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(cartItemRepository.findByCart_CartId(901L)).thenReturn(List.of(existing));
+
+        CartResponseDto result = cartService.updateQuantity(session, 9L, 4);
+
+        assertEquals(4, existing.getQuantity());
+        assertEquals(1, result.getItems().size());
+        assertEquals(4, result.getItems().get(0).getQty());
+    }
+
+    @Test
     void removeItem_notFound_throwsNotFound() {
         MockHttpSession session = consumerSession(1L);
         ConsumerProfile consumer = consumer(1L);
@@ -258,6 +282,30 @@ class CartServiceTest {
         );
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void removeItem_whenCartStillHasItems_keepsStore() {
+        MockHttpSession session = consumerSession(1L);
+        ConsumerProfile consumer = consumer(1L);
+        Store store = store(10L, "Store A");
+        Listing listing = listing(9L, store, "Rice", new BigDecimal("8.00"), new BigDecimal("5.00"));
+        Cart activeCart = cart(1001L, consumer, store);
+        CartItem removedItem = cartItem(activeCart, listing, 1);
+        CartItem remainingItem = cartItem(activeCart, listing, 2);
+
+        when(consumerProfileRepository.findById(1L)).thenReturn(Optional.of(consumer));
+        when(cartRepository.findFirstByConsumer_ConsumerIdAndStatusOrderByCreatedAtDesc(1L, "ACTIVE"))
+            .thenReturn(Optional.of(activeCart));
+        when(cartItemRepository.findByCart_CartIdAndListing_ListingId(1001L, 9L)).thenReturn(Optional.of(removedItem));
+        when(cartItemRepository.findByCart_CartId(1001L)).thenReturn(List.of(remainingItem), List.of(remainingItem));
+
+        CartResponseDto result = cartService.removeItem(session, 9L);
+
+        verify(cartItemRepository).delete(removedItem);
+        verify(cartRepository, never()).save(any(Cart.class));
+        assertEquals(10L, result.getSupplierId());
+        assertFalse(result.getItems().isEmpty());
     }
 
     @Test
@@ -281,6 +329,69 @@ class CartServiceTest {
         assertNull(cartCaptor.getValue().getStore());
         assertNull(result.getSupplierId());
         assertTrueEmpty(result.getItems().isEmpty());
+    }
+
+    @Test
+    void addItem_existingStoreSameAsListing_allowsAdd() {
+        MockHttpSession session = consumerSession(1L);
+        ConsumerProfile consumer = consumer(1L);
+        Store store = store(10L, "Store A");
+        Listing listing = listing(8L, store, "Salad", new BigDecimal("12.00"), new BigDecimal("7.00"));
+        Cart activeCart = cart(1300L, consumer, store);
+        CartItem saved = cartItem(activeCart, listing, 1);
+
+        when(listingRepository.findById(8L)).thenReturn(Optional.of(listing));
+        when(consumerProfileRepository.findById(1L)).thenReturn(Optional.of(consumer));
+        when(cartRepository.findFirstByConsumer_ConsumerIdAndStatusOrderByCreatedAtDesc(1L, "ACTIVE"))
+            .thenReturn(Optional.of(activeCart));
+        when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(cartItemRepository.findByCart_CartIdAndListing_ListingId(1300L, 8L)).thenReturn(Optional.empty());
+        when(cartItemRepository.save(any(CartItem.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(cartItemRepository.findByCart_CartId(1300L)).thenReturn(List.of(saved));
+
+        CartResponseDto result = cartService.addItem(session, 8L, 1);
+
+        assertEquals(1, result.getItems().size());
+        assertEquals(10L, result.getSupplierId());
+    }
+
+    @Test
+    void toCartItemDto_emptyPhotosNullPickupNullStore_noSavingsLabel() {
+        Listing listing = listing(14L, null, "Deal", new BigDecimal("5.00"), new BigDecimal("5.00"));
+        listing.setPhotos(List.of());
+        listing.setPickupStart(null);
+        listing.setPickupEnd(null);
+
+        CartItem item = cartItem(cart(1400L, consumer(1L), null), listing, 1);
+
+        CartResponseDto.CartItemDto dto = cartService.toCartItemDto(item);
+
+        assertNull(dto.getImageUrl());
+        assertNull(dto.getPickupStart());
+        assertNull(dto.getPickupEnd());
+        assertNull(dto.getStoreName());
+        assertNull(dto.getSavingsLabel());
+    }
+
+    @Test
+    void toCartResponseDto_handlesNullPricesInMappedItems() {
+        Cart cart = cart(1500L, consumer(1L), null);
+        CartItem item = cartItem(cart, listing(15L, store(1L, "S"), "Deal", new BigDecimal("10.00"), new BigDecimal("5.00")), 1);
+        when(cartItemRepository.findByCart_CartId(1500L)).thenReturn(List.of(item));
+
+        CartService spyService = Mockito.spy(cartService);
+        CartResponseDto.CartItemDto mapped = new CartResponseDto.CartItemDto();
+        mapped.setListingId(15L);
+        mapped.setTitle("Deal");
+        mapped.setQty(1);
+        mapped.setLineTotal(new BigDecimal("0.00"));
+        mapped.setOriginalPrice(null);
+        mapped.setUnitPrice(new BigDecimal("5.00"));
+        Mockito.doReturn(mapped).when(spyService).toCartItemDto(any(CartItem.class));
+
+        CartResponseDto dto = spyService.toCartResponseDto(cart);
+
+        assertEquals(BigDecimal.ZERO, dto.getTotalSavings());
     }
 
     private static MockHttpSession consumerSession(Long consumerId) {

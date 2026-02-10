@@ -28,6 +28,8 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
             "JOIN FETCH l.store s " +
             "JOIN FETCH l.inventory i " +
             "LEFT JOIN FETCH l.photos " +
+            "LEFT JOIN FETCH l.listingFoodCategories lfc " +
+            "LEFT JOIN FETCH lfc.category " +
             "LEFT JOIN FETCH s.supplierProfile sp " +
             "LEFT JOIN FETCH sp.storeType " +
             "WHERE l.status = 'ACTIVE' AND i.qtyAvailable > 0 " +
@@ -39,6 +41,8 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
             "JOIN FETCH l.store s " +
             "JOIN FETCH l.inventory i " +
             "LEFT JOIN FETCH l.photos " +
+            "LEFT JOIN FETCH l.listingFoodCategories lfc " +
+            "LEFT JOIN FETCH lfc.category " +
             "LEFT JOIN FETCH s.supplierProfile sp " +
             "LEFT JOIN FETCH sp.storeType " +
             "WHERE l.status = 'ACTIVE' AND i.qtyAvailable > 0 " +

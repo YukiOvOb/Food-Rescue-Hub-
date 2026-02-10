@@ -22,7 +22,8 @@ export default function AddStore() {
     const [storeName, setStoreName] = useState("");
     const [address, setAddress] = useState("");
     const [postalCode, setPostalCode] = useState("");
-    const [openingHours, setOpeningHours] = useState("");
+    const [openingTime, setOpeningTime] = useState("");
+    const [closingTime, setClosingTime] = useState("");
     const [description, setDescription] = useState("");
     const [pickupInstructions, setPickupInstructions] = useState("");
     const [coordinates, setCoordinates] = useState(center);
@@ -84,6 +85,15 @@ export default function AddStore() {
             navigate('/login');
             return;
         }
+
+        if (openingTime && closingTime && closingTime <= openingTime) {
+            alert("Closing time must be later than opening time.");
+            return;
+        }
+
+        const openingHours = openingTime && closingTime
+            ? `${openingTime} - ${closingTime}`
+            : "";
 
         const payload = {
             supplierId: supplierId, // Use the dynamic ID from session
@@ -149,7 +159,22 @@ export default function AddStore() {
 
                 <div style={inputGroupStyle}>
                     <label>Opening Hours:</label>
-                    <input type="text" value={openingHours} placeholder="e.g. 09:00 - 21:00" onChange={(e) => setOpeningHours(e.target.value)} style={inputStyle} />
+                    <div style={{ display: "flex", gap: "10px" }}>
+                        <input
+                            type="time"
+                            value={openingTime}
+                            onChange={(e) => setOpeningTime(e.target.value)}
+                            style={inputStyle}
+                        />
+                        <input
+                            type="time"
+                            value={closingTime}
+                            onChange={(e) => setClosingTime(e.target.value)}
+                            style={inputStyle}
+                            min={openingTime || undefined}
+                        />
+                    </div>
+                    <small>Closing time must be later than opening time.</small>
                 </div>
 
                 <div style={inputGroupStyle}>

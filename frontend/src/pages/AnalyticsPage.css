@@ -91,3 +91,33 @@
   color: #64748b;
   text-align: center;
 }
+
+.analytics-table-card {
+  margin-top: 18px;
+}
+
+.analytics-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.analytics-table thead th {
+  text-align: left;
+  padding: 10px 12px;
+  background: #f8fafc;
+  color: #475569;
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: 600;
+}
+
+.analytics-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef2f7;
+  color: #0f172a;
+}

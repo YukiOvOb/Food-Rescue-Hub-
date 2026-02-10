@@ -1,6 +1,7 @@
 package com.frh.backend.repository;
 
 import com.frh.backend.Model.Order;
+import com.frh.backend.dto.Co2CategoryBreakdownDto;
 import com.frh.backend.dto.TopSellingItemDto;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -47,6 +49,27 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("supplierId") Long supplierId,
             @Param("status") String status,
             Pageable pageable);
+
+    @Query("SELECT new com.frh.backend.dto.Co2CategoryBreakdownDto(" +
+        "fc.id, fc.name, " +
+        "SUM(oi.quantity * lfc.weightKg), " +
+        "SUM(oi.quantity * lfc.weightKg * fc.kgCo2PerKg)) " +
+        "FROM Order o " +
+        "JOIN o.orderItems oi " +
+        "JOIN oi.listing l " +
+        "JOIN l.listingFoodCategories lfc " +
+        "JOIN lfc.category fc " +
+        "WHERE o.store.supplierProfile.supplierId = :supplierId " +
+        "AND o.status = :status " +
+        "AND o.createdAt >= :since " +
+        "AND lfc.weightKg IS NOT NULL " +
+        "AND fc.kgCo2PerKg IS NOT NULL " +
+        "GROUP BY fc.id, fc.name " +
+        "ORDER BY SUM(oi.quantity * lfc.weightKg * fc.kgCo2PerKg) DESC")
+    List<Co2CategoryBreakdownDto> findCo2BreakdownBySupplierAndStatusSince(
+        @Param("supplierId") Long supplierId,
+        @Param("status") String status,
+        @Param("since") LocalDateTime since);
     
     // Check if order exists by order ID
     Optional<Order> findById(Long orderId);

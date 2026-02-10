@@ -31,6 +31,7 @@ export default function ListingsPage() {
   const [listings, setListings] = useState([]);
   const [user, setUser] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [foodCategories, setFoodCategories] = useState([]);
   const [formData, setFormData] = useState({
     storeId: '',
     title: '',
@@ -39,7 +40,9 @@ export default function ListingsPage() {
     rescuePrice: '',
     pickupStart: '',
     pickupEnd: '',
-    expiryAt: ''
+    expiryAt: '',
+    categoryIds: [],
+    categoryWeightById: {}
   });
   const [photoFile, setPhotoFile] = useState(null);
   const [errors, setErrors] = useState([]);
@@ -81,7 +84,9 @@ export default function ListingsPage() {
       rescuePrice: '',
       pickupStart: '',
       pickupEnd: '',
-      expiryAt: ''
+      expiryAt: '',
+      categoryIds: [],
+      categoryWeightById: {}
     });
     setPhotoFile(null);
     setErrors([]);
@@ -104,6 +109,19 @@ export default function ListingsPage() {
       }
     };
     loadUser();
+  }, []);
+
+  useEffect(() => {
+    fetch(`${apiBase}/food-categories`)
+      .then((r) => {
+        if (!r.ok) throw new Error('network');
+        return r.json();
+      })
+      .then((data) => setFoodCategories(Array.isArray(data) ? data : []))
+      .catch((err) => {
+        console.error('Error fetching food categories:', err);
+        setFoodCategories([]);
+      });
   }, []);
 
   useEffect(() => {
@@ -192,6 +210,29 @@ export default function ListingsPage() {
     setErrors([]);
   };
 
+  const toggleCategory = (categoryId) => {
+    setFormData((prev) => {
+      const exists = prev.categoryIds.includes(categoryId);
+      const nextIds = exists
+        ? prev.categoryIds.filter((id) => id !== categoryId)
+        : [...prev.categoryIds, categoryId];
+      const nextWeights = { ...prev.categoryWeightById };
+      if (exists) {
+        delete nextWeights[categoryId];
+      }
+      return { ...prev, categoryIds: nextIds, categoryWeightById: nextWeights };
+    });
+    setErrors([]);
+  };
+
+  const handleCategoryWeightChange = (categoryId, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      categoryWeightById: { ...prev.categoryWeightById, [categoryId]: value }
+    }));
+    setErrors([]);
+  };
+
   const validatePrices = () => {
     const priceErrors = [];
     const originalPrice = parseFloat(formData.originalPrice);
@@ -207,6 +248,23 @@ export default function ListingsPage() {
       priceErrors.push('Rescue price must be lower than original price');
     }
     return priceErrors;
+  };
+
+  const getCategoryErrors = () => {
+    const errs = [];
+    if (!formData.categoryIds || formData.categoryIds.length === 0) {
+      errs.push('Select at least one food category');
+    }
+    if (formData.categoryIds && formData.categoryIds.length > 0) {
+      const invalidWeights = formData.categoryIds.filter((id) => {
+        const grams = parseFloat(formData.categoryWeightById[id]);
+        return Number.isNaN(grams) || grams <= 0;
+      });
+      if (invalidWeights.length > 0) {
+        errs.push('Each selected category must have a weight (grams) greater than 0');
+      }
+    }
+    return errs;
   };
 
   const getPriceErrors = () => {
@@ -251,7 +309,8 @@ export default function ListingsPage() {
 
     const priceErrors = validatePrices();
     const timeErrors = getTimeErrors();
-    const combinedErrors = [...priceErrors, ...timeErrors];
+    const categoryErrors = getCategoryErrors();
+    const combinedErrors = [...priceErrors, ...timeErrors, ...categoryErrors];
     if (combinedErrors.length > 0) {
       setErrors(combinedErrors);
       return;
@@ -276,7 +335,11 @@ export default function ListingsPage() {
       rescuePrice: parseFloat(formData.rescuePrice),
       pickupStart: pickupStartStr,
       pickupEnd: pickupEndStr,
-      expiryAt: expiryAtStr
+      expiryAt: expiryAtStr,
+      categoryWeights: formData.categoryIds.map((id) => ({
+        categoryId: id,
+        weightKg: parseFloat(formData.categoryWeightById[id]) / 1000
+      }))
     };
 
     // Backend expects storeId as query param, not inside the JSON body.
@@ -578,6 +641,95 @@ export default function ListingsPage() {
                 />
               </div>
             </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                Food Categories
+              </label>
+              {foodCategories.length === 0 ? (
+                <div style={{ color: '#6b7280', fontSize: 13 }}>No food categories found.</div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px' }}>
+                  {foodCategories.map((cat) => (
+                    <label
+                      key={cat.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 10px',
+                        borderRadius: '10px',
+                        border: getCategoryErrors().length > 0 ? '2px solid red' : '1px solid #e5e7eb',
+                        background: '#fff'
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.categoryIds.includes(cat.id)}
+                        onChange={() => toggleCategory(cat.id)}
+                      />
+                      <span style={{ fontSize: 14, color: '#111827' }}>{cat.name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {formData.categoryIds.length > 0 && (
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                  Category Weights (grams)
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
+                  {formData.categoryIds.map((id) => {
+                    const cat = foodCategories.find((c) => c.id === id);
+                    return (
+                      <div
+                        key={id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          padding: '8px 10px',
+                          borderRadius: '10px',
+                          border: getCategoryErrors().length > 0 ? '2px solid red' : '1px solid #e5e7eb',
+                          background: '#fff'
+                        }}
+                      >
+                        <span style={{ flex: 1, fontSize: 14, color: '#111827' }}>
+                          {cat ? cat.name : `Category ${id}`}
+                        </span>
+                        <input
+                          type="number"
+                          value={formData.categoryWeightById[id] ?? ''}
+                          onChange={(e) => handleCategoryWeightChange(id, e.target.value)}
+                          step="1"
+                          min="1"
+                          placeholder="grams"
+                          style={{
+                            width: 90,
+                            padding: '6px 8px',
+                            borderRadius: '8px',
+                            border: '1px solid #d1d5db',
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ marginTop: 8, color: '#6b7280', fontSize: 12 }}>
+                  {(() => {
+                    const totalGrams = formData.categoryIds.reduce((sum, id) => {
+                      const v = parseFloat(formData.categoryWeightById[id]);
+                      return Number.isNaN(v) ? sum : sum + v;
+                    }, 0);
+                    const totalKg = totalGrams / 1000;
+                    return `Total weight: ${totalGrams.toFixed(0)} g (${totalKg.toFixed(3)} kg)`;
+                  })()}
+                </div>
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: '10px' }}>
               <button type="submit" style={pillPrimary}>
