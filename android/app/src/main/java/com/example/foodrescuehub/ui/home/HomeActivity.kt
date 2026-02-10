@@ -30,6 +30,7 @@ import com.google.android.material.chip.ChipGroup
 import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import android.graphics.Color
 
 /**
  * Home Activity - Main screen for consumer homepage
@@ -51,7 +52,7 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var rvRecommendations: RecyclerView
     private lateinit var recommendationsProgressBar: android.widget.ProgressBar
     // private lateinit var tabLayout: TabLayout  // Removed
-    private lateinit var chipGroupCategories: ChipGroup
+    private lateinit var chipGroupCategories: LinearLayout
     private lateinit var rvListings: RecyclerView
     private lateinit var progressBar: ProgressBar
     private lateinit var tvEmptyState: TextView
@@ -149,7 +150,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
     /**
-     * Setup banner carousel
+     * Setup banner carousel slide - horizontal
      */
     private fun setupBanner() {
         val bannerItems = listOf(
@@ -346,23 +347,57 @@ class HomeActivity : AppCompatActivity() {
      * Setup category filter chips
      */
     private fun setupCategoryChips() {
-        val chipMap = mapOf(
-            R.id.chipBakery to "Bakery",
-            R.id.chipDessert to "Coffee Shop",  // Map Dessert chip to Coffee Shop
-            R.id.chipCafe to "Cafe",
-            R.id.chipLightMeal to "Restaurant",
-            R.id.chipAll to "All"
+        var selectedChip: LinearLayout? = binding.chipAll // Default selection
+
+        // Set initial selection
+        selectedChip?.setBackgroundResource(R.drawable.category_chip_selected)
+        updateChipTextColor(selectedChip, true)
+
+        val chips = mapOf(
+            binding.chipBakery to "Bakery",
+            binding.chipDessert to "Coffee Shop",
+            binding.chipCafe to "Cafe",
+            binding.chipLightMeal to "Restaurant",
+            binding.chipAll to "All"
         )
 
-        binding.chipGroupCategories.setOnCheckedStateChangeListener { _, checkedIds ->
-            if (checkedIds.isNotEmpty()) {
-                val selectedChipId = checkedIds[0]
-                val category = chipMap[selectedChipId] ?: "All"
+        chips.forEach { (chip, category) ->
+            chip.setOnClickListener {
+                // Deselect previous chip
+                selectedChip?.let {
+                    it.setBackgroundResource(R.drawable.category_chip_background)
+                    updateChipTextColor(it, false)
+                }
+
+                // Select new chip
+                chip.setBackgroundResource(R.drawable.category_chip_selected)
+                updateChipTextColor(chip as LinearLayout, true)
+                selectedChip = chip
+
+                // Apply filter
                 viewModel.filterByCategory(category)
             }
         }
     }
 
+    /**
+     * Update chip text color based on selection state
+     */
+    private fun updateChipTextColor(chip: LinearLayout?, isSelected: Boolean) {
+        chip?.let {
+            // The second child (index 1) is the TextView containing the category name
+            if (it.childCount > 1) {
+                val textView = it.getChildAt(1) as? TextView
+                textView?.setTextColor(
+                    if (isSelected) {
+                        Color.WHITE
+                    } else {
+                        Color.parseColor("#424242")
+                    }
+                )
+            }
+        }
+    }
     /**
      * Setup sort and filter button
      */

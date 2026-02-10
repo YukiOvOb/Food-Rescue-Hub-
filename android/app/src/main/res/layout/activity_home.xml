@@ -1,71 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFF5EE"
+    android:background="@drawable/bg_light_gradient"
     tools:context=".ui.home.HomeActivity">
 
     <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#FFF5EE"
-        app:elevation="0dp">
-
-        <LinearLayout
+        android:background="@android:color/white"
+        app:elevation="0dp"
+        app:statusBarForeground="@android:color/white"
+        app:liftOnScroll="false">
+<!--just a test purpose - ov-->
+    <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp">
 
-            <!-- Header with greeting and cart/notification -->
+            <!-- Header with greeting and icons -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp">
+                android:layout_marginTop="40dp"
+                android:layout_marginBottom="20dp">
 
-                <TextView
-                    android:id="@+id/tvGreeting"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentStart="true"
-                    android:text="Good evening"
-                    android:textColor="#000000"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
-
-                <FrameLayout
-                    android:id="@+id/flCartIcon"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true">
-
-                    <ImageButton
-                        android:id="@+id/btnCart"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:layout_gravity="center"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Shopping Cart"
-                        android:src="@android:drawable/ic_menu_add"
-                        android:tint="#8BC34A" />
+                    android:layout_centerVertical="true"
+                    android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/tvCartBadge"
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
-                        android:layout_gravity="end|top"
-                        android:background="@android:color/holo_red_light"
-                        android:gravity="center"
-                        android:text="0"
-                        android:textColor="#FFFFFF"
-                        android:textSize="10sp"
+                        android:id="@+id/tvGreeting"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Hello"
+                        android:textColor="#9E9E9E"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Team08"
+                        android:textColor="#000000"
+                        android:textSize="20sp"
                         android:textStyle="bold"
-                        android:visibility="gone" />
-                </FrameLayout>
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:orientation="horizontal">
+
+                    <FrameLayout
+                        android:id="@+id/flCartIcon"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="8dp">
+
+                        <ImageButton
+                            android:id="@+id/btnCart"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="Shopping Cart"
+                            android:src="@android:drawable/ic_menu_add"
+                            app:tint="#000000"
+                            android:padding="8dp" />
+
+                        <TextView
+                            android:id="@+id/tvCartBadge"
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_gravity="end|top"
+                            android:layout_marginTop="8dp"
+                            android:layout_marginEnd="8dp"
+                            android:background="#FF3B30"
+                            android:gravity="center"
+                            android:text="0"
+                            android:textColor="#FFFFFF"
+                            android:textSize="10sp"
+                            android:textStyle="bold"
+                            android:visibility="gone" />
+                    </FrameLayout>
+                </LinearLayout>
             </RelativeLayout>
 
             <!-- Search bar -->
@@ -74,19 +104,188 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 app:cardCornerRadius="12dp"
+                app:cardBackgroundColor="@color/white"
                 app:cardElevation="2dp">
 
                 <androidx.appcompat.widget.SearchView
                     android:id="@+id/searchView"
                     android:layout_width="match_parent"
-                    android:layout_height="48dp"
+                    android:layout_height="42dp"
                     app:iconifiedByDefault="false"
                     app:queryHint="Search stores or mystery boxes" />
             </com.google.android.material.card.MaterialCardView>
+
+            <!-- Category chips -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:overScrollMode="never">
+
+                <LinearLayout
+                    android:id="@+id/chipGroupCategories"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <!-- Bakery Category -->
+                    <LinearLayout
+                        android:id="@+id/chipBakery"
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
+                        android:layout_marginEnd="12dp"
+                        android:background="@drawable/category_chip_background"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🍞"
+                            android:textSize="28sp"
+                            android:layout_marginBottom="4dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Bakery"
+                            android:textSize="11sp"
+                            android:textColor="#424242"
+                            android:textAlignment="center"
+                            android:gravity="center"
+                            />
+                    </LinearLayout>
+
+                    <!-- Dessert Category -->
+                    <LinearLayout
+                        android:id="@+id/chipDessert"
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
+                        android:layout_marginEnd="12dp"
+                        android:background="@drawable/category_chip_background"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🧁"
+                            android:textSize="28sp"
+                            android:layout_marginBottom="4dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Dessert"
+                            android:textSize="11sp"
+                            android:textColor="#424242"
+                            android:textAlignment="center"
+                            android:gravity="center" />
+                    </LinearLayout>
+
+                    <!-- Cafe Category -->
+                    <LinearLayout
+                        android:id="@+id/chipCafe"
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
+                        android:layout_marginEnd="12dp"
+                        android:background="@drawable/category_chip_background"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="☕"
+                            android:textSize="28sp"
+                            android:layout_marginBottom="4dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Cafe"
+                            android:textSize="11sp"
+                            android:textColor="#424242"
+                            android:textAlignment="center"
+                            android:gravity="center" />
+                    </LinearLayout>
+
+                    <!-- Light Meal Category -->
+                    <LinearLayout
+                        android:id="@+id/chipLightMeal"
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
+                        android:layout_marginEnd="12dp"
+                        android:background="@drawable/category_chip_background"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🥗"
+                            android:textSize="28sp"
+                            android:layout_marginBottom="4dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Light Meal"
+                            android:textSize="10sp"
+                            android:textColor="#424242"
+                            android:textAlignment="center"
+                            android:gravity="center"
+                            android:maxLines="2" />
+                    </LinearLayout>
+
+                    <!-- All Category -->
+                    <LinearLayout
+                        android:id="@+id/chipAll"
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
+                        android:background="@drawable/category_chip_background"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🍱"
+                            android:textSize="28sp"
+                            android:layout_marginBottom="4dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="All"
+                            android:textSize="11sp"
+                            android:textColor="#424242"
+                            android:textAlignment="center"
+                            android:gravity="center" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </HorizontalScrollView>
+
         </LinearLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Listings RecyclerView -->
+    <!-- Main Content ScrollView -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -96,40 +295,68 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="90dp">
 
-            <!-- Banner ViewPager2 -->
-            <androidx.viewpager2.widget.ViewPager2
-                android:id="@+id/bannerViewPager"
+            <!-- Banner ViewPager2 with Card -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
-                android:layout_height="180dp"
-                android:layout_marginBottom="16dp" />
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#FFFFFF">
+
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/bannerViewPager"
+                    android:layout_width="match_parent"
+                    android:layout_height="160dp" />
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Recommendations Section -->
             <LinearLayout
                 android:id="@+id/recommendationsSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="24dp"
                 android:orientation="vertical">
 
                 <!-- Recommendations Header -->
-                <TextView
-                    android:layout_width="wrap_content"
+                <RelativeLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/recommendations_section"
-                    android:textColor="#000000"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:text="@string/recommendations_section"
+                        android:textColor="#000000"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvSeeAllRecommendations"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:text="See All"
+                        android:textStyle="bold"
+                        android:textColor="#8BC34A"
+                        android:textSize="14sp" />
+                </RelativeLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="16dp"
                     android:text="@string/recommendations_subtitle"
-                    android:textColor="#666666"
-                    android:textSize="14sp" />
+                    android:textColor="#9E9E9E"
+                    android:textSize="13sp" />
 
                 <!-- Loading indicator -->
                 <ProgressBar
@@ -144,106 +371,56 @@
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvRecommendations"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="120dp"
                     android:clipToPadding="false"
-                    android:paddingEnd="16dp"
+                    android:orientation="horizontal"
                     android:nestedScrollingEnabled="false" />
             </LinearLayout>
 
-            <!-- Nearby deals header with sort/filter button -->
-            <LinearLayout
+            <!-- All Deals Header -->
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="16dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:layout_marginBottom="16dp">
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_alignParentStart="true"
                     android:text="All Deals"
                     android:textColor="#000000"
-                    android:textSize="18sp"
+                    android:textSize="20sp"
                     android:textStyle="bold" />
 
-                <ImageButton
-                    android:id="@+id/btnSortFilter"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginEnd="8dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Sort and Filter"
-                    android:padding="8dp"
-                    android:src="@android:drawable/ic_menu_sort_by_size"
-                    android:tint="#666666" />
-
-                <TextView
-                    android:id="@+id/tvSeeAll"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="See all"
-                    android:textColor="#8BC34A"
-                    android:textSize="14sp" />
-            </LinearLayout>
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
 
-            <!-- Category chips -->
-            <HorizontalScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:scrollbars="none">
+                    <ImageButton
+                        android:id="@+id/btnSortFilter"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_marginEnd="12dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Sort and Filter"
+                        android:padding="6dp"
+                        android:src="@android:drawable/ic_menu_sort_by_size"
+                        app:tint="#9E9E9E" />
 
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chipGroupCategories"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:selectionRequired="true"
-                    app:singleSelection="true">
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipBakery"
-                        style="@style/Widget.Material3.Chip.Filter"
+                    <TextView
+                        android:id="@+id/tvSeeAll"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="🍞 Bakery"
-                        app:chipBackgroundColor="@android:color/white" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipDessert"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🧁 Dessert"
-                        app:chipBackgroundColor="@android:color/white" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipCafe"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="☕ Cafe"
-                        app:chipBackgroundColor="@android:color/white" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipLightMeal"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🥗 Light Meal"
-                        app:chipBackgroundColor="@android:color/white" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipAll"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:checked="true"
-                        android:text="🍱 All"
-                        app:chipBackgroundColor="@android:color/white" />
-                </com.google.android.material.chip.ChipGroup>
-            </HorizontalScrollView>
+                        android:text="See All"
+                        android:textStyle="bold"
+                        android:textColor="#8BC34A"
+                        android:textSize="14sp" />
+                </LinearLayout>
+            </RelativeLayout>
 
             <!-- Progress bar -->
             <ProgressBar
@@ -270,7 +447,7 @@
                 android:layout_marginTop="32dp"
                 android:gravity="center"
                 android:text="No listings available"
-                android:textColor="#999999"
+                android:textColor="#BDBDBD"
                 android:textSize="16sp"
                 android:visibility="gone" />
         </LinearLayout>
@@ -282,7 +459,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:background="@android:color/white"
-        app:menu="@menu/bottom_nav_menu" />
+        app:menu="@menu/bottom_nav_menu"
+        app:itemIconTint="@color/bottom_nav_item_color"
+        app:itemTextColor="@color/bottom_nav_item_color"
+        app:backgroundTint="#FFFFFF"
+        app:elevation="8dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"/>
+
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
