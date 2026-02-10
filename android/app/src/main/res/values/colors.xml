@@ -37,4 +37,17 @@
     <color name="status_pending">#FFA726</color>
     <color name="status_completed">#66BB6A</color>
     <color name="status_cancelled">#EF5350</color>
+
+<!--    prdouct details page-->
+    <color name="background_gray">#F5F5F5</color>
+    <color name="text_primary">#1A1A1A</color>
+    <color name="text_secondary">#666666</color>
+    <color name="text_tertiary">#999999</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="details_background">#F8F9FA</color>
+    <color name="primary_green">#4CAF50</color>
+    <color name="savings_green">#2E7D32</color>
+    <color name="savings_bg">#E8F5E9</color>
+    <color name="button_background">#F5F5F5</color>
+    <color name="dot_separator">#CCCCCC</color>
 </resources>
