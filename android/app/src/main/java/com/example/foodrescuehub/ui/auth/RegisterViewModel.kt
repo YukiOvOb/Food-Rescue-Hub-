@@ -7,37 +7,29 @@ import androidx.lifecycle.viewModelScope
 import com.example.foodrescuehub.data.repository.AuthManager
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel for LoginActivity
- * Manages UI state and coordinates with AuthManager for authentication
- */
-class LoginViewModel : ViewModel() {
+class RegisterViewModel : ViewModel() {
 
-    private val _loginResult = MutableLiveData<Result<Boolean>>()
-    val loginResult: LiveData<Result<Boolean>> = _loginResult
+    private val _registerResult = MutableLiveData<Result<Boolean>>()
+    val registerResult: LiveData<Result<Boolean>> = _registerResult
 
     private val _isLoading = MutableLiveData<Boolean>(false)
     val isLoading: LiveData<Boolean> = _isLoading
 
-    /**
-     * Perform login using AuthManager
-     */
-    fun login(email: String, password: String) {
+    fun register(email: String, password: String, displayName: String, phone: String?) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val success = AuthManager.login(email, password)
+                val success = AuthManager.register(email, password, displayName, phone)
                 if (success) {
-                    _loginResult.value = Result.success(true)
+                    _registerResult.value = Result.success(true)
                 } else {
-                    _loginResult.value = Result.failure(Exception("Login failed"))
+                    _registerResult.value = Result.failure(Exception("Registration failed"))
                 }
             } catch (e: Exception) {
-                _loginResult.value = Result.failure(e)
+                _registerResult.value = Result.failure(e)
             } finally {
                 _isLoading.value = false
             }
         }
     }
-
 }

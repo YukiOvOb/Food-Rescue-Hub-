@@ -30,6 +30,7 @@ export default function ListingsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [listings, setListings] = useState([]);
   const [user, setUser] = useState(null);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     storeId: '',
     title: '',
@@ -40,6 +41,7 @@ export default function ListingsPage() {
     pickupEnd: '',
     expiryAt: ''
   });
+  const [photoFile, setPhotoFile] = useState(null);
   const [errors, setErrors] = useState([]);
 
   // ----- helpers for datetime formatting -----
@@ -56,6 +58,36 @@ export default function ListingsPage() {
 
   const normalizeDateTimeLocal = (dt) =>
     dt && dt.length === 16 ? `${dt}:00` : dt; // "yyyy-MM-ddTHH:MM" -> "yyyy-MM-ddTHH:MM:00"
+
+  const toTimeInput = (dt) => {
+    if (!dt) return '';
+    const d = new Date(dt);
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  };
+
+  const toDateTimeLocalInput = (dt) => {
+    if (!dt) return '';
+    const d = new Date(dt);
+    const offsetMs = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - offsetMs).toISOString().slice(0, 16);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      storeId: '',
+      title: '',
+      description: '',
+      originalPrice: '',
+      rescuePrice: '',
+      pickupStart: '',
+      pickupEnd: '',
+      expiryAt: ''
+    });
+    setPhotoFile(null);
+    setErrors([]);
+    setEditingId(null);
+    setShowCreateForm(false);
+  };
 
   const apiBase = '/api';
   const supplierBase = `${apiBase}/supplier`;
@@ -97,6 +129,61 @@ export default function ListingsPage() {
         console.error('Error fetching listings:', err);
         setListings([]);
       });
+  };
+
+  const uploadPhoto = async (listingId) => {
+    if (!photoFile || !listingId) return;
+
+    const fd = new FormData();
+    fd.append('file', photoFile);
+
+    await fetch(`${supplierBase}/listings/${listingId}/photos`, {
+      method: 'POST',
+      body: fd,
+      credentials: 'include'
+    });
+  };
+
+  const handleDelete = (listingId) => {
+    if (!listingId) return;
+    const confirmed = window.confirm('Delete this listing?');
+    if (!confirmed) return;
+
+    fetch(`${supplierBase}/listings/${listingId}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error('Failed to delete');
+        return r.text();
+      })
+      .then(() => fetchListings())
+      .catch((err) => console.error(err));
+  };
+
+  const startEdit = (listing) => {
+    const listingId = listing.listingId || listing.id;
+
+    setEditingId(listingId);
+    setShowCreateForm(true);
+    setPhotoFile(null);
+
+    setFormData({
+      storeId: listing.storeId || listing.store?.storeId || '',
+      title: listing.title || '',
+      description: listing.description || '',
+      originalPrice: listing.originalPrice ?? '',
+      rescuePrice: listing.rescuePrice ?? '',
+      pickupStart: toTimeInput(listing.pickupStart),
+      pickupEnd: toTimeInput(listing.pickupEnd),
+      expiryAt: toDateTimeLocalInput(listing.expiryAt)
+    });
+  };
+
+  const getPrimaryPhoto = (listing) => {
+    const urls = listing.photoUrls
+      || (Array.isArray(listing.photos) ? listing.photos.map((p) => p.photoUrl) : []);
+    return urls && urls.length > 0 ? urls[0] : null;
   };
 
   const handleChange = (e) => {
@@ -170,7 +257,7 @@ export default function ListingsPage() {
       return;
     }
 
-    if (!formData.storeId) {
+    if (!editingId && !formData.storeId) {
       setErrors(['Store ID is required']);
       return;
     }
@@ -193,10 +280,14 @@ export default function ListingsPage() {
     };
 
     // Backend expects storeId as query param, not inside the JSON body.
-    const url = `${supplierBase}/listings?storeId=${encodeURIComponent(formData.storeId)}`;
+    const url = editingId
+      ? `${supplierBase}/listings/${editingId}`
+      : `${supplierBase}/listings?storeId=${encodeURIComponent(formData.storeId)}`;
+
+    const method = editingId ? 'PUT' : 'POST';
 
     fetch(url, {
-      method: 'POST',
+      method,
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify(payload)
@@ -213,19 +304,12 @@ export default function ListingsPage() {
         }
         return r.json();
       })
-      .then(() => {
-        setFormData({
-          storeId: '',
-          title: '',
-          description: '',
-          originalPrice: '',
-          rescuePrice: '',
-          pickupStart: '',
-          pickupEnd: '',
-          expiryAt: ''
-        });
-        setErrors([]);
-        setShowCreateForm(false);
+      .then(async (saved) => {
+        if (photoFile && saved) {
+          const listingId = saved.listingId || saved.id;
+          await uploadPhoto(listingId);
+        }
+        resetForm();
         fetchListings();
       })
       .catch((err) => {
@@ -260,8 +344,7 @@ export default function ListingsPage() {
       {showCreateForm && (
         <div style={{ ...cardStyle, marginBottom: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h2 style={{ margin: 0 }}>Create New Listing</h2>
-            <button type="button" style={pillSubtle} onClick={() => setShowCreateForm(false)}>Cancel</button>
+            <h2 style={{ margin: 0 }}>{editingId ? 'Edit Listing' : 'Create New Listing'}</h2>
           </div>
           <form onSubmit={handleSubmit}>
             {errors.length > 0 && (
@@ -287,7 +370,8 @@ export default function ListingsPage() {
                 name="storeId"
                 value={formData.storeId}
                 onChange={handleChange}
-                required
+                required={!editingId}
+                disabled={!!editingId}
                 style={{
                   width: '100%',
                   padding: '10px',
@@ -331,6 +415,16 @@ export default function ListingsPage() {
                   minHeight: '80px'
                 }}
               />
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Photo</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setPhotoFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
+              />
+              {photoFile && <div style={{ color: '#6b7280', marginTop: 6 }}>Selected: {photoFile.name}</div>}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
@@ -487,9 +581,9 @@ export default function ListingsPage() {
 
             <div style={{ display: 'flex', gap: '10px' }}>
               <button type="submit" style={pillPrimary}>
-                Create
+                {editingId ? 'Update Listing' : 'Create'}
               </button>
-              <button type="button" onClick={() => setShowCreateForm(false)} style={pillSubtle}>
+              <button type="button" onClick={resetForm} style={pillSubtle}>
                 Cancel
               </button>
             </div>
@@ -506,12 +600,37 @@ export default function ListingsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
           {listings.map((listing) => (
             <div key={listing.listingId || listing.id} style={{ ...cardStyle, padding: 18 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0 }}>{listing.title}</h3>
-                <span style={{ background: '#ecfdf3', color: '#166534', padding: '4px 10px', borderRadius: '999px', fontSize: 12 }}>
-                  {listing.status || 'ACTIVE'}
-                </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                <div>
+                  <h3 style={{ margin: 0 }}>{listing.title}</h3>
+                  <span style={{ background: '#ecfdf3', color: '#166534', padding: '4px 10px', borderRadius: '999px', fontSize: 12 }}>
+                    {listing.status || 'ACTIVE'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    style={{ ...pillSubtle, padding: '6px 10px', fontSize: 12 }}
+                    onClick={() => startEdit(listing)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    style={{ ...pillSubtle, padding: '6px 10px', fontSize: 12, backgroundColor: '#fee2e2', color: '#b91c1c' }}
+                    onClick={() => handleDelete(listing.listingId || listing.id)}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
+              {getPrimaryPhoto(listing) && (
+                <div style={{ marginTop: 12, borderRadius: 12, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
+                  <img
+                    src={getPrimaryPhoto(listing)}
+                    alt={listing.title}
+                    style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }}
+                  />
+                </div>
+              )}
               {listing.description && <p style={{ color: '#4b5563' }}>{listing.description}</p>}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
                 <div>
