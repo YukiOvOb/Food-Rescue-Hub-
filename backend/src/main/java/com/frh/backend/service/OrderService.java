@@ -6,6 +6,7 @@ import com.frh.backend.dto.OrderSummaryDTO;
 import com.frh.backend.exception.InsufficientStockException;
 import com.frh.backend.exception.OrderStateException;
 import com.frh.backend.repository.*;
+import com.frh.backend.util.PickupTokenGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -14,14 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
-import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.PageRequest;
 
@@ -43,16 +40,6 @@ public class OrderService {
     private final InventoryService inventoryService;
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
-
-    private String hashToken(String token) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(token.getBytes());
-            return Base64.getEncoder().encodeToString(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Error hashing token", e);
-        }
-    }
 
     /**
      * Create a new order from cart.
@@ -111,21 +98,9 @@ public class OrderService {
         }
 
         order.setTotalAmount(totalAmount);
+        order.setPickupToken(PickupTokenGenerator.createForOrder(order));
 
-        // Save order first to generate orderId
         Order savedOrder = orderRepository.save(order);
-
-        // Generate pickup token
-        String rawToken = UUID.randomUUID().toString().replace("-", "");
-        String qrTokenHash = hashToken(rawToken);
-        LocalDateTime expiresAt = LocalDateTime.now().plusHours(24);
-
-        PickupToken pickupToken = new PickupToken();
-        pickupToken.setOrder(savedOrder); // This sets the orderId via @MapsId
-        pickupToken.setQrTokenHash(qrTokenHash);
-        pickupToken.setExpiresAt(expiresAt);
-
-        savedOrder.setPickupToken(pickupToken);
 
         // Clear cart
         cartItemRepository.deleteByCart_CartId(cart.getCartId());
@@ -176,17 +151,16 @@ public class OrderService {
         order.setPickupSlotStart(req.getPickupSlotStart());
         order.setPickupSlotEnd(req.getPickupSlotEnd());
 
-        Order savedOrder = orderRepository.save(order);
-
         OrderItem item = new OrderItem();
-        item.setOrder(savedOrder);
+        item.setOrder(order);
         item.setListing(listing);
         item.setQuantity(req.getQuantity());
         item.setUnitPrice(listing.getRescuePrice());
         // lineTotal is calculated by @PrePersist on OrderItem
-        savedOrder.getOrderItems().add(item);
+        order.getOrderItems().add(item);
+        order.setPickupToken(PickupTokenGenerator.createForOrder(order));
 
-        return orderRepository.save(savedOrder);
+        return orderRepository.save(order);
     }
 
     // ACCEPT – supplier accepts a pending order (US 7)

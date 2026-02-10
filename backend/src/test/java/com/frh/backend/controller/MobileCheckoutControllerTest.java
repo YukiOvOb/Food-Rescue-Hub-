@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
@@ -298,6 +299,8 @@ class MobileCheckoutControllerTest {
         verify(orderRepository).save(orderCaptor.capture());
         assertEquals(start, orderCaptor.getValue().getPickupSlotStart());
         assertEquals(end, orderCaptor.getValue().getPickupSlotEnd());
+        assertNotNull(orderCaptor.getValue().getPickupToken());
+        assertNotNull(orderCaptor.getValue().getPickupToken().getQrTokenHash());
     }
 
     private static Map<String, Object> payload(List<Map<String, Object>> items) {

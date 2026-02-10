@@ -138,6 +138,33 @@ class ModelBehaviorTest {
     }
 
     @Test
+    void listingFoodCategoryId_equalsAndHashCode() {
+        ListingFoodCategoryId id1 = new ListingFoodCategoryId();
+        id1.setListingId(10L);
+        id1.setCategoryId(20L);
+
+        ListingFoodCategoryId id2 = new ListingFoodCategoryId();
+        id2.setListingId(10L);
+        id2.setCategoryId(20L);
+
+        ListingFoodCategoryId differentListing = new ListingFoodCategoryId();
+        differentListing.setListingId(11L);
+        differentListing.setCategoryId(20L);
+
+        ListingFoodCategoryId differentCategory = new ListingFoodCategoryId();
+        differentCategory.setListingId(10L);
+        differentCategory.setCategoryId(21L);
+
+        assertEquals(id1, id1);
+        assertEquals(id1, id2);
+        assertEquals(id1.hashCode(), id2.hashCode());
+        assertNotEquals(id1, differentListing);
+        assertNotEquals(id1, differentCategory);
+        assertNotEquals(id1, null);
+        assertNotEquals(id1, "not-an-id");
+    }
+
+    @Test
     void pickupToken_isValid_checksUsedAndExpiry() {
         PickupToken token = new PickupToken();
         token.setExpiresAt(LocalDateTime.now().plusMinutes(10));

@@ -1,9 +1,10 @@
 package com.frh.backend.controller;
 
 import com.frh.backend.Model.Listing;
-import com.frh.backend.Model.Store;
+import com.frh.backend.dto.ListingDTO;
 import com.frh.backend.repository.ListingRepository;
 import com.frh.backend.repository.StoreRepository;
+import com.frh.backend.service.ListingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,9 @@ class ListingControllerTest {
     @MockitoBean
     private StoreRepository storeRepository;
 
+    @MockitoBean
+    private ListingService listingService;
+
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -58,6 +62,18 @@ class ListingControllerTest {
         return l;
     }
 
+    private ListingDTO validListingDto() {
+        ListingDTO l = new ListingDTO();
+        l.setTitle("Bread");
+        l.setDescription("Fresh bread");
+        l.setOriginalPrice(BigDecimal.valueOf(10));
+        l.setRescuePrice(BigDecimal.valueOf(5));
+        l.setPickupStart(LocalDateTime.now().plusHours(1));
+        l.setPickupEnd(LocalDateTime.now().plusHours(2));
+        l.setExpiryAt(LocalDateTime.now().plusHours(3));
+        return l;
+    }
+
     /* -----------------------------
        CREATE – STORE MISSING
        ----------------------------- */
@@ -66,7 +82,7 @@ class ListingControllerTest {
 
         mockMvc.perform(post("/api/supplier/listings")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validListing())))
+                        .content(objectMapper.writeValueAsString(validListingDto())))
                 .andExpect(status().isBadRequest());
     }
 
@@ -76,13 +92,13 @@ class ListingControllerTest {
     @Test
     void createListing_storeNotFound() throws Exception {
 
-        Mockito.when(storeRepository.findById(1L))
-                .thenReturn(Optional.empty());
+        Mockito.when(storeRepository.existsById(1L))
+                .thenReturn(false);
 
         mockMvc.perform(post("/api/supplier/listings")
-                        .param("storeId", "1")
+                .param("storeId", "1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validListing())))
+                        .content(objectMapper.writeValueAsString(validListingDto())))
                 .andExpect(status().isBadRequest());
     }
 
@@ -92,11 +108,10 @@ class ListingControllerTest {
     @Test
     void createListing_validationError() throws Exception {
 
-        Store store = new Store();
-        Mockito.when(storeRepository.findById(1L))
-                .thenReturn(Optional.of(store));
+        Mockito.when(storeRepository.existsById(1L))
+                .thenReturn(true);
 
-        Listing invalid = new Listing(); // missing fields
+        ListingDTO invalid = new ListingDTO(); // missing fields
 
         mockMvc.perform(post("/api/supplier/listings")
                         .param("storeId", "1")
@@ -111,20 +126,19 @@ class ListingControllerTest {
     @Test
     void createListing_success() throws Exception {
 
-        Store store = new Store();
-        Listing listing = validListing();
+        ListingDTO listing = validListingDto();
         listing.setListingId(1L);
 
-        Mockito.when(storeRepository.findById(1L))
-                .thenReturn(Optional.of(store));
+        Mockito.when(storeRepository.existsById(1L))
+                .thenReturn(true);
 
-        Mockito.when(listingRepository.save(Mockito.any()))
+        Mockito.when(listingService.createListing(Mockito.any(), Mockito.eq(1L)))
                 .thenReturn(listing);
 
         mockMvc.perform(post("/api/supplier/listings")
-                        .param("storeId", "1")
+                .param("storeId", "1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validListing())))
+                        .content(objectMapper.writeValueAsString(validListingDto())))
                 .andExpect(status().isOk());
     }
 
@@ -134,18 +148,16 @@ class ListingControllerTest {
     @Test
     void createListing_dbError() throws Exception {
 
-        Store store = new Store();
+        Mockito.when(storeRepository.existsById(1L))
+                .thenReturn(true);
 
-        Mockito.when(storeRepository.findById(1L))
-                .thenReturn(Optional.of(store));
-
-        Mockito.when(listingRepository.save(Mockito.any()))
+        Mockito.when(listingService.createListing(Mockito.any(), Mockito.eq(1L)))
                 .thenThrow(new DataIntegrityViolationException("constraint"));
 
         mockMvc.perform(post("/api/supplier/listings")
-                        .param("storeId", "1")
+                .param("storeId", "1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validListing())))
+                        .content(objectMapper.writeValueAsString(validListingDto())))
                 .andExpect(status().isBadRequest());
     }
 
@@ -155,18 +167,16 @@ class ListingControllerTest {
     @Test
     void createListing_unexpectedError() throws Exception {
 
-        Store store = new Store();
+        Mockito.when(storeRepository.existsById(1L))
+                .thenReturn(true);
 
-        Mockito.when(storeRepository.findById(1L))
-                .thenReturn(Optional.of(store));
-
-        Mockito.when(listingRepository.save(Mockito.any()))
+        Mockito.when(listingService.createListing(Mockito.any(), Mockito.eq(1L)))
                 .thenThrow(new RuntimeException("Something went wrong"));
 
         mockMvc.perform(post("/api/supplier/listings")
-                        .param("storeId", "1")
+                .param("storeId", "1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validListing())))
+                        .content(objectMapper.writeValueAsString(validListingDto())))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().string(containsString("Unexpected server error")));
     }
@@ -190,9 +200,8 @@ class ListingControllerTest {
     @Test
     void getListingsBySupplier() throws Exception {
 
-        Mockito.when(listingRepository
-                .findByStore_SupplierProfile_SupplierId(1L))
-                .thenReturn(List.of(new Listing()));
+        Mockito.when(listingService.getListingsBySupplier(1L))
+                .thenReturn(List.of(new ListingDTO()));
 
         mockMvc.perform(get("/api/supplier/listings/supplier/{id}", 1L))
                 .andExpect(status().isOk());
@@ -317,12 +326,11 @@ class ListingControllerTest {
     @Test
     void createListing_titleBlank() throws Exception {
 
-        Store store = new Store();
-        Listing invalid = validListing();
+        ListingDTO invalid = validListingDto();
         invalid.setTitle("   ");
 
-        Mockito.when(storeRepository.findById(1L))
-                .thenReturn(Optional.of(store));
+        Mockito.when(storeRepository.existsById(1L))
+                .thenReturn(true);
 
         mockMvc.perform(post("/api/supplier/listings")
                         .param("storeId", "1")
@@ -338,12 +346,11 @@ class ListingControllerTest {
     @Test
     void createListing_originalPriceMustBePositive() throws Exception {
 
-        Store store = new Store();
-        Listing invalid = validListing();
+        ListingDTO invalid = validListingDto();
         invalid.setOriginalPrice(BigDecimal.ZERO);
 
-        Mockito.when(storeRepository.findById(1L))
-                .thenReturn(Optional.of(store));
+        Mockito.when(storeRepository.existsById(1L))
+                .thenReturn(true);
 
         mockMvc.perform(post("/api/supplier/listings")
                         .param("storeId", "1")
@@ -359,12 +366,11 @@ class ListingControllerTest {
     @Test
     void createListing_rescuePriceCannotBeNegative() throws Exception {
 
-        Store store = new Store();
-        Listing invalid = validListing();
+        ListingDTO invalid = validListingDto();
         invalid.setRescuePrice(BigDecimal.valueOf(-1));
 
-        Mockito.when(storeRepository.findById(1L))
-                .thenReturn(Optional.of(store));
+        Mockito.when(storeRepository.existsById(1L))
+                .thenReturn(true);
 
         mockMvc.perform(post("/api/supplier/listings")
                         .param("storeId", "1")
@@ -380,12 +386,11 @@ class ListingControllerTest {
     @Test
     void createListing_rescuePriceMustBeLowerThanOriginalPrice() throws Exception {
 
-        Store store = new Store();
-        Listing invalid = validListing();
+        ListingDTO invalid = validListingDto();
         invalid.setRescuePrice(BigDecimal.valueOf(10));
 
-        Mockito.when(storeRepository.findById(1L))
-                .thenReturn(Optional.of(store));
+        Mockito.when(storeRepository.existsById(1L))
+                .thenReturn(true);
 
         mockMvc.perform(post("/api/supplier/listings")
                         .param("storeId", "1")
@@ -401,14 +406,13 @@ class ListingControllerTest {
     @Test
     void createListing_pickupStartMustBeInFuture() throws Exception {
 
-        Store store = new Store();
-        Listing invalid = validListing();
+        ListingDTO invalid = validListingDto();
         invalid.setPickupStart(LocalDateTime.now().minusHours(1));
         invalid.setPickupEnd(LocalDateTime.now().plusHours(1));
         invalid.setExpiryAt(LocalDateTime.now().plusHours(2));
 
-        Mockito.when(storeRepository.findById(1L))
-                .thenReturn(Optional.of(store));
+        Mockito.when(storeRepository.existsById(1L))
+                .thenReturn(true);
 
         mockMvc.perform(post("/api/supplier/listings")
                         .param("storeId", "1")
@@ -424,14 +428,13 @@ class ListingControllerTest {
     @Test
     void createListing_pickupEndCannotBeBeforeStart() throws Exception {
 
-        Store store = new Store();
-        Listing invalid = validListing();
+        ListingDTO invalid = validListingDto();
         invalid.setPickupStart(LocalDateTime.now().plusHours(3));
         invalid.setPickupEnd(LocalDateTime.now().plusHours(2));
         invalid.setExpiryAt(LocalDateTime.now().plusHours(4));
 
-        Mockito.when(storeRepository.findById(1L))
-                .thenReturn(Optional.of(store));
+        Mockito.when(storeRepository.existsById(1L))
+                .thenReturn(true);
 
         mockMvc.perform(post("/api/supplier/listings")
                         .param("storeId", "1")
@@ -447,14 +450,13 @@ class ListingControllerTest {
     @Test
     void createListing_expiryMustBeAfterPickupEnd() throws Exception {
 
-        Store store = new Store();
-        Listing invalid = validListing();
+        ListingDTO invalid = validListingDto();
         invalid.setPickupStart(LocalDateTime.now().plusHours(1));
         invalid.setPickupEnd(LocalDateTime.now().plusHours(3));
         invalid.setExpiryAt(LocalDateTime.now().plusHours(2));
 
-        Mockito.when(storeRepository.findById(1L))
-                .thenReturn(Optional.of(store));
+        Mockito.when(storeRepository.existsById(1L))
+                .thenReturn(true);
 
         mockMvc.perform(post("/api/supplier/listings")
                         .param("storeId", "1")
