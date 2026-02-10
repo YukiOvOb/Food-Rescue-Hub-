@@ -2,6 +2,7 @@ package com.example.foodrescuehub.ui.detail
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -191,18 +192,46 @@ class ProductDetailActivity : AppCompatActivity() {
     }
 
     private fun showCrossStoreWarning(listingId: Long) {
-        AlertDialog.Builder(this)
-            .setTitle("Clear Cart?")
-            .setMessage("Your cart contains items from another store. Adding this item will clear your current cart. Continue?")
-            .setPositiveButton("Clear & Add") { _, _ ->
-                CartManager.clearCart { success ->
-                    if (success) {
-                        performAddToCart(listingId)
-                    }
+        val dialogView = layoutInflater.inflate(R.layout.dialog_clear_cart, null)
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(true)
+            .create()
+
+        val btnClearAdd = dialogView.findViewById<Button>(R.id.btnClearAdd)
+        val btnCancel = dialogView.findViewById<Button>(R.id.btnCancel)
+
+        btnClearAdd.setOnClickListener {
+            dialog.dismiss()
+            CartManager.clearCart { success ->
+                if (success) {
+                    performAddToCart(listingId)
                 }
             }
-            .setNegativeButton("Cancel", null)
-            .show()
+        }
+
+        btnCancel.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+    private fun showSimpleRoundedDialog(title: String, message: String) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle(title)
+        builder.setMessage(message)
+        builder.setPositiveButton("OK") { dialog, _ ->
+            dialog.dismiss()
+        }
+
+        val dialog = builder.create()
+
+        // Set rounded corners
+        dialog.setOnShowListener {
+            dialog.window?.setBackgroundDrawableResource(R.drawable.dialog_rounded_bg)
+        }
+
+        dialog.show()
     }
 
     private fun performAddToCart(listingId: Long) {
