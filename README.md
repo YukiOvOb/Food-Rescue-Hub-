@@ -12,7 +12,7 @@ This README is for local startup only (no Docker app startup path).
 - Node.js 20+
 - npm
 - Git
-- Network access to `13.228.183.177:33306`
+- Network access to `13.228.183.177:33306` for sql database
 
 ### Default Local Ports
 

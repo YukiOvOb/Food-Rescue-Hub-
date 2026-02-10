@@ -32,6 +32,7 @@ export default function ListingsPage() {
   const [user, setUser] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [foodCategories, setFoodCategories] = useState([]);
+  const [successMessage, setSuccessMessage] = useState('');
   const [formData, setFormData] = useState({
     storeId: '',
     title: '',
@@ -73,6 +74,45 @@ export default function ListingsPage() {
     const d = new Date(dt);
     const offsetMs = d.getTimezoneOffset() * 60000;
     return new Date(d.getTime() - offsetMs).toISOString().slice(0, 16);
+  };
+
+  const formatTime = (dt) => {
+    if (!dt) return 'N/A';
+    const date = new Date(dt);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatDateTime = (dt) => {
+    if (!dt) return 'N/A';
+    const date = new Date(dt);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+  const resolvePhotoUrl = (url) => {
+    if (!url) return null;
+    if (/^https?:\/\//i.test(url) || url.startsWith('data:') || url.startsWith('blob:')) {
+      return url;
+    }
+    const normalizedPath = url.startsWith('/') ? url : `/${url}`;
+    return `${window.location.origin}${normalizedPath}`;
+  };
+
+  const getPhotoUrls = (listing) => {
+    if (Array.isArray(listing.photoUrls)) {
+      return listing.photoUrls.map(resolvePhotoUrl).filter(Boolean);
+    }
+    if (Array.isArray(listing.photos)) {
+      return listing.photos
+        .map((p) => resolvePhotoUrl(p?.photoUrl || p?.url))
+        .filter(Boolean);
+    }
+    if (listing.photoUrl) {
+      const resolved = resolvePhotoUrl(listing.photoUrl);
+      return resolved ? [resolved] : [];
+    }
+    return [];
   };
 
   const resetForm = () => {
@@ -131,7 +171,7 @@ export default function ListingsPage() {
   }, [user?.userId, user?.supplierId]);
 
   const fetchListings = () => {
-    const supplierId = user?.userId ?? user?.supplierId;
+    const supplierId = user?.supplierId ?? user?.userId;
     if (!supplierId) return;
     
     fetch(`${supplierBase}/listings/supplier/${supplierId}`)
@@ -166,6 +206,8 @@ export default function ListingsPage() {
     if (!listingId) return;
     const confirmed = window.confirm('Delete this listing?');
     if (!confirmed) return;
+    setErrors([]);
+    setSuccessMessage('');
 
     fetch(`${supplierBase}/listings/${listingId}`, {
       method: 'DELETE',
@@ -175,16 +217,36 @@ export default function ListingsPage() {
         if (!r.ok) throw new Error('Failed to delete');
         return r.text();
       })
-      .then(() => fetchListings())
-      .catch((err) => console.error(err));
+      .then((message) => {
+        setSuccessMessage(message || 'Listing deleted successfully.');
+        fetchListings();
+      })
+      .catch((err) => {
+        console.error(err);
+        setErrors(['Failed to delete listing']);
+      });
   };
 
   const startEdit = (listing) => {
     const listingId = listing.listingId || listing.id;
+    const categoryWeights = Array.isArray(listing.categoryWeights) ? listing.categoryWeights : [];
+    const categoryIdsFromWeights = categoryWeights
+      .map((item) => item?.categoryId)
+      .filter((id) => Number.isFinite(id));
+    const fallbackCategoryIds = Array.isArray(listing.categoryIds) ? listing.categoryIds : [];
+    const categoryIds = categoryIdsFromWeights.length > 0 ? categoryIdsFromWeights : fallbackCategoryIds;
+    const categoryWeightById = categoryWeights.reduce((acc, item) => {
+      if (!Number.isFinite(item?.categoryId) || item.weightKg == null) return acc;
+      const grams = Number(item.weightKg) * 1000;
+      acc[item.categoryId] = Number.isFinite(grams) ? String(Math.round(grams)) : '';
+      return acc;
+    }, {});
 
     setEditingId(listingId);
     setShowCreateForm(true);
     setPhotoFile(null);
+    setErrors([]);
+    setSuccessMessage('');
 
     setFormData({
       storeId: listing.storeId || listing.store?.storeId || '',
@@ -194,13 +256,14 @@ export default function ListingsPage() {
       rescuePrice: listing.rescuePrice ?? '',
       pickupStart: toTimeInput(listing.pickupStart),
       pickupEnd: toTimeInput(listing.pickupEnd),
-      expiryAt: toDateTimeLocalInput(listing.expiryAt)
+      expiryAt: toDateTimeLocalInput(listing.expiryAt),
+      categoryIds,
+      categoryWeightById
     });
   };
 
   const getPrimaryPhoto = (listing) => {
-    const urls = listing.photoUrls
-      || (Array.isArray(listing.photos) ? listing.photos.map((p) => p.photoUrl) : []);
+    const urls = getPhotoUrls(listing);
     return urls && urls.length > 0 ? urls[0] : null;
   };
 
@@ -208,6 +271,7 @@ export default function ListingsPage() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setErrors([]);
+    setSuccessMessage('');
   };
 
   const toggleCategory = (categoryId) => {
@@ -223,6 +287,7 @@ export default function ListingsPage() {
       return { ...prev, categoryIds: nextIds, categoryWeightById: nextWeights };
     });
     setErrors([]);
+    setSuccessMessage('');
   };
 
   const handleCategoryWeightChange = (categoryId, value) => {
@@ -231,6 +296,7 @@ export default function ListingsPage() {
       categoryWeightById: { ...prev.categoryWeightById, [categoryId]: value }
     }));
     setErrors([]);
+    setSuccessMessage('');
   };
 
   const validatePrices = () => {
@@ -306,6 +372,7 @@ export default function ListingsPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setSuccessMessage('');
 
     const priceErrors = validatePrices();
     const timeErrors = getTimeErrors();
@@ -348,6 +415,7 @@ export default function ListingsPage() {
       : `${supplierBase}/listings?storeId=${encodeURIComponent(formData.storeId)}`;
 
     const method = editingId ? 'PUT' : 'POST';
+    const wasEditing = !!editingId;
 
     fetch(url, {
       method,
@@ -373,6 +441,7 @@ export default function ListingsPage() {
           await uploadPhoto(listingId);
         }
         resetForm();
+        setSuccessMessage(wasEditing ? 'Listing updated successfully.' : 'Listing created successfully.');
         fetchListings();
       })
       .catch((err) => {
@@ -403,6 +472,21 @@ export default function ListingsPage() {
           </button>
         )}
       </div>
+
+      {successMessage && (
+        <div
+          style={{
+            marginBottom: 16,
+            backgroundColor: '#e8f7eb',
+            border: '1px solid #c6e9cc',
+            color: '#14532d',
+            borderRadius: 10,
+            padding: '12px 14px'
+          }}
+        >
+          {successMessage}
+        </div>
+      )}
 
       {showCreateForm && (
         <div style={{ ...cardStyle, marginBottom: 20 }}>
@@ -750,56 +834,63 @@ export default function ListingsPage() {
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-          {listings.map((listing) => (
-            <div key={listing.listingId || listing.id} style={{ ...cardStyle, padding: 18 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
-                <div>
-                  <h3 style={{ margin: 0 }}>{listing.title}</h3>
-                  <span style={{ background: '#ecfdf3', color: '#166534', padding: '4px 10px', borderRadius: '999px', fontSize: 12 }}>
-                    {listing.status || 'ACTIVE'}
-                  </span>
+          {listings.map((listing) => {
+            const primaryPhoto = getPrimaryPhoto(listing);
+            return (
+              <div key={listing.listingId || listing.id} style={{ ...cardStyle, padding: 18 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+                  <h3 style={{ margin: 0, flex: 1 }}>{listing.title}</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    <span style={{ background: '#ecfdf3', color: '#166534', padding: '4px 10px', borderRadius: '999px', fontSize: 12 }}>
+                      {listing.status || 'ACTIVE'}
+                    </span>
+                    <button
+                      style={{ ...pillSubtle, padding: '6px 10px', fontSize: 12 }}
+                      onClick={() => startEdit(listing)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      style={{ ...pillSubtle, padding: '6px 10px', fontSize: 12, backgroundColor: '#fee2e2', color: '#b91c1c' }}
+                      onClick={() => handleDelete(listing.listingId || listing.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button
-                    style={{ ...pillSubtle, padding: '6px 10px', fontSize: 12 }}
-                    onClick={() => startEdit(listing)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    style={{ ...pillSubtle, padding: '6px 10px', fontSize: 12, backgroundColor: '#fee2e2', color: '#b91c1c' }}
-                    onClick={() => handleDelete(listing.listingId || listing.id)}
-                  >
-                    Delete
-                  </button>
+                <div style={{ marginTop: 12, borderRadius: 12, overflow: 'hidden', border: '1px solid #e5e7eb', height: 180, backgroundColor: '#f8fafc' }}>
+                  {primaryPhoto ? (
+                    <img
+                      src={primaryPhoto}
+                      alt={listing.title}
+                      style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: 13 }}>
+                      No photo uploaded
+                    </div>
+                  )}
+                </div>
+
+                {listing.description && <p style={{ color: '#4b5563', marginTop: 10, marginBottom: 0 }}>{listing.description}</p>}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
+                  <div>
+                    <div style={{ color: '#6b7280', fontSize: 12 }}>Original</div>
+                    <div style={{ fontWeight: 700 }}>${listing.originalPrice}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: '#6b7280', fontSize: 12 }}>Rescue</div>
+                    <div style={{ fontWeight: 700, color: '#16a34a' }}>${listing.rescuePrice}</div>
+                  </div>
+                </div>
+                <div style={{ marginTop: 12, borderTop: '1px solid #e5e7eb', paddingTop: 10, color: '#4b5563', fontSize: 13 }}>
+                  <div>Pickup: {formatTime(listing.pickupStart)} - {formatTime(listing.pickupEnd)}</div>
+                  <div>Expires: {formatDateTime(listing.expiryAt)}</div>
                 </div>
               </div>
-              {getPrimaryPhoto(listing) && (
-                <div style={{ marginTop: 12, borderRadius: 12, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-                  <img
-                    src={getPrimaryPhoto(listing)}
-                    alt={listing.title}
-                    style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }}
-                  />
-                </div>
-              )}
-              {listing.description && <p style={{ color: '#4b5563' }}>{listing.description}</p>}
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
-                <div>
-                  <div style={{ color: '#6b7280', fontSize: 12 }}>Original</div>
-                  <div style={{ fontWeight: 700 }}>${listing.originalPrice}</div>
-                </div>
-                <div>
-                  <div style={{ color: '#6b7280', fontSize: 12 }}>Rescue</div>
-                  <div style={{ fontWeight: 700, color: '#16a34a' }}>${listing.rescuePrice}</div>
-                </div>
-              </div>
-              <div style={{ marginTop: 12, borderTop: '1px solid #e5e7eb', paddingTop: 10, color: '#4b5563', fontSize: 13 }}>
-                <div>Pickup: {new Date(listing.pickupStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(listing.pickupEnd).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                <div>Expires: {new Date(listing.expiryAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
