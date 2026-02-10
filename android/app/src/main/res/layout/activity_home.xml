@@ -15,7 +15,7 @@
         app:elevation="0dp"
         app:statusBarForeground="@android:color/white"
         app:liftOnScroll="false">
-
+<!--just a test purpose - ov-->
     <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
