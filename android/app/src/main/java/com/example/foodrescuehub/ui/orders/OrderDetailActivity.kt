@@ -7,12 +7,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.foodrescuehub.R
+import com.example.foodrescuehub.data.model.OrderListingInfo
 import com.example.foodrescuehub.data.api.RetrofitClient
 import com.example.foodrescuehub.databinding.ActivityOrderDetailBinding
 import com.example.foodrescuehub.ui.home.HomeActivity
+import com.example.foodrescuehub.ui.review.ReviewActivity
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -51,6 +54,7 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     private var storeName: String = ""
     private var pickupSlotStart: String? = null
     private var pickupSlotEnd: String? = null
+    private var reviewableListings: List<OrderListingInfo> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,6 +93,10 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
             } else {
                 Toast.makeText(this, "Store location not available", Toast.LENGTH_SHORT).show()
             }
+        }
+
+        binding.btnReviewListing.setOnClickListener {
+            openReviewFlow()
         }
     }
 
@@ -134,6 +142,10 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         updateOrderStatus(order.status)
         setupQRCodeButton(order.status)
         order.pickupSlotEnd?.let { calculateETA(it) }
+        reviewableListings = order.orderItems.orEmpty()
+            .mapNotNull { it.listing }
+            .distinctBy { it.listingId }
+        updateReviewButton(order.status)
 
         binding.llOrderItems.removeAllViews()
         order.orderItems?.forEach { item ->
@@ -147,6 +159,46 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
             tvItemPrice.text = "$${String.format("%.2f", item.lineTotal)}"
             binding.llOrderItems.addView(itemView)
         }
+    }
+
+    private fun updateReviewButton(status: String) {
+        val isCompleted = status.equals("COMPLETED", ignoreCase = true) ||
+            status.equals("COLLECTED", ignoreCase = true)
+        val canReview = isCompleted && reviewableListings.isNotEmpty()
+        binding.btnReviewListing.visibility = if (canReview) View.VISIBLE else View.GONE
+    }
+
+    private fun openReviewFlow() {
+        if (reviewableListings.isEmpty()) {
+            Toast.makeText(this, getString(R.string.review_missing_listing), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (reviewableListings.size == 1) {
+            launchReviewActivity(reviewableListings.first())
+            return
+        }
+
+        val titles = reviewableListings.map { listing ->
+            if (listing.title.isBlank()) getString(R.string.review_listing_fallback) else listing.title
+        }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.review_pick_listing))
+            .setItems(titles) { _, index ->
+                launchReviewActivity(reviewableListings[index])
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun launchReviewActivity(listing: OrderListingInfo) {
+        val intent = Intent(this, ReviewActivity::class.java).apply {
+            putExtra(ReviewActivity.EXTRA_ORDER_ID, orderId)
+            putExtra(ReviewActivity.EXTRA_LISTING_ID, listing.listingId)
+            putExtra(ReviewActivity.EXTRA_LISTING_TITLE, listing.title)
+        }
+        startActivity(intent)
     }
 
     private fun setupQRCodeButton(status: String) {

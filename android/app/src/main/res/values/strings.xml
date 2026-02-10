@@ -46,4 +46,22 @@
     <string name="type_a_message">Type a message...</string>
     <string name="send">Send</string>
     <string name="message_content">Message content</string>
+
+    <!-- Listing Reviews -->
+    <string name="review_listing_button">Review this order</string>
+    <string name="review_title">Review Listing</string>
+    <string name="review_subtitle">Share your experience after pickup</string>
+    <string name="review_rating_label">Your rating</string>
+    <string name="review_comment_hint">Write your review</string>
+    <string name="review_submit_button">Submit review</string>
+    <string name="review_submitting">Submitting...</string>
+    <string name="review_submit_success">Review submitted successfully</string>
+    <string name="review_submit_failed_with_code">Failed to submit review (%1$d)</string>
+    <string name="review_network_error">Network error: %1$s</string>
+    <string name="review_rating_required">Please select a rating</string>
+    <string name="review_comment_required">Please enter a comment</string>
+    <string name="review_missing_context">Review details are missing</string>
+    <string name="review_missing_listing">No listing found to review</string>
+    <string name="review_pick_listing">Select an item to review</string>
+    <string name="review_listing_fallback">Listing</string>
 </resources>
