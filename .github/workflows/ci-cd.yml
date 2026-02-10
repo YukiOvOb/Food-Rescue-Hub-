@@ -405,33 +405,18 @@ jobs:
 
       - name: Perform CodeQL Analysis
         if: matrix.language != 'python' || needs.detect.outputs.has_python_src == 'true'
+        id: analyze
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{ matrix.language }}"
 
-      - name: Convert SARIF to readable summary
-        if: always() && (matrix.language != 'python' || needs.detect.outputs.has_python_src == 'true')
-        uses: ajeet-anand/sarif-to-md-action@v1
-        with:
-          sarif-file: ../results/${{ matrix.language }}.sarif
-          output-file: sast-summary-${{ matrix.language }}.md
-
-      - name: Upload readable summary
+      - name: Upload SAST Report (SARIF)
         if: always() && (matrix.language != 'python' || needs.detect.outputs.has_python_src == 'true')
         uses: actions/upload-artifact@v4
         with:
-          name: sast-summary-${{ matrix.language }}
-          path: sast-summary-${{ matrix.language }}.md
+          name: SAST-report-${{ matrix.language }}
+          path: ${{ steps.analyze.outputs.sarif-file }}
           if-no-files-found: warn
-
-      - name: Upload CodeQL SARIF artifact
-        if: always() && (matrix.language != 'python' || needs.detect.outputs.has_python_src == 'true')
-        uses: actions/upload-artifact@v4
-        with:
-          name: codeql-sast-${{ matrix.language }}
-          path: |
-            ../results/${{ matrix.language }}.sarif
-          if-no-files-found: ignore
 
 
 
@@ -838,7 +823,7 @@ jobs:
       - name: Wait for backend
         run: |
           for i in {1..60}; do
-            if curl -fsS "${BACKEND_LOCAL_URL}/api/hello" >/dev/null; then
+            if curl -fsS "${{ steps.jmeter_target.outputs.target_url }}/api/hello" >/dev/null; then
               echo "Backend is ready"
               exit 0
             fi
