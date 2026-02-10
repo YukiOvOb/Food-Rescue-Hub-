@@ -1197,21 +1197,14 @@ jobs:
 
 
   # =========================================================
-  # STAGE 2.7: IAST (OpenTelemetry-based, open-source)
-  # Runs on test environment flow before image build/deploy stages.
+  # STAGE 3: IAST (OpenTelemetry-based, open-source)
   # =========================================================
 
   iast-opentelemetry:
     name: IAST (OpenTelemetry runtime – open source)
     runs-on: ubuntu-latest
-    needs:
-      - detect
-      - backend-junit
-      - python-tests
-      - lint-code-quality
-    if: >
-      (github.event_name == 'push' && (github.ref == 'refs/heads/Sprint2' || github.ref == 'refs/heads/main')) ||
-      (github.event_name == 'pull_request' && github.base_ref == 'main')
+    needs: [image-scan-trivy]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
       MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || 'password' }}
       IAST_COMPOSE_FILE: docker-compose.integration.yml
