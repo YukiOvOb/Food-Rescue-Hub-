@@ -19,7 +19,8 @@ export default function EditStore() {
     const [storeName, setStoreName] = useState("");
     const [address, setAddress] = useState("");
     const [postalCode, setPostalCode] = useState("");
-    const [openingHours, setOpeningHours] = useState("");
+    const [openingTime, setOpeningTime] = useState("");
+    const [closingTime, setClosingTime] = useState("");
     const [description, setDescription] = useState("");
     const [pickupInstructions, setPickupInstructions] = useState("");
     const [coordinates, setCoordinates] = useState({ lat: 1.3521, lng: 103.8198 });
@@ -41,7 +42,11 @@ export default function EditStore() {
                 setStoreName(data.storeName);
                 setAddress(data.addressLine);
                 setPostalCode(data.postalCode);
-                setOpeningHours(data.openingHours);
+                if (data.openingHours && data.openingHours.includes("-")) {
+                    const parts = data.openingHours.split("-").map(s => s.trim());
+                    setOpeningTime(parts[0] ?? "");
+                    setClosingTime(parts[1] ?? "");
+                }
                 setDescription(data.description);
                 setPickupInstructions(data.pickupInstructions);
                 setCoordinates({ lat: data.lat, lng: data.lng });
@@ -73,6 +78,15 @@ export default function EditStore() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (openingTime && closingTime && closingTime <= openingTime) {
+            alert("Closing time must be later than opening time.");
+            return;
+        }
+
+        const openingHours = openingTime && closingTime
+            ? `${openingTime} - ${closingTime}`
+            : "";
 
         const payload = {
             supplierId: supplierId,
@@ -126,7 +140,22 @@ export default function EditStore() {
 
                 <div style={inputGroupStyle}>
                     <label>Opening Hours:</label>
-                    <input type="text" value={openingHours} onChange={(e) => setOpeningHours(e.target.value)} style={inputStyle} />
+                    <div style={{ display: "flex", gap: "10px" }}>
+                        <input
+                            type="time"
+                            value={openingTime}
+                            onChange={(e) => setOpeningTime(e.target.value)}
+                            style={inputStyle}
+                        />
+                        <input
+                            type="time"
+                            value={closingTime}
+                            onChange={(e) => setClosingTime(e.target.value)}
+                            style={inputStyle}
+                            min={openingTime || undefined}
+                        />
+                    </div>
+                    <small>Closing time must be later than opening time.</small>
                 </div>
 
                 <div style={inputGroupStyle}>

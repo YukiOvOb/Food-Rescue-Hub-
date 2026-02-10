@@ -11,6 +11,7 @@ const Dashboard = () => {
   const [pendingOrders, setPendingOrders] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalProducts, setTotalProducts] = useState(0);
+  const [co2SavedKg, setCo2SavedKg] = useState(0);
   const [statsLoading, setStatsLoading] = useState(false);
 
   useEffect(() => {
@@ -48,15 +49,18 @@ const Dashboard = () => {
     const loadStats = async () => {
       setStatsLoading(true);
       try {
-        const [pendingResult, completedResult, listingsResult] = await Promise.all([
+        const [pendingResult, completedResult, listingsResult, co2Result] = await Promise.all([
           axiosInstance.get(`/orders/supplier/${supplierId}/status/PENDING`),
           axiosInstance.get(`/orders/supplier/${supplierId}/status/COMPLETED`),
-          axiosInstance.get(`/supplier/listings/supplier/${supplierId}`)
+          axiosInstance.get(`/supplier/listings/supplier/${supplierId}`),
+          axiosInstance.get(`/analytics/supplier/${supplierId}/co2?days=30`)
         ]);
 
         const pendingOrdersList = pendingResult?.data || [];
         const completedOrdersList = completedResult?.data || [];
         const allListings = listingsResult?.data || [];
+        const co2Summary = co2Result?.data || {};
+        const co2Total = (Array.isArray(co2Summary) ? 0 : Number(co2Summary?.totalCo2Kg ?? 0));
 
         console.log('Dashboard Stats - Listings data:', allListings);
         console.log('Dashboard Stats - Listings count:', allListings.length);
@@ -74,12 +78,14 @@ const Dashboard = () => {
           setPendingOrders(pendingCount);
           setTotalRevenue(revenue);
           setTotalProducts(listingCount);
+          setCo2SavedKg(Number.isFinite(co2Total) ? co2Total : 0);
         }
       } catch (error) {
         if (!cancelled) {
           setPendingOrders(0);
           setTotalRevenue(0);
           setTotalProducts(0);
+          setCo2SavedKg(0);
         }
         console.error('Failed to load dashboard stats:', error);
         console.error('Error details:', error.response?.data, error.response?.status);
@@ -225,6 +231,12 @@ const Dashboard = () => {
             <h4>Total Revenue</h4>
             <p className="stat-value">
               {statsLoading ? '...' : `$${totalRevenue.toFixed(2)}`}
+            </p>
+          </div>
+          <div className="stat-card">
+            <h4>CO2 Saved (30d)</h4>
+            <p className="stat-value">
+              {statsLoading ? '...' : `${co2SavedKg.toFixed(2)} kg`}
             </p>
           </div>
           <div className="stat-card">
