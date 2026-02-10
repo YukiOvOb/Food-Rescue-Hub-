@@ -408,13 +408,29 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{ matrix.language }}"
+
+      - name: Convert SARIF to readable summary
+        if: always() && (matrix.language != 'python' || needs.detect.outputs.has_python_src == 'true')
+        uses: ajeet-anand/sarif-to-md-action@v1
+        with:
+          sarif-file: ../results/${{ matrix.language }}.sarif
+          output-file: sast-summary-${{ matrix.language }}.md
+
+      - name: Upload readable summary
+        if: always() && (matrix.language != 'python' || needs.detect.outputs.has_python_src == 'true')
+        uses: actions/upload-artifact@v4
+        with:
+          name: sast-summary-${{ matrix.language }}
+          path: sast-summary-${{ matrix.language }}.md
+          if-no-files-found: warn
+
       - name: Upload CodeQL SARIF artifact
         if: always() && (matrix.language != 'python' || needs.detect.outputs.has_python_src == 'true')
         uses: actions/upload-artifact@v4
         with:
           name: codeql-sast-${{ matrix.language }}
           path: |
-            **/*.sarif
+            ../results/${{ matrix.language }}.sarif
           if-no-files-found: ignore
 
 
