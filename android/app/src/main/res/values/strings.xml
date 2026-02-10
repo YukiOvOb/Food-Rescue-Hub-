@@ -6,7 +6,14 @@
     <string name="email_hint">Email</string>
     <string name="password_hint">Password</string>
     <string name="login_button">Login</string>
-    <string name="continue_as_guest">Continue as Guest</string>
+    <string name="continue_as_guest">Create Account</string>
+    <string name="display_name_hint">Display name</string>
+    <string name="phone_hint">Phone (optional)</string>
+    <string name="confirm_password_hint">Confirm password</string>
+    <string name="register_success">Account created</string>
+    <string name="register_button">Create Account</string>
+    <string name="register_title">Create your account</string>
+    <string name="password_mismatch">Passwords do not match</string>
     <string name="login_required_title">Login Required</string>
     <string name="login_required_message">Please login to add items to your cart</string>
     <string name="login_prompt_login">Login</string>

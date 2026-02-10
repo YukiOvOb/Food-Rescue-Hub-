@@ -61,14 +61,37 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Display Name Input -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilDisplayName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/display_name_hint"
+            app:layout_constraintTop_toBottomOf="@id/tilEmail"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:startIconDrawable="@android:drawable/ic_menu_edit"
+            app:errorEnabled="false"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etDisplayName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"
+                android:maxLines="1" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
         <!-- Password Input -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilPassword"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:hint="@string/password_hint"
-            app:layout_constraintTop_toBottomOf="@id/tilEmail"
+            app:layout_constraintTop_toBottomOf="@id/tilDisplayName"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:startIconDrawable="@android:drawable/ic_lock_lock"
@@ -99,7 +122,7 @@
 
         <!-- Continue as Guest Button -->
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnGuest"
+            android:id="@+id/btnCreateAccount"
             android:layout_width="0dp"
             android:layout_height="56dp"
             android:layout_marginTop="12dp"

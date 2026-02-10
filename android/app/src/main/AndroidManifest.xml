@@ -80,6 +80,7 @@
             android:name=".ui.checkout.PaymentWebViewActivity"
             android:exported="false"
             android:label="Secure Payment" />
+        <activity android:name=".ui.auth.RegisterActivity" android:exported="false" />
     </application>
 
 </manifest>

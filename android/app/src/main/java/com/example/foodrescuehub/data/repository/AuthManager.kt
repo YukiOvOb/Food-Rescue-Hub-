@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.foodrescuehub.data.api.RetrofitClient
 import com.example.foodrescuehub.data.model.LoginRequest
+import com.example.foodrescuehub.data.model.RegisterRequest
 import com.example.foodrescuehub.data.model.User
 import com.example.foodrescuehub.data.storage.SecurePreferences
 
@@ -60,6 +61,44 @@ object AuthManager {
                 
                 CartManager.fetchCart()
                 
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    /**
+     * Register a new consumer account and log in immediately.
+     */
+    suspend fun register(email: String, password: String, displayName: String, phone: String? = null): Boolean {
+        if (!isValidEmail(email) || password.length < 8) {
+            return false
+        }
+
+        val effectiveDisplayName = displayName.ifBlank {
+            email.substringBefore("@", email)
+        }
+
+        return try {
+            val payload = RegisterRequest(
+                email = email,
+                password = password,
+                displayName = effectiveDisplayName,
+                phone = phone?.takeIf { it.isNotBlank() },
+                role = "CONSUMER"
+            )
+
+            val response = RetrofitClient.apiService.register(payload)
+            if (response.isSuccessful && response.body() != null) {
+                val user = response.body()!!
+                securePreferences.saveUser(user)
+                _currentUser.postValue(user)
+                _isLoggedIn.postValue(true)
+                CartManager.fetchCart()
                 true
             } else {
                 false
