@@ -84,6 +84,7 @@ class MobileCheckoutControllerTest {
 
         mockMvc.perform(post("/api/mobile/checkout/start")
                 .sessionAttr("USER_ID", 1L)
+                .sessionAttr("USER_ROLE", "CONSUMER")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(payload)))
             .andExpect(status().isBadRequest());
@@ -97,6 +98,7 @@ class MobileCheckoutControllerTest {
 
         mockMvc.perform(post("/api/mobile/checkout/start")
                 .sessionAttr("USER_ID", 1L)
+                .sessionAttr("USER_ROLE", "CONSUMER")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(payload)))
             .andExpect(status().isBadRequest());
@@ -114,6 +116,7 @@ class MobileCheckoutControllerTest {
 
         mockMvc.perform(post("/api/mobile/checkout/start")
                 .sessionAttr("USER_ID", 1L)
+                .sessionAttr("USER_ROLE", "CONSUMER")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(payload)))
             .andExpect(status().isNotFound());
@@ -132,6 +135,7 @@ class MobileCheckoutControllerTest {
 
         mockMvc.perform(post("/api/mobile/checkout/start")
                 .sessionAttr("USER_ID", 1L)
+                .sessionAttr("USER_ROLE", "CONSUMER")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(payload)))
             .andExpect(status().isConflict());
@@ -158,6 +162,7 @@ class MobileCheckoutControllerTest {
 
         mockMvc.perform(post("/api/mobile/checkout/start")
                 .sessionAttr("USER_ID", 1L)
+                .sessionAttr("USER_ROLE", "CONSUMER")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(payload)))
             .andExpect(status().isOk())
@@ -197,6 +202,7 @@ class MobileCheckoutControllerTest {
 
         mockMvc.perform(post("/api/mobile/checkout/start")
                 .sessionAttr("USER_ID", 1L)
+                .sessionAttr("USER_ROLE", "CONSUMER")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(payload)))
             .andExpect(status().isOk())
@@ -226,6 +232,7 @@ class MobileCheckoutControllerTest {
 
         mockMvc.perform(post("/api/mobile/checkout/start")
                 .sessionAttr("USER_ID", 1L)
+                .sessionAttr("USER_ROLE", "CONSUMER")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(payload)))
             .andExpect(status().isServiceUnavailable());
@@ -251,6 +258,7 @@ class MobileCheckoutControllerTest {
 
         mockMvc.perform(post("/api/mobile/checkout/start")
                 .sessionAttr("USER_ID", 1L)
+                .sessionAttr("USER_ROLE", "CONSUMER")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(payload)))
             .andExpect(status().isInternalServerError());
@@ -281,6 +289,7 @@ class MobileCheckoutControllerTest {
 
         mockMvc.perform(post("/api/mobile/checkout/start")
                 .sessionAttr("USER_ID", 1L)
+                .sessionAttr("USER_ROLE", "CONSUMER")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(payload)))
             .andExpect(status().isOk());
@@ -326,3 +335,5 @@ class MobileCheckoutControllerTest {
         return store;
     }
 }
+
+

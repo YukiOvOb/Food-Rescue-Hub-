@@ -8,7 +8,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.foodrescuehub.data.api.RetrofitClient
-import com.example.foodrescuehub.data.repository.AuthManager
 import com.example.foodrescuehub.databinding.ActivityOrdersBinding
 import kotlinx.coroutines.launch
 
@@ -64,8 +63,11 @@ class OrdersActivity : AppCompatActivity() {
                     if (orders.isEmpty()) {
                         showEmptyState()
                     } else {
-                        // Sort orders by ID descending so the latest order is at the top
-                        val sortedOrders = orders.sortedByDescending { it.orderId }
+                        // Sort newest first by created time; tie-break on orderId.
+                        val sortedOrders = orders.sortedWith(
+                            compareByDescending<com.example.foodrescuehub.data.model.Order> { it.createdAt }
+                                .thenByDescending { it.orderId }
+                        )
                         ordersAdapter.submitList(sortedOrders)
                         showOrders()
                     }

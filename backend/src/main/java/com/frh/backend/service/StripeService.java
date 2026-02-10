@@ -5,6 +5,7 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -12,6 +13,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Service
+@Slf4j
 public class StripeService {
     
     // DTO for passing line item details
@@ -32,6 +34,8 @@ public class StripeService {
     public void init() {
         if (StringUtils.hasText(stripeSecretKey)) {
             Stripe.apiKey = stripeSecretKey;
+        } else {
+            log.warn("Stripe is not configured. Set STRIPE_SECRET_KEY (maps to stripe.secret.key).");
         }
     }
     /**
@@ -41,7 +45,7 @@ public class StripeService {
      */
     public String createCheckoutSession(List<StripeLineItem> lineItems, String orderReference) throws StripeException {
         if (!StringUtils.hasText(stripeSecretKey)) {
-            throw new IllegalStateException("Stripe is not configured");
+            throw new IllegalStateException("Stripe is not configured. Set STRIPE_SECRET_KEY.");
         }
         Stripe.apiKey = stripeSecretKey;
 

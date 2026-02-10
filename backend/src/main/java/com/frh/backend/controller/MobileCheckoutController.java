@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.frh.backend.Model.*;
 import com.frh.backend.repository.*;
@@ -47,7 +48,10 @@ public class MobileCheckoutController {
     public ResponseEntity<?> startMobileCheckout(HttpSession session, @RequestBody CheckoutRequest request) {
         // validation: ensure user in session and items present
         Long consumerId = (Long) session.getAttribute("USER_ID");
-        if (consumerId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+        String userRole = (String) session.getAttribute("USER_ROLE");
+        if (consumerId == null || !"CONSUMER".equalsIgnoreCase(userRole)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+        }
         if (request.items == null || request.items.isEmpty()) return ResponseEntity.badRequest().body("Cart is empty");
         
         // Validate pickup slot is provided
@@ -57,7 +61,7 @@ public class MobileCheckoutController {
         
         // get consumer from session id
         ConsumerProfile consumer = consumerProfileRepository.findById(consumerId)
-                .orElseThrow(() -> new RuntimeException("Consumer profile not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Consumer profile not found"));
         // Split Orders per Store
         Map<Store, List<OrderItem>> storeItemMap = new HashMap<>();
 
@@ -65,19 +69,25 @@ public class MobileCheckoutController {
         List<StripeService.StripeLineItem> stripeLineItems = new ArrayList<>();
         
         for (CheckoutItem reqItem : request.items) {
+            if (reqItem.quantity <= 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quantity must be greater than zero");
+            }
+
             // Use pessimistic lock for stock validation
             Listing listing = listingRepository.findByIdForUpdate(reqItem.listingId);
             if (listing == null) {
-                throw new RuntimeException("Listing not found ID: " + reqItem.listingId);
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found ID: " + reqItem.listingId);
             }
 
             // Check stock availability
             Inventory inventory = listing.getInventory();
             if (inventory == null || inventory.getQtyAvailable() < reqItem.quantity) {
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Insufficient stock for listing: " + listing.getTitle() + 
-                          ". Available: " + (inventory != null ? inventory.getQtyAvailable() : 0) +
-                          ", Requested: " + reqItem.quantity);
+                throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Insufficient stock for listing: " + listing.getTitle() +
+                        ". Available: " + (inventory != null ? inventory.getQtyAvailable() : 0) +
+                        ", Requested: " + reqItem.quantity
+                );
             }
 
             // Decrement stock (reserve it)
@@ -143,7 +153,7 @@ public class MobileCheckoutController {
             response.put("orderIds", createdOrderIds);
             return ResponseEntity.ok(response);
         } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Payment service unavailable");
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Payment service unavailable", e);
         } catch (Exception e) {
             throw new RuntimeException("Stripe Error: " + e.getMessage());
         }
