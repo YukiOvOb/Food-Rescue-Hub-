@@ -1810,11 +1810,20 @@ jobs:
               fi
               echo "Using origin: $(git remote get-url origin)"
               retry_cmd 5 git fetch --prune origin main
+              # Recover from interrupted merge/rebase/cherry-pick/am states from prior failed deploys.
+              git merge --abort >/dev/null 2>&1 || true
+              git rebase --abort >/dev/null 2>&1 || true
+              git cherry-pick --abort >/dev/null 2>&1 || true
+              git am --abort >/dev/null 2>&1 || true
+              if [ -n "$(git diff --name-only --diff-filter=U)" ]; then
+                echo "EC2 repo has unresolved conflicts; discarding local git state before sync"
+              fi
               if [ -n "$(git status --porcelain)" ]; then
-                echo "EC2 repo has local changes; stashing before deploy sync"
-                git stash push --include-untracked -m "ci-deploy-$(date -u +%Y%m%dT%H%M%SZ)" || true
+                echo "EC2 repo has local changes; forcing clean sync with origin/main"
+                git reset --hard HEAD
               fi
               git checkout -B main FETCH_HEAD
+              git reset --hard FETCH_HEAD
             else
               echo "Directory ~/Food-Rescue-Hub- is not a git repository"
               exit 1
