@@ -1,14 +1,48 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import jsQR from 'jsqr';
+import axios from '../services/axiosConfig';
+import authService from '../services/authService';
 import './styles/QRCodeDecoder.css';
+
+const CAMERA_CONSTRAINTS = [
+  {
+    video: {
+      facingMode: { ideal: 'environment' },
+      width: { ideal: 1280 },
+      height: { ideal: 720 }
+    },
+    audio: false
+  },
+  {
+    video: { facingMode: 'environment' },
+    audio: false
+  },
+  {
+    video: true,
+    audio: false
+  }
+];
+
+const normalizeOrders = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.orders)) return payload.orders;
+  return [];
+};
 
 const QRCodeDecoder = () => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const [cameraActive, setCameraActive] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const streamRef = useRef(null);
+  const animationFrameRef = useRef(null);
 
   const parseResponseData = async (response) => {
     const contentType = response.headers.get('content-type') || '';
@@ -21,174 +55,298 @@ const QRCodeDecoder = () => {
     if (contentType.includes('application/json')) {
       try {
         return JSON.parse(text);
-      } catch (err) {
+      } catch (parseError) {
         return { error: text };
       }
     }
 
     try {
       return JSON.parse(text);
-    } catch (err) {
+    } catch (parseError) {
       return { error: text };
     }
   };
 
-  // 启动摄像头
+  const stopCamera = useCallback(() => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    const stream = streamRef.current || videoRef.current?.srcObject;
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
+    streamRef.current = null;
+    setCameraActive(false);
+    setIsScanning(false);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, [stopCamera]);
+
   const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        setCameraActive(true);
-        setError(null);
-      }
-    } catch (err) {
-      setError('Cannot access camera: ' + err.message);
+    if (!window.isSecureContext && window.location.hostname !== 'localhost') {
+      setError('Camera access needs HTTPS or localhost.');
+      return;
     }
-  };
 
-  // 停止摄像头
-  const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      videoRef.current.srcObject.getTracks().forEach(track => track.stop());
-      setCameraActive(false);
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError('This browser does not support camera access.');
+      return;
     }
-  };
 
-  // 从视频帧中捕获和解码QRCode
-  const captureAndDecode = async () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    setError(null);
+    setResult(null);
+    setSuccessMessage(null);
 
-    const context = canvasRef.current.getContext('2d');
-    canvasRef.current.width = videoRef.current.videoWidth;
-    canvasRef.current.height = videoRef.current.videoHeight;
-    context.drawImage(videoRef.current, 0, 0);
-
-    canvasRef.current.toBlob(async (blob) => {
-      if (!blob) return;
-
-      setLoading(true);
-      setError(null);
-      setResult(null);
-
-      const formData = new FormData();
-      formData.append('file', blob, 'qrcode.png');
-
+    for (const constraints of CAMERA_CONSTRAINTS) {
       try {
-        const response = await fetch('/api/pickup-tokens/decode-qrcode', {
-          method: 'POST',
-          body: formData,
-        });
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        streamRef.current = stream;
 
-        const data = await parseResponseData(response);
-
-        if (!response.ok) {
-          setError(data?.error || data?.message || 'Failed to decode QR code');
+        if (!videoRef.current) {
+          stream.getTracks().forEach((track) => track.stop());
+          setError('Video element is not available.');
           return;
         }
 
-        setResult(data?.content || '');
-        stopCamera();
-      } catch (err) {
-        setError('Network error: ' + err.message);
-      } finally {
-        setLoading(false);
+        videoRef.current.srcObject = stream;
+        videoRef.current.muted = true;
+
+        await videoRef.current.play();
+
+        setCameraActive(true);
+        setIsScanning(true);
+        return;
+      } catch (cameraError) {
+        // Try the next camera constraint candidate.
       }
-    });
+    }
+
+    setError('Cannot access camera. Check browser permissions and retry.');
   };
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setError(null);
-      setResult(null);
+  useEffect(() => {
+    if (!cameraActive || !isScanning) {
+      return undefined;
     }
+
+    const scanFrame = () => {
+      const videoElement = videoRef.current;
+      const canvasElement = canvasRef.current;
+
+      if (!videoElement || !canvasElement) {
+        animationFrameRef.current = requestAnimationFrame(scanFrame);
+        return;
+      }
+
+      if (videoElement.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+        animationFrameRef.current = requestAnimationFrame(scanFrame);
+        return;
+      }
+
+      if (!videoElement.videoWidth || !videoElement.videoHeight) {
+        animationFrameRef.current = requestAnimationFrame(scanFrame);
+        return;
+      }
+
+      const context = canvasElement.getContext('2d', { willReadFrequently: true });
+      if (!context) {
+        animationFrameRef.current = requestAnimationFrame(scanFrame);
+        return;
+      }
+      canvasElement.width = videoElement.videoWidth;
+      canvasElement.height = videoElement.videoHeight;
+      context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+
+      const imageData = context.getImageData(0, 0, canvasElement.width, canvasElement.height);
+      const decoded = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: 'attemptBoth'
+      });
+
+      if (decoded?.data) {
+        const decodedText = decoded.data.trim();
+        setResult(decodedText);
+        setError(null);
+        setSuccessMessage('QR code detected. You can confirm this order now.');
+        stopCamera();
+        return;
+      }
+
+      animationFrameRef.current = requestAnimationFrame(scanFrame);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(scanFrame);
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    };
+  }, [cameraActive, isScanning, stopCamera]);
+
+  const decodeWithBackend = async (inputFile) => {
+    const formData = new FormData();
+    formData.append('file', inputFile);
+
+    const response = await fetch('/api/pickup-tokens/decode-qrcode', {
+      method: 'POST',
+      body: formData,
+      credentials: 'include'
+    });
+
+    const data = await parseResponseData(response);
+    if (!response.ok) {
+      throw new Error(data?.error || data?.message || 'Failed to decode QR code');
+    }
+
+    return (data?.content || '').trim();
+  };
+
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files?.[0];
+    if (!selectedFile) {
+      return;
+    }
+    setFile(selectedFile);
+    setError(null);
+    setResult(null);
+    setSuccessMessage(null);
   };
 
   const handleUpload = async () => {
     if (!file) {
-      setError('Please select a file first');
+      setError('Please select a file first.');
       return;
     }
 
     setLoading(true);
     setError(null);
     setResult(null);
-
-    const formData = new FormData();
-    formData.append('file', file);
+    setSuccessMessage(null);
 
     try {
-      const response = await fetch('/api/pickup-tokens/decode-qrcode', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await parseResponseData(response);
-
-      if (!response.ok) {
-        setError(data?.error || data?.message || 'Failed to decode QR code');
-        return;
-      }
-
-      setResult(data?.content || '');
+      const decodedText = await decodeWithBackend(file);
+      setResult(decodedText);
       setFile(null);
-    } catch (err) {
-      setError('Network error: ' + err.message);
+      setSuccessMessage('QR image decoded successfully. You can confirm the order now.');
+    } catch (uploadError) {
+      setError(uploadError.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const resolveSupplierId = async () => {
+    const localUser = authService.getStoredUser();
+    if (localUser?.userId || localUser?.supplierId) {
+      return localUser.userId ?? localUser.supplierId;
+    }
+
+    const currentUser = await authService.getCurrentUser();
+    return currentUser?.userId ?? currentUser?.supplierId ?? null;
+  };
+
+  const confirmOrderByScannedToken = async () => {
+    if (!result) {
+      setError('Scan or decode a QR code before confirming.');
+      return;
+    }
+
+    setConfirming(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const supplierId = await resolveSupplierId();
+      if (!supplierId) {
+        throw new Error('Cannot resolve supplier account.');
+      }
+
+      const storesResponse = await axios.get(`/stores/supplier/${supplierId}`);
+      const stores = Array.isArray(storesResponse?.data) ? storesResponse.data : [];
+
+      if (stores.length === 0) {
+        throw new Error('No stores found for this supplier.');
+      }
+
+      const orderResponses = await Promise.all(
+        stores.map((store) => axios.get(`/orders/store/${store.storeId}`))
+      );
+
+      const allOrders = orderResponses.flatMap((response) => normalizeOrders(response?.data));
+      const scannedToken = result.trim();
+
+      const pendingOrderMatch = allOrders.find(
+        (order) => order?.status === 'PENDING' && order?.pickupToken?.qrTokenHash === scannedToken
+      );
+
+      if (!pendingOrderMatch) {
+        const completedOrderMatch = allOrders.find(
+          (order) => order?.status === 'COMPLETED' && order?.pickupToken?.qrTokenHash === scannedToken
+        );
+
+        if (completedOrderMatch) {
+          throw new Error(`Order #${completedOrderMatch.orderId} is already completed.`);
+        }
+
+        throw new Error('No pending order found for this pickup token.');
+      }
+
+      await axios.patch(`/orders/${pendingOrderMatch.orderId}/status`, null, {
+        params: { status: 'COMPLETED' }
+      });
+
+      setSuccessMessage(`Order #${pendingOrderMatch.orderId} marked as completed.`);
+    } catch (confirmError) {
+      setError(confirmError?.response?.data?.message || confirmError.message || 'Failed to confirm order.');
+    } finally {
+      setConfirming(false);
     }
   };
 
   return (
     <div className="qr-decoder-container">
       <h2>QR Code Decoder</h2>
-      
-      {/* 摄像头检测部分 */}
+
       <div className="camera-section">
-        <h3>📷 Real-time Camera Detection</h3>
+        <h3>Real-time Camera Detection</h3>
         {!cameraActive ? (
           <button onClick={startCamera} className="camera-btn">
-            Start Camera
+            Open Camera & Start Scanning
           </button>
         ) : (
           <>
-            <video 
-              ref={videoRef} 
-              autoPlay 
-              playsInline
-              className="camera-video"
-            />
-            <canvas ref={canvasRef} style={{ display: 'none' }} />
+            <video ref={videoRef} autoPlay playsInline className="camera-video" />
+            <p className="scan-status">Scanning live camera feed...</p>
             <div className="camera-controls">
-              <button 
-                onClick={captureAndDecode} 
-                disabled={loading}
-                className="capture-btn"
-              >
-                {loading ? 'Processing...' : 'Capture & Decode'}
-              </button>
               <button onClick={stopCamera} className="stop-camera-btn">
                 Stop Camera
               </button>
             </div>
           </>
         )}
+        <canvas ref={canvasRef} style={{ display: 'none' }} />
       </div>
 
       <div className="divider">Or</div>
 
-      {/* 文件上传部分 */}
       <div className="upload-section">
-        <h3>📁 Upload QR Code Image</h3>
+        <h3>Upload QR Code Image</h3>
         <input
           type="file"
           accept="image/*"
           onChange={handleFileChange}
-          disabled={loading}
+          disabled={loading || confirming}
           className="file-input"
         />
 
@@ -200,7 +358,7 @@ const QRCodeDecoder = () => {
 
         <button
           onClick={handleUpload}
-          disabled={!file || loading}
+          disabled={!file || loading || confirming}
           className="upload-btn"
         >
           {loading ? 'Decoding...' : 'Decode QR Code'}
@@ -208,22 +366,29 @@ const QRCodeDecoder = () => {
       </div>
 
       {error && <div className="error-message">❌ {error}</div>}
+      {successMessage && <div className="success-message">✅ {successMessage}</div>}
 
       {result && (
         <div className="result-message">
-          <h3>✅ Decoded Content:</h3>
+          <h3>Decoded Content</h3>
           <div className="result-content">
             <code>{result}</code>
           </div>
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(result);
-              alert('Copied to clipboard!');
-            }}
-            className="copy-btn"
-          >
-            Copy to Clipboard
-          </button>
+          <div className="result-actions">
+            <button
+              onClick={confirmOrderByScannedToken}
+              disabled={confirming}
+              className="confirm-btn"
+            >
+              {confirming ? 'Confirming...' : 'Confirm Order Pickup'}
+            </button>
+            <button
+              onClick={() => navigator.clipboard.writeText(result)}
+              className="copy-btn"
+            >
+              Copy Token
+            </button>
+          </div>
         </div>
       )}
     </div>

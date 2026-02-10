@@ -12,6 +12,7 @@
   "dependencies": {
     "@react-google-maps/api": "^2.20.8",
     "axios": "^1.13.4",
+    "jsqr": "^1.4.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-router-dom": "^7.13.0"

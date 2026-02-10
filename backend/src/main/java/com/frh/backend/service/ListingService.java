@@ -120,11 +120,19 @@ public class ListingService {
             dto.setCategory(getStoreCategory(listing));
         }
 
-        // Inventory
+        // Inventory (default to 0 when inventory or quantity fields are missing)
+        Integer qtyAvailable = 0;
+        Integer qtyReserved = 0;
         if (listing.getInventory() != null) {
-            dto.setQtyAvailable(listing.getInventory().getQtyAvailable());
-            dto.setQtyReserved(listing.getInventory().getQtyReserved());
+            if (listing.getInventory().getQtyAvailable() != null) {
+                qtyAvailable = listing.getInventory().getQtyAvailable();
+            }
+            if (listing.getInventory().getQtyReserved() != null) {
+                qtyReserved = listing.getInventory().getQtyReserved();
+            }
         }
+        dto.setQtyAvailable(qtyAvailable);
+        dto.setQtyReserved(qtyReserved);
 
         // Photos
         if (listing.getPhotos() != null && !listing.getPhotos().isEmpty()) {

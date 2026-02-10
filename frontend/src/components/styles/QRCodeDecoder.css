@@ -50,6 +50,16 @@
   background-color: #000;
 }
 
+.scan-status {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #1f2937;
+  background-color: #e0f2fe;
+  border-left: 4px solid #0284c7;
+  padding: 8px 10px;
+  border-radius: 6px;
+}
+
 .camera-controls {
   display: flex;
   gap: 10px;
@@ -153,7 +163,7 @@
   color: #fff;
   border: none;
   border-radius: 6px;
-  cursor: pointer;;
+  cursor: pointer;
   font-weight: 600;
 }
 
@@ -202,4 +212,43 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 12px;
+}
+
+.copy-btn:hover {
+  background-color: #2563eb;
+}
+
+.success-message {
+  margin-top: 14px;
+  padding: 12px;
+  background-color: #dcfce7;
+  color: #166534;
+  border-left: 4px solid #22c55e;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.result-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.confirm-btn {
+  padding: 8px 14px;
+  background-color: #16a34a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.confirm-btn:hover {
+  background-color: #15803d;
+}
+
+.confirm-btn:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
 }
