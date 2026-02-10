@@ -69,6 +69,19 @@ public ResponseEntity<?> createListing(
 
     // 3) Save – catch DB errors so they become readable 400s instead of generic 500
     try {
+        // Ensure an inventory row exists so consumers can see it (consumer query filters qty_available > 0)
+        if (listing.getInventory() == null) {
+            com.frh.backend.Model.Inventory inv = new com.frh.backend.Model.Inventory();
+            inv.setListing(listing);
+            inv.setQtyAvailable(1); // default 1 so it appears; supplier can adjust later
+            inv.setQtyReserved(0);
+            listing.setInventory(inv);
+        } else if (listing.getInventory().getQtyAvailable() == null || listing.getInventory().getQtyAvailable() <= 0) {
+            listing.getInventory().setQtyAvailable(1);
+            listing.getInventory().setQtyReserved(0);
+            listing.getInventory().setListing(listing);
+        }
+
         Listing savedListing = listingRepository.save(listing);
         return ResponseEntity.ok(savedListing);
 
