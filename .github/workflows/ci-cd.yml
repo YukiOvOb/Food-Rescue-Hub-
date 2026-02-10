@@ -378,7 +378,7 @@ jobs:
         with:
           args: >
             -Dsonar.organization=harini14hari
-            -Dsonar.projectKey=harini14hari
+            -Dsonar.projectKey=harini14hari_Food-Rescue-Hub-
             -Dsonar.branch.name=main
 
 
