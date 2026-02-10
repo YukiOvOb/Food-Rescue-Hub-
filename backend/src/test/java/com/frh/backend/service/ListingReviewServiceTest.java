@@ -85,9 +85,107 @@ class ListingReviewServiceTest {
     }
 
     @Test
+    void createReview_orderNotFound_throwsNotFound() {
+        CreateListingReviewRequest request = request(1L, 100L, 5, "Good");
+        when(orderRepository.findById(1L)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> listingReviewService.createReview(10L, request)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        verify(listingReviewRepository, never()).save(any());
+    }
+
+    @Test
+    void createReview_orderConsumerNull_throwsForbidden() {
+        Order order = order(1L, 10L, "COMPLETED", 100L);
+        order.setConsumer(null);
+        CreateListingReviewRequest request = request(1L, 100L, 5, "Good");
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> listingReviewService.createReview(10L, request)
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        verify(listingReviewRepository, never()).save(any());
+    }
+
+    @Test
+    void createReview_nullStatus_throwsBadRequest() {
+        Order order = order(1L, 10L, null, 100L);
+        CreateListingReviewRequest request = request(1L, 100L, 5, "Good");
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> listingReviewService.createReview(10L, request)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(listingReviewRepository, never()).save(any());
+    }
+
+    @Test
     void createReview_notCompleted_throwsBadRequest() {
         Order order = order(1L, 10L, "PENDING", 100L);
         CreateListingReviewRequest request = request(1L, 100L, 5, "Good");
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> listingReviewService.createReview(10L, request)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(listingReviewRepository, never()).save(any());
+    }
+
+    @Test
+    void createReview_orderItemsNull_throwsBadRequest() {
+        Order order = order(1L, 10L, "COLLECTED", 100L);
+        order.setOrderItems(null);
+        CreateListingReviewRequest request = request(1L, 100L, 4, "Good");
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> listingReviewService.createReview(10L, request)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(listingReviewRepository, never()).save(any());
+    }
+
+    @Test
+    void createReview_orderItemsEmpty_throwsBadRequest() {
+        Order order = order(1L, 10L, "COLLECTED", 100L);
+        order.setOrderItems(List.of());
+        CreateListingReviewRequest request = request(1L, 100L, 4, "Good");
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> listingReviewService.createReview(10L, request)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(listingReviewRepository, never()).save(any());
+    }
+
+    @Test
+    void createReview_orderContainsNullListing_throwsBadRequest() {
+        Order order = order(1L, 10L, "COLLECTED", 100L);
+        order.getOrderItems().get(0).setListing(null);
+        CreateListingReviewRequest request = request(1L, 100L, 4, "Good");
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
@@ -135,8 +233,108 @@ class ListingReviewServiceTest {
     }
 
     @Test
+    void createReview_ratingNull_throwsBadRequest() {
+        Order order = order(1L, 10L, "COMPLETED", 100L);
+        CreateListingReviewRequest request = request(1L, 100L, null, "Good");
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(listingReviewRepository.existsByOrder_OrderIdAndListing_ListingIdAndConsumer_ConsumerId(1L, 100L, 10L))
+            .thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> listingReviewService.createReview(10L, request)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(listingReviewRepository, never()).save(any());
+    }
+
+    @Test
+    void createReview_ratingAboveFive_throwsBadRequest() {
+        Order order = order(1L, 10L, "COMPLETED", 100L);
+        CreateListingReviewRequest request = request(1L, 100L, 6, "Good");
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(listingReviewRepository.existsByOrder_OrderIdAndListing_ListingIdAndConsumer_ConsumerId(1L, 100L, 10L))
+            .thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> listingReviewService.createReview(10L, request)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(listingReviewRepository, never()).save(any());
+    }
+
+    @Test
+    void createReview_commentNull_throwsBadRequest() {
+        Order order = order(1L, 10L, "COMPLETED", 100L);
+        CreateListingReviewRequest request = request(1L, 100L, 5, null);
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(listingReviewRepository.existsByOrder_OrderIdAndListing_ListingIdAndConsumer_ConsumerId(1L, 100L, 10L))
+            .thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> listingReviewService.createReview(10L, request)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(listingReviewRepository, never()).save(any());
+    }
+
+    @Test
+    void createReview_commentBlank_throwsBadRequest() {
+        Order order = order(1L, 10L, "COMPLETED", 100L);
+        CreateListingReviewRequest request = request(1L, 100L, 5, "   ");
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(listingReviewRepository.existsByOrder_OrderIdAndListing_ListingIdAndConsumer_ConsumerId(1L, 100L, 10L))
+            .thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> listingReviewService.createReview(10L, request)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(listingReviewRepository, never()).save(any());
+    }
+
+    @Test
     void deleteReview_notOwner_throwsForbidden() {
         ListingReview review = review(8L, order(1L, 20L, "COMPLETED", 100L), consumer(20L), listing(100L));
+        when(listingReviewRepository.findById(8L)).thenReturn(Optional.of(review));
+
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> listingReviewService.deleteReview(8L, 10L)
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        verify(listingReviewRepository, never()).delete(any());
+    }
+
+    @Test
+    void deleteReview_notFound_throwsNotFound() {
+        when(listingReviewRepository.findById(8L)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> listingReviewService.deleteReview(8L, 10L)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        verify(listingReviewRepository, never()).delete(any());
+    }
+
+    @Test
+    void deleteReview_consumerNull_throwsForbidden() {
+        ListingReview review = review(8L, order(1L, 20L, "COMPLETED", 100L), consumer(20L), listing(100L));
+        review.setConsumer(null);
         when(listingReviewRepository.findById(8L)).thenReturn(Optional.of(review));
 
         ResponseStatusException ex = assertThrows(
@@ -156,6 +354,19 @@ class ListingReviewServiceTest {
         listingReviewService.deleteReview(8L, 10L);
 
         verify(listingReviewRepository).delete(review);
+    }
+
+    @Test
+    void getReviewsByListing_mapsReviews() {
+        ListingReview review = review(8L, order(1L, 10L, "COMPLETED", 100L), consumer(10L), listing(100L));
+        when(listingReviewRepository.findByListing_ListingIdOrderByCreatedAtDesc(100L)).thenReturn(List.of(review));
+
+        List<ListingReviewResponse> responses = listingReviewService.getReviewsByListing(100L);
+
+        assertEquals(1, responses.size());
+        assertEquals(8L, responses.get(0).getReviewId());
+        assertEquals(100L, responses.get(0).getListingId());
+        assertEquals(10L, responses.get(0).getConsumerId());
     }
 
     private CreateListingReviewRequest request(Long orderId, Long listingId, Integer rating, String comment) {
