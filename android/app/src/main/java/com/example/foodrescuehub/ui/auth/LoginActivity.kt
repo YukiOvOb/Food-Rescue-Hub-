@@ -1,5 +1,6 @@
 package com.example.foodrescuehub.ui.auth
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -29,13 +30,34 @@ class LoginActivity : AppCompatActivity() {
             showLoading(isLoading)
         }
 
+
         viewModel.loginResult.observe(this) { result ->
-            result.onSuccess {
+            result.onSuccess { user -> // named return outcome user
                 Toast.makeText(this, R.string.login_success, Toast.LENGTH_SHORT).show()
-                // NAVIGATE to HomeActivity instead of just finishing
+
+
+                // save User ID  for ReviewActivity
+
+                val sharedPref = getSharedPreferences("UserSession", Context.MODE_PRIVATE)
+                with (sharedPref.edit()) {
+
+                    try {
+
+                        putLong("KEY_USER_ID", user.userId)
+                    } catch (e: Exception) {
+                        // 如果实在读不到，存个默认值防止崩坏
+                        putLong("KEY_USER_ID", 1L)
+                    }
+
+                    apply()
+                }
+                // ---------------------------------------------------------
+
+                // jump to home page
                 val intent = Intent(this, HomeActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 startActivity(intent)
+
             }.onFailure {
                 binding.tilEmail.error = getString(R.string.invalid_email)
                 Toast.makeText(this, it.message ?: "Login failed", Toast.LENGTH_SHORT).show()
@@ -49,6 +71,13 @@ class LoginActivity : AppCompatActivity() {
         }
 
         binding.btnGuest.setOnClickListener {
+            // guest model
+            val sharedPref = getSharedPreferences("UserSession", Context.MODE_PRIVATE)
+            with (sharedPref.edit()) {
+                putLong("KEY_USER_ID", 999L) // 999 behave guest
+                apply()
+            }
+
             // Guests also go to HomeActivity
             val intent = Intent(this, HomeActivity::class.java)
             startActivity(intent)

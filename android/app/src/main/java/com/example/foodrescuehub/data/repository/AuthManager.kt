@@ -22,6 +22,9 @@ object AuthManager {
     private val _currentUser = MutableLiveData<User?>(null)
     val currentUser: LiveData<User?> = _currentUser
 
+    //save user who login succeed
+    var lastLoggedInUser: User? = null
+
     /**
      * Initialize AuthManager and restore login state from storage
      * Should be called once in Application.onCreate()
@@ -34,6 +37,7 @@ object AuthManager {
         if (savedUser != null) {
             _currentUser.value = savedUser
             _isLoggedIn.value = true
+            lastLoggedInUser = savedUser
         }
     }
 
@@ -52,20 +56,23 @@ object AuthManager {
 
         return try {
             val response = RetrofitClient.apiService.login(LoginRequest(email, password))
-            
+
             if (response.isSuccessful && response.body() != null) {
                 val user = response.body()!!
-                
+
                 // Save user to encrypted storage
                 securePreferences.saveUser(user)
+
+
+                lastLoggedInUser = user
 
                 // Update LiveData (use postValue as this might be on a background thread)
                 _currentUser.postValue(user)
                 _isLoggedIn.postValue(true)
-                
+
                 // Synchronize cart state after successful login
                 CartManager.fetchCart()
-                
+
                 true
             } else {
                 false
@@ -83,13 +90,16 @@ object AuthManager {
     fun logout() {
         // Clear user and cookies from storage
         securePreferences.clearUser()
-        
+
         // Clear cookies from the active Retrofit client
         RetrofitClient.clearSession()
 
         // Update LiveData
         _currentUser.value = null
         _isLoggedIn.value = false
+
+
+        lastLoggedInUser = null
 
         // Clear cart on logout
         CartManager.clearCartForLogout()

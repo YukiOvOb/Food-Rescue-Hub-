@@ -1,6 +1,7 @@
 package com.example.foodrescuehub.data.api
 
 import com.example.foodrescuehub.data.model.*
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -163,4 +164,8 @@ interface ApiService {
     //
     @POST("api/mobile/checkout/start")
     suspend fun startCheckout(@Body request: CheckoutRequest): Response<CheckoutResponse>
+
+// review
+@POST("api/reviews/add")
+suspend fun submitReview(@Body request: ReviewRequest): Response<ResponseBody>
 }
