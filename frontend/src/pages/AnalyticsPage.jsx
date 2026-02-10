@@ -83,7 +83,6 @@ const AnalyticsPage = () => {
         <div>
           <span className="analytics-tag">Supplier</span>
           <h1>Analytics</h1>
-          <p>Top Selling Products</p>
         </div>
         <button className="analytics-btn" onClick={() => navigate('/dashboard')}>
           Back to Dashboard
@@ -146,6 +145,7 @@ const AnalyticsPage = () => {
             </>
           )}
 
+          <h2>Top Selling Products</h2>
           {items.length === 0 ? (
             <div className="analytics-empty">No sales data available</div>
           ) : (
