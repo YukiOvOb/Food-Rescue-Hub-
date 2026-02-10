@@ -58,7 +58,7 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var tvEmptyState: TextView
     private lateinit var bottomNavigation: BottomNavigationView
     private lateinit var btnSortFilter: ImageButton
-    private lateinit var btnCart: ImageButton
+    private lateinit var btnCart: TextView
     private lateinit var tvCartBadge: TextView
 
     // User location from database (will be fetched from backend)

@@ -15,7 +15,7 @@
         app:elevation="0dp"
         app:statusBarForeground="@android:color/white"
         app:liftOnScroll="false">
-<!--just a test purpose - ov-->
+<!--just a test purpose of text - ov-->
     <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -66,19 +66,21 @@
 
                     <FrameLayout
                         android:id="@+id/flCartIcon"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:layout_width="48dp"
+                        android:layout_height="50dp"
                         android:layout_marginStart="8dp">
 
-                        <ImageButton
+                        <TextView
                             android:id="@+id/btnCart"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:contentDescription="Shopping Cart"
-                            android:src="@android:drawable/ic_menu_add"
-                            app:tint="#000000"
-                            android:padding="8dp" />
+                            android:gravity="center"
+                            android:padding="8dp"
+                            android:text="🔔"
+                            android:textSize="25sp"
+                            app:tint="#000000" />
 
                         <TextView
                             android:id="@+id/tvCartBadge"
