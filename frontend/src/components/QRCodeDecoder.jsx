@@ -320,13 +320,19 @@ const QRCodeDecoder = () => {
 
       <div className="camera-section">
         <h3>Real-time Camera Detection</h3>
-        {!cameraActive ? (
+        {!cameraActive && (
           <button onClick={startCamera} className="camera-btn">
             Open Camera & Start Scanning
           </button>
-        ) : (
+        )}
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          className={`camera-video ${cameraActive ? '' : 'camera-video-hidden'}`}
+        />
+        {cameraActive && (
           <>
-            <video ref={videoRef} autoPlay playsInline className="camera-video" />
             <p className="scan-status">Scanning live camera feed...</p>
             <div className="camera-controls">
               <button onClick={stopCamera} className="stop-camera-btn">

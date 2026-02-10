@@ -50,6 +50,10 @@
   background-color: #000;
 }
 
+.camera-video-hidden {
+  display: none;
+}
+
 .scan-status {
   margin: 0 0 12px;
   font-size: 14px;
