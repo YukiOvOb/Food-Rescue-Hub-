@@ -60,7 +60,8 @@ public class PickupTokenController {
 
         try {
             String qrHash = token.getQrTokenHash();
-            String fileName = "order_" + orderId + "_" + qrHash;
+            String safeHash = qrHash.replaceAll("[^A-Za-z0-9_-]", "_");
+            String fileName = "order_" + orderId + "_" + safeHash;
             String filePath = QRCodeGenerator.generateQRCode(qrHash, fileName);
             String qrCodeUrl = "http://localhost:8080/qrcode/" + fileName + ".png";
 

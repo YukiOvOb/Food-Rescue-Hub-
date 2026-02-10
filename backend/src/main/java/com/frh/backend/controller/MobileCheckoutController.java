@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.frh.backend.Model.*;
 import com.frh.backend.repository.*;
 import com.frh.backend.service.StripeService;
+import com.frh.backend.util.PickupTokenGenerator;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -141,6 +142,7 @@ public class MobileCheckoutController {
                 item.setOrder(order);
             }
             order.setOrderItems(itemsForThisStore);
+            order.setPickupToken(PickupTokenGenerator.createForOrder(order));
             order = orderRepository.save(order);
             createdOrderIds.add(order.getOrderId());
         }

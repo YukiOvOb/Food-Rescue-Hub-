@@ -245,6 +245,8 @@ class OrderServiceTest {
         assertEquals(new BigDecimal("7.50"), result.getTotalAmount());
         assertEquals(1, result.getOrderItems().size());
         assertEquals(3, result.getOrderItems().get(0).getQuantity());
+        assertNotNull(result.getPickupToken());
+        assertNotNull(result.getPickupToken().getQrTokenHash());
     }
 
     @Test
