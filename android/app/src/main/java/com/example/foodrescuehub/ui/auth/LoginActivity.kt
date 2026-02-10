@@ -48,11 +48,8 @@ class LoginActivity : AppCompatActivity() {
             performLogin()
         }
 
-        binding.btnGuest.setOnClickListener {
-            // Guests also go to HomeActivity
-            val intent = Intent(this, HomeActivity::class.java)
-            startActivity(intent)
-            finish()
+        binding.btnCreateAccount.setOnClickListener {
+            startActivity(Intent(this, RegisterActivity::class.java))
         }
     }
 
@@ -79,7 +76,7 @@ class LoginActivity : AppCompatActivity() {
     private fun showLoading(loading: Boolean) {
         binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
         binding.btnLogin.isEnabled = !loading
-        binding.btnGuest.isEnabled = !loading
+        binding.btnCreateAccount.isEnabled = !loading
         binding.etEmail.isEnabled = !loading
         binding.etPassword.isEnabled = !loading
     }
