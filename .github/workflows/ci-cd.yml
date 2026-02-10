@@ -370,6 +370,21 @@ jobs:
         with:
           fetch-depth: 0   # REQUIRED
 
+      - name: Set up JDK 17 (for build)
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Build backend (compile classes for Sonar)
+        working-directory: backend
+        shell: bash
+        run: |
+          set -e
+          chmod +x mvnw
+          ./mvnw -q -DskipTests package
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         env:
