@@ -58,6 +58,8 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var tvEmptyState: TextView
     private lateinit var bottomNavigation: BottomNavigationView
     private lateinit var btnSortFilter: ImageButton
+
+    //just changed here for the notification bell icon
     private lateinit var btnCart: TextView
     private lateinit var tvCartBadge: TextView
 
