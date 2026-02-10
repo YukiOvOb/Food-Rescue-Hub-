@@ -32,6 +32,9 @@ public class AnalyticsController {
             return ResponseEntity.ok(items);
         } catch (Exception e) {
             log.error("Error retrieving top selling products", e);
+            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(List.of());
+            }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to retrieve top selling products");
         }

@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -137,5 +138,98 @@ public class StoreServiceTest {
 
         assertEquals("Store not found", exception.getMessage());
         verify(storeRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void createStore_ShouldThrow_WhenSupplierDoesNotExist() {
+        StoreRequest dto = new StoreRequest();
+        dto.setSupplierId(123L);
+
+        when(supplierProfileRepository.findById(123L)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> storeService.createStore(dto));
+
+        assertEquals("Supplier not found", ex.getMessage());
+        verify(storeRepository, never()).save(any(Store.class));
+    }
+
+    @Test
+    void getAllStores_ShouldMapResponses_AndHandleNullSupplierProfile() {
+        SupplierProfile supplier = new SupplierProfile();
+        supplier.setSupplierId(10L);
+
+        Store withSupplier = new Store();
+        withSupplier.setStoreId(1L);
+        withSupplier.setStoreName("Store A");
+        withSupplier.setSupplierProfile(supplier);
+
+        Store withoutSupplier = new Store();
+        withoutSupplier.setStoreId(2L);
+        withoutSupplier.setStoreName("Store B");
+        withoutSupplier.setSupplierProfile(null);
+
+        when(storeRepository.findBySupplierProfile_SupplierId(10L))
+            .thenReturn(List.of(withSupplier, withoutSupplier));
+
+        List<StoreResponse> responses = storeService.getAllStores(10L);
+
+        assertEquals(2, responses.size());
+        assertEquals(10L, responses.get(0).getSupplierId());
+        assertNull(responses.get(1).getSupplierId());
+    }
+
+    @Test
+    void getStoreById_ShouldThrow_WhenStoreDoesNotExist() {
+        when(storeRepository.findById(404L)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> storeService.getStoreById(404L));
+
+        assertEquals("Store not found", ex.getMessage());
+    }
+
+    @Test
+    void updateStore_ShouldUpdateAndReturnMappedResponse() {
+        Long storeId = 50L;
+
+        SupplierProfile supplier = new SupplierProfile();
+        supplier.setSupplierId(3L);
+
+        Store existingStore = new Store();
+        existingStore.setStoreId(storeId);
+        existingStore.setSupplierProfile(supplier);
+
+        StoreRequest dto = new StoreRequest();
+        dto.setStoreName("Updated Store");
+        dto.setAddressLine("Updated Address");
+        dto.setPostalCode("654321");
+        dto.setLat(new BigDecimal("1.31"));
+        dto.setLng(new BigDecimal("103.91"));
+        dto.setOpeningHours("9-5");
+        dto.setDescription("Updated description");
+        dto.setPickupInstructions("Collect at counter");
+
+        when(storeRepository.findById(storeId)).thenReturn(Optional.of(existingStore));
+        when(storeRepository.save(existingStore)).thenReturn(existingStore);
+
+        StoreResponse response = storeService.updateStore(storeId, dto);
+
+        assertEquals("Updated Store", response.getStoreName());
+        assertEquals("Updated Address", response.getAddressLine());
+        assertEquals("654321", response.getPostalCode());
+        assertEquals(3L, response.getSupplierId());
+        verify(storeRepository).save(existingStore);
+    }
+
+    @Test
+    void updateStore_ShouldThrow_WhenStoreDoesNotExist() {
+        when(storeRepository.findById(88L)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(
+            RuntimeException.class,
+            () -> storeService.updateStore(88L, new StoreRequest())
+        );
+
+        assertEquals("Store not found", ex.getMessage());
+        verify(storeRepository, never()).save(any(Store.class));
     }
 }

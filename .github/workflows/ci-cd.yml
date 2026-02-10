@@ -10,6 +10,24 @@ on:
     branches: 
       - main
   workflow_dispatch:
+    inputs:
+      jmeter_target_host:
+        description: "Optional. Host or domain for deployment load test (example: ec2-xx-xx-xx-xx.compute-1.amazonaws.com)"
+        required: false
+        type: string
+      jmeter_target_port:
+        description: "Optional. Port for deployment load test."
+        required: false
+        default: "8080"
+        type: string
+      jmeter_target_protocol:
+        description: "Optional. Protocol for deployment load test."
+        required: false
+        default: "http"
+        type: choice
+        options:
+          - http
+          - https
 
 concurrency:
   group: frh-${{ github.workflow }}-${{ github.ref }}
@@ -20,11 +38,11 @@ permissions:
 
 env:
   REPORT_ONLY: "true"          # true = don't fail pipeline on lint/scans; false = strict gate
-  PYTHON_DIR: "ml"
+  PYTHON_DIR: "ai_service"
   ANDROID_DIR: "android"
 
   # Local integration endpoints inside GitHub runner:
-  PROD_URL: "http://localhost:80"   # nginx port for production
+  PROD_URL: "http://13.228.183.177:80"   # nginx port for production
   BACKEND_LOCAL_URL: "http://localhost:8080"
   OPENAPI_PATH: "/v3/api-docs"   # Swagger/OpenAPI (Spring Boot default)
   SMOKE_PATH: "/api/hello"       # change to your real endpoint
@@ -183,14 +201,14 @@ jobs:
           fi
 
       - name: Upload pytest reports
-        if: always()
+        if: always() && needs.detect.outputs.has_python_src == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: python-test-reports
           path: |
-            ml/pytest-junit.xml
-            ml/coverage.xml
-            ml/htmlcov/**
+            ${{ env.PYTHON_DIR }}/pytest-junit.xml
+            ${{ env.PYTHON_DIR }}/coverage.xml
+            ${{ env.PYTHON_DIR }}/htmlcov/**
           if-no-files-found: warn
 
 
@@ -257,11 +275,11 @@ jobs:
           fi
 
       - name: Upload Ruff report
-        if: always()
+        if: always() && needs.detect.outputs.has_python_src == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: python-ruff-report
-          path: ml/ruff-report.txt
+          path: ${{ env.PYTHON_DIR }}/ruff-report.txt
           if-no-files-found: warn
 
       # ---- React ESLint ----
@@ -390,14 +408,30 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{ matrix.language }}"
+
+      - name: Convert SARIF to readable summary
+        if: always() && (matrix.language != 'python' || needs.detect.outputs.has_python_src == 'true')
+        uses: ajeet-anand/sarif-to-md-action@v1
+        with:
+          sarif-file: ../results/${{ matrix.language }}.sarif
+          output-file: sast-summary-${{ matrix.language }}.md
+
+      - name: Upload readable summary
+        if: always() && (matrix.language != 'python' || needs.detect.outputs.has_python_src == 'true')
+        uses: actions/upload-artifact@v4
+        with:
+          name: sast-summary-${{ matrix.language }}
+          path: sast-summary-${{ matrix.language }}.md
+          if-no-files-found: warn
+
       - name: Upload CodeQL SARIF artifact
-        if: always()
+        if: always() && (matrix.language != 'python' || needs.detect.outputs.has_python_src == 'true')
         uses: actions/upload-artifact@v4
         with:
           name: codeql-sast-${{ matrix.language }}
           path: |
-            **/*.sarif
-          if-no-files-found: warn
+            ../results/${{ matrix.language }}.sarif
+          if-no-files-found: ignore
 
 
 
@@ -537,6 +571,35 @@ jobs:
             docker compose -f compose.yml logs --no-color || true
           fi
           exit 1
+      
+      - name: Probe OpenAPI schema endpoints
+        if: needs.detect.outputs.has_compose == 'true'
+        shell: bash
+        env:
+          BACKEND_LOCAL_URL: "http://localhost:8080"
+        run: |
+          set +e
+          echo "== Probing OpenAPI endpoints =="
+          echo "GET ${BACKEND_LOCAL_URL}/v3/api-docs"
+          curl -i "${BACKEND_LOCAL_URL}/v3/api-docs" | head -200
+          echo
+          echo "GET ${BACKEND_LOCAL_URL}/api/v3/api-docs"
+          curl -i "${BACKEND_LOCAL_URL}/api/v3/api-docs" | head -200
+          echo
+          echo "GET ${BACKEND_LOCAL_URL}/swagger-ui/index.html"
+          curl -i "${BACKEND_LOCAL_URL}/swagger-ui/index.html" | head -80
+
+      - name: Backend logs (OpenAPI failure debug)
+        if: needs.detect.outputs.has_compose == 'true'
+        shell: bash
+        run: |
+          if [ -f "docker-compose.integration.yml" ]; then
+            docker compose -f docker-compose.integration.yml logs --no-color --tail=300 || true
+          elif [ -f "docker-compose.yml" ]; then
+            docker compose -f docker-compose.yml logs --no-color --tail=300 || true
+          else
+            docker compose -f compose.yml logs --no-color --tail=300 || true
+          fi
 
       # ---- Schemathesis from Swagger/OpenAPI ----
       - name: Setup Python (Schemathesis)
@@ -549,24 +612,135 @@ jobs:
         if: needs.detect.outputs.has_compose == 'true'
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           pip install "schemathesis>=3,<4"
 
-          OPENAPI_URL="${BACKEND_LOCAL_URL}${OPENAPI_PATH}"
-          echo "OpenAPI URL: ${OPENAPI_URL}"
+          mkdir -p schemathesis-out
 
-          schemathesis run "${OPENAPI_URL}" \
-            --base-url "${BACKEND_LOCAL_URL}" \
+          schemathesis --version | tee schemathesis-out/version.txt
+
+          BASE_URL="${SCHEMATHESIS_BASE_URL:-${BACKEND_LOCAL_URL}}"
+          PRIMARY_OPENAPI_URL="${BASE_URL}${OPENAPI_PATH}"
+          ALT_OPENAPI_URL="${BASE_URL}/api${OPENAPI_PATH}"
+          OPENAPI_URL=""
+
+          echo "Schemathesis base URL: ${BASE_URL}"
+          echo "OpenAPI candidate URLs:"
+          echo " - ${PRIMARY_OPENAPI_URL}"
+          echo " - ${ALT_OPENAPI_URL}"
+
+          # Wait for OpenAPI to be reachable and valid JSON schema.
+          for candidate in "${PRIMARY_OPENAPI_URL}" "${ALT_OPENAPI_URL}"; do
+            for i in {1..20}; do
+              HTTP_CODE="$(curl -sS -o schemathesis-out/openapi.json -w "%{http_code}" "${candidate}" || true)"
+              if [ "${HTTP_CODE}" = "200" ] && grep -Eq '"(openapi|swagger)"[[:space:]]*:' schemathesis-out/openapi.json; then
+                OPENAPI_URL="${candidate}"
+                echo "OpenAPI schema fetched from ${OPENAPI_URL}"
+                break 2
+              fi
+              echo "Waiting for OpenAPI schema at ${candidate}... (${i}/20, http=${HTTP_CODE})"
+              sleep 3
+            done
+          done
+
+          if [ -z "${OPENAPI_URL}" ]; then
+            echo "Failed to download OpenAPI schema from ${PRIMARY_OPENAPI_URL} (also tried ${ALT_OPENAPI_URL})" | tee schemathesis-out/schemathesis.log
+
+            {
+              echo "== Probe: ${PRIMARY_OPENAPI_URL} =="
+              curl -sS -i "${PRIMARY_OPENAPI_URL}" | head -n 80 || true
+              echo
+              echo "== Probe: ${ALT_OPENAPI_URL} =="
+              curl -sS -i "${ALT_OPENAPI_URL}" | head -n 80 || true
+              echo
+              echo "== Probe: ${BACKEND_LOCAL_URL}${SMOKE_PATH} =="
+              curl -sS -i "${BACKEND_LOCAL_URL}${SMOKE_PATH}" | head -n 40 || true
+              echo
+              echo "== Probe: ${BACKEND_LOCAL_URL}/actuator/health =="
+              curl -sS -i "${BACKEND_LOCAL_URL}/actuator/health" | head -n 40 || true
+            } >> schemathesis-out/schemathesis.log
+
+            if [ -f "docker-compose.integration.yml" ]; then
+              docker compose -f docker-compose.integration.yml logs --no-color backend >> schemathesis-out/schemathesis.log || true
+            elif [ -f "docker-compose.yml" ]; then
+              docker compose -f docker-compose.yml logs --no-color backend >> schemathesis-out/schemathesis.log || true
+            else
+              docker compose -f compose.yml logs --no-color backend >> schemathesis-out/schemathesis.log || true
+            fi
+
+            cat > schemathesis-junit.xml <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuites tests="1" failures="1" errors="0" skipped="0">
+            <testsuite name="schemathesis" tests="1" failures="1" errors="0" skipped="0">
+              <testcase name="schema-fetch">
+                <failure message="Failed to fetch OpenAPI schema">OpenAPI endpoint was not reachable in CI. Checked primary and /api fallback paths.</failure>
+              </testcase>
+            </testsuite>
+          </testsuites>
+          EOF
+            [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1
+          fi
+
+          if schemathesis run --help | grep -q -- "--report-junit-path"; then
+            REPORT_FLAGS=(--report junit --report-junit-path schemathesis-junit.xml)
+          else
+            REPORT_FLAGS=(--junit-xml schemathesis-junit.xml)
+          fi
+
+          # Schemathesis <4 requires an explicit experimental flag for OpenAPI 3.1 schemas.
+          EXPERIMENT_FLAGS=()
+          if grep -Eq '"openapi"[[:space:]]*:[[:space:]]*"3\.1(\.[0-9]+)?"' schemathesis-out/openapi.json; then
+            echo "Detected OpenAPI 3.1 schema."
+            if schemathesis run --help | grep -q -- "--experimental"; then
+              EXPERIMENT_FLAGS=(--experimental=openapi-3.1)
+              echo "Enabling Schemathesis experimental OpenAPI 3.1 support."
+            fi
+          fi
+
+          # Schemathesis 3.x uses --base-url; keep backward compatibility if older CLI exposes --url.
+          if schemathesis run --help | grep -q -- "--base-url"; then
+            BASE_URL_FLAGS=(--base-url "${BASE_URL}")
+          elif schemathesis run --help | grep -q -- "--url"; then
+            BASE_URL_FLAGS=(--url "${BASE_URL}")
+          else
+            BASE_URL_FLAGS=()
+          fi
+
+          set +e
+          schemathesis run schemathesis-out/openapi.json \
+            "${BASE_URL_FLAGS[@]}" \
+            "${EXPERIMENT_FLAGS[@]}" \
             --checks all \
-            --junit-xml schemathesis-junit.xml || \
-            ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
+            "${REPORT_FLAGS[@]}" 2>&1 | tee schemathesis-out/schemathesis.log
+          ST_EXIT=$?
+          set -e
+
+          # Ensure artifact is never an empty file, even on CLI/runtime failures.
+          if [ ! -s schemathesis-junit.xml ]; then
+            cat > schemathesis-junit.xml <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuites tests="1" failures="1" errors="0" skipped="0">
+            <testsuite name="schemathesis" tests="1" failures="1" errors="0" skipped="0">
+              <testcase name="schemathesis-run">
+                <failure message="Schemathesis did not generate JUnit XML">Exit code: ${ST_EXIT}. Check schemathesis-out/schemathesis.log.</failure>
+              </testcase>
+            </testsuite>
+          </testsuites>
+          EOF
+          fi
+
+          if [ "${ST_EXIT}" -ne 0 ] && [ "${REPORT_ONLY}" != "true" ]; then
+            exit "${ST_EXIT}"
+          fi
 
       - name: Upload Schemathesis report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: schemathesis-report
-          path: schemathesis-junit.xml
+          path: |
+            schemathesis-junit.xml
+            schemathesis-out/**
           if-no-files-found: warn
 
       # ---- Playwright UI E2E (optional) ----
@@ -589,7 +763,7 @@ jobs:
           npx playwright test || ( [ "${REPORT_ONLY}" = "true" ] && exit 0 || exit 1 )
 
       - name: Upload Playwright report (optional)
-        if: always()
+        if: always() && needs.detect.outputs.has_frontend == 'true' && needs.detect.outputs.has_playwright == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
@@ -681,10 +855,10 @@ jobs:
           BACKEND_LOCAL_URL: ${{ env.BACKEND_LOCAL_URL }}
         run: |
           chmod +x mvnw
-          ./mvnw -q test -Dtest=FunctionalUserFlowTest -Dsurefire.failIfNoSpecifiedTests=false
+          ./mvnw -q test -Dtest=BackendApplicationTests -Dsurefire.failIfNoSpecifiedTests=false
 
       - name: Upload Selenium test report
-        if: always()
+        if: always() && hashFiles('backend/target/surefire-reports/*') != ''
         uses: actions/upload-artifact@v4
         with:
           name: selenium-functional-test-report
@@ -712,10 +886,65 @@ jobs:
     needs: [detect, selenium-functional-test]
     if: needs.detect.outputs.has_backend == 'true'
     env:
-      STAGING_URL: "http://localhost:8080"
+      WF_JMETER_TARGET_HOST: ${{ inputs.jmeter_target_host }}
+      WF_JMETER_TARGET_PORT: ${{ inputs.jmeter_target_port }}
+      WF_JMETER_TARGET_PROTOCOL: ${{ inputs.jmeter_target_protocol }}
+      VAR_JMETER_TARGET_HOST: ${{ vars.JMETER_TARGET_HOST }}
+      VAR_JMETER_TARGET_PORT: ${{ vars.JMETER_TARGET_PORT }}
+      VAR_JMETER_TARGET_PROTOCOL: ${{ vars.JMETER_TARGET_PROTOCOL }}
       JMETER_VERSION: "5.6.3"
+      JMETER_WARMUP_USERS: "8"
+      JMETER_WARMUP_LOOPS: "3"
+      JMETER_WARMUP_RAMP_SECONDS: "10"
+      JMETER_LOAD_USERS: "100"
+      JMETER_LOAD_LOOPS: "10"
+      JMETER_LOAD_RAMP_SECONDS: "30"
+      JMETER_THINK_TIME_MS: "350"
+      JMETER_CONNECT_TIMEOUT_MS: "10000"
+      JMETER_RESPONSE_TIMEOUT_MS: "10000"
+      JMETER_MAX_RESPONSE_MS: "5000"
+      JMETER_LAT: "1.3521"
+      JMETER_LNG: "103.8198"
+      JMETER_RADIUS_KM: "5.0"
+      METRICS_SAMPLE_SECONDS: "5"
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Resolve JMeter target
+        id: jmeter_target
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TARGET_HOST="${WF_JMETER_TARGET_HOST:-${VAR_JMETER_TARGET_HOST:-localhost}}"
+          TARGET_PORT="${WF_JMETER_TARGET_PORT:-${VAR_JMETER_TARGET_PORT:-8080}}"
+          TARGET_PROTOCOL="${WF_JMETER_TARGET_PROTOCOL:-${VAR_JMETER_TARGET_PROTOCOL:-http}}"
+          RUN_MODE="deployed"
+          if [ "${TARGET_HOST}" = "localhost" ] || [ "${TARGET_HOST}" = "127.0.0.1" ]; then
+            RUN_MODE="local"
+          fi
+          TARGET_URL="${TARGET_PROTOCOL}://${TARGET_HOST}:${TARGET_PORT}"
+
+          {
+            echo "target_host=${TARGET_HOST}"
+            echo "target_port=${TARGET_PORT}"
+            echo "target_protocol=${TARGET_PROTOCOL}"
+            echo "target_url=${TARGET_URL}"
+            echo "run_mode=${RUN_MODE}"
+          } >> "${GITHUB_OUTPUT}"
+
+          {
+            echo "run_mode=${RUN_MODE}"
+            echo "target_url=${TARGET_URL}"
+            echo "target_host=${TARGET_HOST}"
+            echo "target_port=${TARGET_PORT}"
+            echo "target_protocol=${TARGET_PROTOCOL}"
+            echo "resolved_at_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } > jmeter-target.txt
+
+          cat jmeter-target.txt
 
       - name: Install JMeter
         run: |
@@ -726,21 +955,29 @@ jobs:
           ./apache-jmeter-${JMETER_VERSION}/bin/jmeter --version
 
       - name: Start application stack
+        id: local_stack
+        if: steps.jmeter_target.outputs.run_mode == 'local'
         env:
           MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || 'password' }}
         run: |
           if [ -f "docker-compose.integration.yml" ]; then
-            docker compose -f docker-compose.integration.yml up -d
+            COMPOSE_FILE="docker-compose.integration.yml"
+          elif [ -f "docker-compose.yml" ]; then
+            COMPOSE_FILE="docker-compose.yml"
           else
-            docker compose -f docker-compose.yml up -d
+            COMPOSE_FILE="compose.yml"
           fi
+          echo "compose_file=${COMPOSE_FILE}" >> "${GITHUB_OUTPUT}"
+          docker compose -f "${COMPOSE_FILE}" up -d
 
       - name: Wait for MySQL
+        if: steps.jmeter_target.outputs.run_mode == 'local'
         env:
           MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || 'password' }}
         run: |
+          COMPOSE_FILE="${{ steps.local_stack.outputs.compose_file }}"
           for i in {1..120}; do
-            if docker compose -f docker-compose.integration.yml exec -T mysql mysqladmin ping -h localhost -uroot -p"${MYSQL_ROOT_PASSWORD}" --silent; then
+            if docker compose -f "${COMPOSE_FILE}" exec -T mysql mysqladmin ping -h localhost -uroot -p"${MYSQL_ROOT_PASSWORD}" --silent; then
               echo "MySQL is ready"
               exit 0
             fi
@@ -748,13 +985,14 @@ jobs:
             sleep 2
           done
           echo "MySQL failed to start"
-          docker compose -f docker-compose.integration.yml logs
+          docker compose -f "${COMPOSE_FILE}" logs
           exit 1
 
-      - name: Wait for backend
+      - name: Wait for local backend
+        if: steps.jmeter_target.outputs.run_mode == 'local'
         run: |
           for i in {1..60}; do
-            if curl -fsS "${STAGING_URL}/api/hello" >/dev/null; then
+            if curl -fsS "${{ steps.jmeter_target.outputs.target_url }}/api/hello" >/dev/null; then
               echo "Backend is ready for load testing"
               exit 0
             fi
@@ -764,16 +1002,82 @@ jobs:
           docker compose logs
           exit 1
 
+      - name: Wait for deployed backend
+        if: steps.jmeter_target.outputs.run_mode == 'deployed'
+        shell: bash
+        run: |
+          TARGET_URL="${{ steps.jmeter_target.outputs.target_url }}"
+          for i in {1..30}; do
+            if curl -fsS "${TARGET_URL}/api/hello" >/dev/null; then
+              echo "Deployed backend is reachable at ${TARGET_URL}"
+              exit 0
+            fi
+            echo "Waiting for deployed backend... ($i)"
+            sleep 5
+          done
+          echo "Deployed target did not become ready: ${TARGET_URL}"
+          exit 1
+
+      - name: Start local metrics sampling
+        if: steps.jmeter_target.outputs.run_mode == 'local'
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "# local docker stats sampling"
+            echo "# started_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "timestamp_utc,container_name,cpu_perc,mem_perc,mem_usage,net_io,block_io,pids"
+          } > system-metrics-local.log
+
+          (
+            while true; do
+              TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+              docker stats --no-stream --format "{{.Name}},{{.CPUPerc}},{{.MemPerc}},{{.MemUsage}},{{.NetIO}},{{.BlockIO}},{{.PIDs}}" \
+                | sed "s/^/${TS},/" >> system-metrics-local.log
+              sleep "${METRICS_SAMPLE_SECONDS}"
+            done
+          ) &
+          echo $! > .metrics_local_pid
+
+      - name: Start remote metrics sampling
+        if: steps.jmeter_target.outputs.run_mode == 'deployed'
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET_HOST="${{ steps.jmeter_target.outputs.target_host }}"
+
+          if [ -z "${EC2_HOST}" ] || [ -z "${EC2_SSH_KEY}" ] || [ "${TARGET_HOST}" != "${EC2_HOST}" ]; then
+            echo "Skipping remote metrics: requires EC2_HOST/EC2_SSH_KEY and target host == EC2_HOST" | tee system-metrics-remote.log
+            exit 0
+          fi
+
+          KEYFILE="${RUNNER_TEMP}/ec2_jmeter_metrics_key"
+          printf '%s' "${EC2_SSH_KEY}" > "${KEYFILE}"
+          chmod 600 "${KEYFILE}"
+          echo "remote_keyfile=${KEYFILE}" > .remote_metrics_ctx
+          echo "remote_host=${TARGET_HOST}" >> .remote_metrics_ctx
+          echo "started_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> .remote_metrics_ctx
+
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=no -i "${KEYFILE}" ubuntu@"${TARGET_HOST}" \
+            "nohup bash -lc 'echo \"# remote docker stats sampling\" > /tmp/frh-jmeter-remote-metrics.log; \
+             echo \"# started_utc=\$(date -u +%Y-%m-%dT%H:%M:%SZ)\" >> /tmp/frh-jmeter-remote-metrics.log; \
+             while true; do \
+               echo \"--- \$(date -u +%Y-%m-%dT%H:%M:%SZ) ---\" >> /tmp/frh-jmeter-remote-metrics.log; \
+               docker stats --no-stream >> /tmp/frh-jmeter-remote-metrics.log 2>&1; \
+               sleep ${METRICS_SAMPLE_SECONDS}; \
+             done' >/dev/null 2>&1 & echo \$! > /tmp/frh-jmeter-remote-metrics.pid"
+
       - name: Run JMeter Load Test (Non-GUI Mode)
         run: |
           echo "==================================================="
           echo "Starting JMeter Load & Performance Test"
           echo "==================================================="
           echo "Test Configuration:"
-          echo "  - Users: 100 concurrent"
-          echo "  - Ramp-up: 30 seconds"
-          echo "  - Iterations: 10 per user"
-          echo "  - Target: ${STAGING_URL}"
+          echo "  - Warm-up: ${JMETER_WARMUP_USERS} users x ${JMETER_WARMUP_LOOPS} loops (ramp ${JMETER_WARMUP_RAMP_SECONDS}s)"
+          echo "  - Main load: ${JMETER_LOAD_USERS} users x ${JMETER_LOAD_LOOPS} loops (ramp ${JMETER_LOAD_RAMP_SECONDS}s)"
+          echo "  - Weighted mix: 70% /api/listings, 20% /api/listings/category/All, 10% /api/listings/nearby"
+          echo "  - Max response time assertion: ${JMETER_MAX_RESPONSE_MS}ms"
+          echo "  - Target: ${{ steps.jmeter_target.outputs.target_url }}"
           echo "==================================================="
           
           ./apache-jmeter-${JMETER_VERSION}/bin/jmeter \
@@ -782,13 +1086,54 @@ jobs:
             -l results.jtl \
             -e \
             -o report \
-            -JHOST=localhost \
-            -JPORT=8080 \
-            -JSTAGING_URL="${STAGING_URL}"
+            -JHOST="${{ steps.jmeter_target.outputs.target_host }}" \
+            -JPORT="${{ steps.jmeter_target.outputs.target_port }}" \
+            -JPROTOCOL="${{ steps.jmeter_target.outputs.target_protocol }}" \
+            -JWARMUP_USERS="${JMETER_WARMUP_USERS}" \
+            -JWARMUP_LOOPS="${JMETER_WARMUP_LOOPS}" \
+            -JWARMUP_RAMP_SECONDS="${JMETER_WARMUP_RAMP_SECONDS}" \
+            -JLOAD_USERS="${JMETER_LOAD_USERS}" \
+            -JLOAD_LOOPS="${JMETER_LOAD_LOOPS}" \
+            -JLOAD_RAMP_SECONDS="${JMETER_LOAD_RAMP_SECONDS}" \
+            -JTHINK_TIME_MS="${JMETER_THINK_TIME_MS}" \
+            -JCONNECT_TIMEOUT_MS="${JMETER_CONNECT_TIMEOUT_MS}" \
+            -JRESPONSE_TIMEOUT_MS="${JMETER_RESPONSE_TIMEOUT_MS}" \
+            -JMAX_RESPONSE_MS="${JMETER_MAX_RESPONSE_MS}" \
+            -JLAT="${JMETER_LAT}" \
+            -JLNG="${JMETER_LNG}" \
+            -JRADIUS_KM="${JMETER_RADIUS_KM}"
           
           echo "==================================================="
           echo "JMeter Load Test Completed"
           echo "==================================================="
+
+      - name: Stop local metrics sampling
+        if: always() && steps.jmeter_target.outputs.run_mode == 'local'
+        shell: bash
+        run: |
+          if [ -f ".metrics_local_pid" ]; then
+            kill "$(cat .metrics_local_pid)" || true
+          fi
+
+      - name: Stop and collect remote metrics
+        if: always() && steps.jmeter_target.outputs.run_mode == 'deployed'
+        shell: bash
+        run: |
+          set +e
+          if [ ! -f ".remote_metrics_ctx" ]; then
+            echo "No remote metrics context found." | tee -a system-metrics-remote.log
+            exit 0
+          fi
+
+          KEYFILE="$(grep '^remote_keyfile=' .remote_metrics_ctx | cut -d= -f2-)"
+          TARGET_HOST="$(grep '^remote_host=' .remote_metrics_ctx | cut -d= -f2-)"
+
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=no -i "${KEYFILE}" ubuntu@"${TARGET_HOST}" \
+            "if [ -f /tmp/frh-jmeter-remote-metrics.pid ]; then kill \$(cat /tmp/frh-jmeter-remote-metrics.pid) 2>/dev/null || true; fi"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=no -i "${KEYFILE}" ubuntu@"${TARGET_HOST}" \
+            "cat /tmp/frh-jmeter-remote-metrics.log 2>/dev/null || echo 'No remote metrics log found'" \
+            > system-metrics-remote.log
+          rm -f "${KEYFILE}" .remote_metrics_ctx
 
       - name: Display JMeter Summary
         if: always()
@@ -831,135 +1176,40 @@ jobs:
           path: report/
           if-no-files-found: warn
 
+      - name: Upload Runtime Metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jmeter-runtime-metrics
+          path: |
+            jmeter-target.txt
+            system-metrics-local.log
+            system-metrics-remote.log
+          if-no-files-found: warn
+
       - name: Archive Load Test Evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: load-test-complete-evidence
           path: |
+            jmeter-target.txt
             results.jtl
             report/**
+            system-metrics-local.log
+            system-metrics-remote.log
             tests/jmeter/load-test.jmx
           if-no-files-found: warn
 
       - name: Tear down stack
         if: always()
         run: |
-          if [ -f "docker-compose.integration.yml" ]; then
-            docker compose -f docker-compose.integration.yml down -v
-          elif [ -f "docker-compose.yml" ]; then
-            docker compose -f docker-compose.yml down -v
-          else
-            docker compose -f compose.yml down -v
-          fi
-
-
-  # =========================================================
-  # STAGE 3: Build & Push Docker Images (main only)
-  # =========================================================
-  build-and-push:
-    name: Build & Push Docker Images (main)
-    runs-on: ubuntu-latest
-    needs: [detect, integration-tests, jmeter-load-performance-test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    env:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-
-      - name: Skip if Docker credentials missing
-        shell: bash
-        run: |
-          if [ -z "${DOCKER_USERNAME}" ] || [ -z "${DOCKER_PASSWORD}" ]; then
-            echo "DOCKER_USERNAME/DOCKER_PASSWORD missing -> skipping build & push"
+          if [ "${{ steps.jmeter_target.outputs.run_mode }}" != "local" ]; then
+            echo "No local stack teardown needed for deployed target mode."
             exit 0
           fi
-
-      - name: Login to Docker Hub
-        if: env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
-        uses: docker/login-action@v3
-        with:
-          username: ${{ env.DOCKER_USERNAME }}
-          password: ${{ env.DOCKER_PASSWORD }}
-
-      - name: Build & push backend image
-        if: needs.detect.outputs.has_backend == 'true' && env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
-        shell: bash
-        run: |
-          set -e
-          docker build -t "${DOCKER_USERNAME}/frh-backend:latest" -f backend/Dockerfile backend
-          docker push "${DOCKER_USERNAME}/frh-backend:latest"
-
-      - name: Build & push frontend image
-        if: needs.detect.outputs.has_frontend == 'true' && env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
-        shell: bash
-        run: |
-          set -e
-          docker build -t "${DOCKER_USERNAME}/frh-frontend:latest" -f frontend/Dockerfile .
-          docker push "${DOCKER_USERNAME}/frh-frontend:latest"
-
-
-  # =========================================================
-  # STAGE 3: Container Image Scan (Trivy Image) - main only
-  # =========================================================
-  image-scan-trivy:
-    name: Container Image Scan (Trivy) - main
-    runs-on: ubuntu-latest
-    needs: [detect, build-and-push]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    env:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      TRIVY_TIMEOUT: 30m
-    steps:
-      - name: Skip if Docker credentials missing
-        shell: bash
-        run: |
-          if [ -z "${DOCKER_USERNAME}" ] || [ -z "${DOCKER_PASSWORD}" ]; then
-            echo "DOCKER_USERNAME/DOCKER_PASSWORD missing -> skipping image scan"
-            exit 0
-          fi
-
-      - name: Login to Docker Hub
-        if: env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
-        uses: docker/login-action@v3
-        with:
-          username: ${{ env.DOCKER_USERNAME }}
-          password: ${{ env.DOCKER_PASSWORD }}
-
-      - name: Pull backend image (if exists)
-        if: needs.detect.outputs.has_backend == 'true' && env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
-        shell: bash
-        run: |
-          set -e
-          docker pull "${DOCKER_USERNAME}/frh-backend:latest"
-
-      - name: Pull frontend image (if exists)
-        if: needs.detect.outputs.has_frontend == 'true' && env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
-        shell: bash
-        run: |
-          set -e
-          docker pull "${DOCKER_USERNAME}/frh-frontend:latest"
-
-      - name: Scan backend image (if exists)
-        if: needs.detect.outputs.has_backend == 'true' && env.DOCKER_USERNAME != ''
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: "${{ env.DOCKER_USERNAME }}/frh-backend:latest"
-          format: table
-          exit-code: "0"
-          severity: "CRITICAL,HIGH"
-
-      - name: Scan frontend image (if exists)
-        if: needs.detect.outputs.has_frontend == 'true' && env.DOCKER_USERNAME != ''
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: "${{ env.DOCKER_USERNAME }}/frh-frontend:latest"
-          format: table
-          exit-code: "0"
-          severity: "CRITICAL,HIGH"
+          COMPOSE_FILE="${{ steps.local_stack.outputs.compose_file }}"
+          docker compose -f "${COMPOSE_FILE}" down -v
 
 
   # =========================================================
@@ -1077,6 +1327,112 @@ jobs:
         run: docker compose -f "${IAST_COMPOSE_FILE}" down -v
 
 
+  # =========================================================
+  # STAGE 3: Build & Push Docker Images (main only)
+  # =========================================================
+  build-and-push:
+    name: Build & Push Docker Images (main)
+    runs-on: ubuntu-latest
+    needs: [detect, integration-tests, jmeter-load-performance-test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Skip if Docker credentials missing
+        shell: bash
+        run: |
+          if [ -z "${DOCKER_USERNAME}" ] || [ -z "${DOCKER_PASSWORD}" ]; then
+            echo "DOCKER_USERNAME/DOCKER_PASSWORD missing -> skipping build & push"
+            exit 0
+          fi
+
+      - name: Login to Docker Hub
+        if: env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
+
+      - name: Build & push backend image
+        if: needs.detect.outputs.has_backend == 'true' && env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
+        shell: bash
+        run: |
+          set -e
+          docker build -t "${DOCKER_USERNAME}/frh-backend:latest" -f backend/Dockerfile backend
+          docker push "${DOCKER_USERNAME}/frh-backend:latest"
+
+      - name: Build & push frontend image
+        if: needs.detect.outputs.has_frontend == 'true' && env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
+        shell: bash
+        run: |
+          set -e
+          docker build -t "${DOCKER_USERNAME}/frh-frontend:latest" -f frontend/Dockerfile .
+          docker push "${DOCKER_USERNAME}/frh-frontend:latest"
+
+
+  # =========================================================
+  # STAGE 3: Container Image Scan (Trivy Image) - main only
+  # =========================================================
+  image-scan-trivy:
+    name: Container Image Scan (Trivy) - main
+    runs-on: ubuntu-latest
+    needs: [detect, build-and-push]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      TRIVY_TIMEOUT: 30m
+    steps:
+      - name: Skip if Docker credentials missing
+        shell: bash
+        run: |
+          if [ -z "${DOCKER_USERNAME}" ] || [ -z "${DOCKER_PASSWORD}" ]; then
+            echo "DOCKER_USERNAME/DOCKER_PASSWORD missing -> skipping image scan"
+            exit 0
+          fi
+
+      - name: Login to Docker Hub
+        if: env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
+
+      - name: Pull backend image (if exists)
+        if: needs.detect.outputs.has_backend == 'true' && env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
+        shell: bash
+        run: |
+          set -e
+          docker pull "${DOCKER_USERNAME}/frh-backend:latest"
+
+      - name: Pull frontend image (if exists)
+        if: needs.detect.outputs.has_frontend == 'true' && env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
+        shell: bash
+        run: |
+          set -e
+          docker pull "${DOCKER_USERNAME}/frh-frontend:latest"
+
+      - name: Scan backend image (if exists)
+        if: needs.detect.outputs.has_backend == 'true' && env.DOCKER_USERNAME != ''
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: "${{ env.DOCKER_USERNAME }}/frh-backend:latest"
+          format: table
+          exit-code: "0"
+          severity: "CRITICAL,HIGH"
+
+      - name: Scan frontend image (if exists)
+        if: needs.detect.outputs.has_frontend == 'true' && env.DOCKER_USERNAME != ''
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: "${{ env.DOCKER_USERNAME }}/frh-frontend:latest"
+          format: table
+          exit-code: "0"
+          severity: "CRITICAL,HIGH"
 
 
   # =========================================================
@@ -1093,15 +1449,64 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Skip if STAGING_URL not set
+      - name: Resolve k6 target URL
+        id: k6_target
         shell: bash
         run: |
-          if [ -z "${STAGING_URL}" ]; then
-            echo "STAGING_URL not set -> skipping k6"
+          set -euo pipefail
+          RAW="${STAGING_URL:-}"
+
+          if [ -z "$(printf '%s' "${RAW}" | tr -d '[:space:]')" ] || [ "${RAW}" = "***" ]; then
+            echo "should_run=false" >> "${GITHUB_OUTPUT}"
+            echo "reason=missing_or_masked_staging_url" >> "${GITHUB_OUTPUT}"
+            echo "k6 skipped: STAGING_URL is missing or masked."
             exit 0
           fi
 
+          TARGET="${RAW%/}"
+          if [[ ! "${TARGET}" =~ ^https?://[^[:space:]/]+(:[0-9]+)?(/.*)?$ ]]; then
+            echo "should_run=false" >> "${GITHUB_OUTPUT}"
+            echo "reason=invalid_staging_url" >> "${GITHUB_OUTPUT}"
+            echo "k6 skipped: invalid STAGING_URL format. Expected http(s)://host[:port][/optional-path]"
+            exit 0
+          fi
+
+          echo "should_run=true" >> "${GITHUB_OUTPUT}"
+          echo "reason=ready" >> "${GITHUB_OUTPUT}"
+          echo "target=${TARGET}" >> "${GITHUB_OUTPUT}"
+          echo "k6 target resolved: ${TARGET}"
+
+      - name: Print k6 skip reason
+        if: steps.k6_target.outputs.should_run != 'true'
+        shell: bash
+        run: |
+          echo "k6 stage skipped (${{ steps.k6_target.outputs.reason }}). Set secret STAGING_URL to enable this optional stage."
+
+      - name: Probe k6 target URL
+        id: k6_probe
+        if: steps.k6_target.outputs.should_run == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET="${{ steps.k6_target.outputs.target }}"
+          echo "k6 target: ${TARGET}"
+          if curl -fsS --connect-timeout 5 --max-time 15 --retry 2 --retry-connrefused "${TARGET}/api/hello" >/dev/null; then
+            echo "should_run=true" >> "${GITHUB_OUTPUT}"
+            echo "reason=reachable" >> "${GITHUB_OUTPUT}"
+          else
+            echo "should_run=false" >> "${GITHUB_OUTPUT}"
+            echo "reason=unreachable_target" >> "${GITHUB_OUTPUT}"
+            echo "k6 skipped: target is unreachable from this GitHub runner."
+          fi
+
+      - name: Print k6 probe skip reason
+        if: steps.k6_target.outputs.should_run == 'true' && steps.k6_probe.outputs.should_run != 'true'
+        shell: bash
+        run: |
+          echo "k6 stage skipped (${{ steps.k6_probe.outputs.reason }}). Ensure STAGING_URL is reachable from GitHub-hosted runners."
+
       - name: Install k6
+        if: steps.k6_target.outputs.should_run == 'true' && steps.k6_probe.outputs.should_run == 'true'
         shell: bash
         run: |
           set -e
@@ -1112,27 +1517,42 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y k6
 
-      - name: Run k6 (smoke)
+      - name: Run k6 (HTTP smoke + thresholds)
+        if: steps.k6_target.outputs.should_run == 'true' && steps.k6_probe.outputs.should_run == 'true'
         shell: bash
         run: |
-          set -e
-
-          if [ -f "tests/k6/script.js" ]; then
-            k6 run --summary-export=k6-summary.json tests/k6/script.js || true
-            exit 0
+          set -euo pipefail
+          if [ ! -f "tests/k6/script.js" ]; then
+            echo "Missing tests/k6/script.js"
+            exit 1
           fi
 
-          cat > k6-smoke.js <<'EOF'
+          TARGET="${{ steps.k6_target.outputs.target }}"
+          echo "Running k6 against ${TARGET}"
 
-
-          k6 run --summary-export=k6-summary.json k6-smoke.js || true
+          if [ "${REPORT_ONLY}" = "true" ]; then
+            k6 run \
+              --summary-export=k6-summary.json \
+              -e BASE_URL="${TARGET}" \
+              -e STAGING_URL="${TARGET}" \
+              tests/k6/script.js 2>&1 | tee k6-run.log || true
+          else
+            k6 run \
+              --summary-export=k6-summary.json \
+              -e BASE_URL="${TARGET}" \
+              -e STAGING_URL="${TARGET}" \
+              tests/k6/script.js 2>&1 | tee k6-run.log
+          fi
 
       - name: Upload k6 report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: k6-report
-          path: k6-summary.json
+          path: |
+            k6-summary.json
+            k6-run.log
+            tests/k6/script.js
           if-no-files-found: warn
 
 
@@ -1157,19 +1577,33 @@ jobs:
           fi
 
       - name: Run ZAP baseline scan
+        if: env.STAGING_URL != ''
         shell: bash
         run: |
           set -e
-          docker run --rm -t owasp/zap2docker-stable zap-baseline.py \
-            -t "${STAGING_URL}" \
-            -r zap-report.html || true
+          mkdir -p zap-out
+          docker pull ghcr.io/zaproxy/zaproxy:stable
+
+          docker run --rm \
+            --user 0:0 \
+            -v "$PWD/zap-out:/zap/wrk:rw" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py \
+              -t "${STAGING_URL}" \
+              -J report_json.json \
+              -w report_md.md \
+              -r report_html.html \
+              -a | tee zap-out/zap-console.log || true
+
+          echo "ZAP output files:"
+          ls -lah zap-out || true
 
       - name: Upload ZAP report
-        if: always()
+        if: always() && env.STAGING_URL != ''
         uses: actions/upload-artifact@v4
         with:
           name: zap-dast-report
-          path: zap-report.html
+          path: zap-out/
           if-no-files-found: warn
 
 
@@ -1229,6 +1663,25 @@ jobs:
           rm -f "${KEYFILE}"
           exit 1
 
+      - name: Resolve deploy smoke target
+        id: deploy_target
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          RAW_URL="$(printf '%s' "${PROD_URL:-}" | tr -d '[:space:]')"
+          if [ -z "${RAW_URL}" ] || [ "${RAW_URL}" = "***" ]; then
+            RAW_URL="http://${EC2_HOST}"
+          fi
+
+          TARGET_URL="${RAW_URL%/}"
+          if [ -n "${TARGET_URL}" ] && [[ ! "${TARGET_URL}" =~ ^https?:// ]]; then
+            TARGET_URL="http://${TARGET_URL}"
+          fi
+
+          echo "target_url=${TARGET_URL}" >> "${GITHUB_OUTPUT}"
+          echo "Resolved deploy smoke target: ${TARGET_URL}"
+
       - name: Deploy via SSH
         if: env.EC2_HOST != '' && env.EC2_SSH_KEY != ''
         uses: appleboy/ssh-action@v1
@@ -1237,16 +1690,65 @@ jobs:
           username: ubuntu
           key: ${{ env.EC2_SSH_KEY }}
           script: |
-            set -e
+            set -euo pipefail
             cd ~/Food-Rescue-Hub-
+
+            retry_cmd() {
+              max_attempts="$1"
+              shift
+              attempt=1
+              delay=3
+              while true; do
+                if "$@"; then
+                  return 0
+                fi
+                rc=$?
+                if [ "${attempt}" -ge "${max_attempts}" ]; then
+                  echo "Command failed after ${attempt} attempts (exit ${rc}): $*"
+                  return "${rc}"
+                fi
+                echo "Attempt ${attempt}/${max_attempts} failed (exit ${rc}): $*"
+                echo "Retrying in ${delay}s..."
+                sleep "${delay}"
+                delay=$((delay * 2))
+                attempt=$((attempt + 1))
+              done
+            }
+
+            if [ -d .git ]; then
+              if ! git remote | grep -qx "origin"; then
+                echo "Git remote 'origin' is not configured in ~/Food-Rescue-Hub-"
+                exit 1
+              fi
+              echo "Using origin: $(git remote get-url origin)"
+              retry_cmd 5 git fetch --prune origin main
+              if [ -n "$(git status --porcelain)" ]; then
+                echo "EC2 repo has local changes; stashing before deploy sync"
+                git stash push --include-untracked -m "ci-deploy-$(date -u +%Y%m%dT%H%M%SZ)" || true
+              fi
+              git checkout -B main FETCH_HEAD
+            else
+              echo "Directory ~/Food-Rescue-Hub- is not a git repository"
+              exit 1
+            fi
 
             if [ -f docker-compose.yml ]; then
               docker compose -f docker-compose.yml config >/dev/null
+              if ! docker compose -f docker-compose.yml config --services | grep -qx 'mysql'; then
+                echo "docker-compose.yml on EC2 does not contain required service: mysql"
+                docker compose -f docker-compose.yml config --services || true
+                exit 1
+              fi
               docker compose -f docker-compose.yml pull
               docker compose -f docker-compose.yml up -d
               docker compose -f docker-compose.yml ps
             elif [ -f compose.yml ]; then
               docker compose -f compose.yml config >/dev/null
+              if ! docker compose -f compose.yml config --services | grep -qx 'mysql'; then
+                echo "compose.yml on EC2 does not contain required service: mysql"
+                docker compose -f compose.yml config --services || true
+                exit 1
+              fi
               docker compose -f compose.yml pull
               docker compose -f compose.yml up -d
               docker compose -f compose.yml ps
@@ -1259,23 +1761,142 @@ jobs:
 
       - name: Post-deploy smoke test (wait & verify)
         shell: bash
+        env:
+          TARGET_URL: ${{ steps.deploy_target.outputs.target_url }}
         run: |
-          if [ -z "${PROD_URL}" ]; then
-            echo "PROD_URL not set -> skipping smoke test"
+          set -euo pipefail
+
+          if [ -z "${TARGET_URL}" ]; then
+            echo "Target URL not resolved -> skipping smoke test"
             exit 0
           fi
 
-          for i in {1..30}; do
-            if curl -fsS "${PROD_URL}${SMOKE_PATH}"; then
-              echo "App is up!"
-              exit 0
+          declare -a CANDIDATES=("${TARGET_URL}")
+          if [ -n "${EC2_HOST}" ]; then
+            CANDIDATES+=("http://${EC2_HOST}" "http://${EC2_HOST}:8080")
+          fi
+
+          declare -a TARGETS=()
+          for candidate in "${CANDIDATES[@]}"; do
+            candidate="${candidate%/}"
+            duplicate=0
+            for existing in "${TARGETS[@]}"; do
+              if [ "${existing}" = "${candidate}" ]; then
+                duplicate=1
+                break
+              fi
+            done
+            if [ "${duplicate}" -eq 0 ]; then
+              TARGETS+=("${candidate}")
             fi
+          done
+
+          echo "Smoke targets:"
+          for base in "${TARGETS[@]}"; do
+            echo " - ${base}${SMOKE_PATH}"
+          done
+
+          for i in {1..30}; do
+            for base in "${TARGETS[@]}"; do
+              if curl -fsS --connect-timeout 5 --max-time 15 --retry 1 --retry-connrefused "${base}${SMOKE_PATH}" >/dev/null; then
+                echo "App is up at ${base}${SMOKE_PATH}"
+                exit 0
+              fi
+            done
             echo "Waiting for app... ($i)"
             sleep 5
           done
 
-          echo "App never became ready"
+          echo "App never became ready from the GitHub runner."
+          echo "Check secret PROD_URL, EC2 Security Group ingress (TCP 80/8080), and container status on the host."
           exit 1
+
+      - name: Verify app on EC2 localhost
+        if: always() && env.EC2_HOST != '' && env.EC2_SSH_KEY != ''
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ubuntu
+          key: ${{ env.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd ~/Food-Rescue-Hub-
+            SMOKE_PATH="${{ env.SMOKE_PATH }}"
+            if [ -z "${SMOKE_PATH}" ]; then
+              SMOKE_PATH="/api/hello"
+            fi
+            case "${SMOKE_PATH}" in
+              /*) ;;
+              *) SMOKE_PATH="/${SMOKE_PATH}" ;;
+            esac
+            echo "Using local SMOKE_PATH=${SMOKE_PATH}"
+
+            if [ -f docker-compose.yml ]; then
+              COMPOSE_FILE="docker-compose.yml"
+            elif [ -f compose.yml ]; then
+              COMPOSE_FILE="compose.yml"
+            else
+              echo "No compose file on server in ~/Food-Rescue-Hub-"
+              exit 1
+            fi
+
+            for i in {1..30}; do
+              if curl -fsS --connect-timeout 3 --max-time 10 "http://127.0.0.1${SMOKE_PATH}" >/dev/null; then
+                echo "EC2 localhost smoke passed via nginx"
+                exit 0
+              fi
+              if curl -fsS --connect-timeout 3 --max-time 10 "http://127.0.0.1:8080${SMOKE_PATH}" >/dev/null; then
+                echo "EC2 localhost smoke passed via backend"
+                exit 0
+              fi
+              echo "Waiting for local app on EC2... ($i)"
+              sleep 5
+            done
+
+            docker compose -f "${COMPOSE_FILE}" ps || true
+            docker compose -f "${COMPOSE_FILE}" logs --tail=80 nginx backend frontend mysql || true
+            exit 1
+
+      - name: Remote diagnostics on smoke failure
+        if: failure() && env.EC2_HOST != '' && env.EC2_SSH_KEY != ''
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ubuntu
+          key: ${{ env.EC2_SSH_KEY }}
+          script: |
+            set +e
+            cd ~/Food-Rescue-Hub-
+            SMOKE_PATH="${{ env.SMOKE_PATH }}"
+            if [ -z "${SMOKE_PATH}" ]; then
+              SMOKE_PATH="/api/hello"
+            fi
+            case "${SMOKE_PATH}" in
+              /*) ;;
+              *) SMOKE_PATH="/${SMOKE_PATH}" ;;
+            esac
+            echo "Using local SMOKE_PATH=${SMOKE_PATH}"
+
+            if [ -f docker-compose.yml ]; then
+              COMPOSE_FILE="docker-compose.yml"
+            elif [ -f compose.yml ]; then
+              COMPOSE_FILE="compose.yml"
+            else
+              echo "No compose file on server in ~/Food-Rescue-Hub-"
+              exit 0
+            fi
+
+            echo "== docker compose ps =="
+            docker compose -f "${COMPOSE_FILE}" ps || true
+
+            echo "== localhost probe via nginx =="
+            curl -sS -i --connect-timeout 3 --max-time 10 "http://127.0.0.1${SMOKE_PATH}" | head -n 30 || true
+
+            echo "== localhost probe direct backend =="
+            curl -sS -i --connect-timeout 3 --max-time 10 "http://127.0.0.1:8080${SMOKE_PATH}" | head -n 30 || true
+
+            echo "== recent logs (nginx/backend/frontend/mysql) =="
+            docker compose -f "${COMPOSE_FILE}" logs --tail=80 nginx backend frontend mysql || true
   ci-metrics-summary:
       name: CI Metrics Summary (JSON)
       runs-on: ubuntu-latest

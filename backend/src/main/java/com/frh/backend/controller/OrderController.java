@@ -41,7 +41,7 @@ public class OrderController {
             // Get consumerId from session
             Long consumerId = (Long) session.getAttribute("USER_ID");
             String user_role = (String) session.getAttribute("USER_ROLE");
-            if (consumerId == null || !user_role.equals("CONSUMER")) {
+            if (consumerId == null || !"CONSUMER".equals(user_role)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "User not authorised"));
             }
@@ -115,9 +115,14 @@ public class OrderController {
         Long consumerId = (Long) session.getAttribute("USER_ID");
         String user_role = (String) session.getAttribute("USER_ROLE");
 
-        if (!user_role.equals("CONSUMER"))   {
+        if (!"CONSUMER".equals(user_role)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Only accessible to consumers"));
+        }
+
+        if (consumerId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "User not authorised"));
         }
 
         try {

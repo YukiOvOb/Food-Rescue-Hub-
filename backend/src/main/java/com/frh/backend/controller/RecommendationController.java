@@ -3,6 +3,7 @@ package com.frh.backend.controller;
 import com.frh.backend.dto.StoreRecommendationDTO;
 import com.frh.backend.service.RecommendationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -64,7 +65,10 @@ public class RecommendationController {
             errorResponse.put("error", e.getMessage());
             errorResponse.put("message", "推荐获取失败");
 
-            return ResponseEntity.status(500).body(errorResponse);
+            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
@@ -114,7 +118,10 @@ public class RecommendationController {
             errorResponse.put("error", e.getMessage());
             errorResponse.put("message", "Failed to retrieve search recommendations");
 
-            return ResponseEntity.status(500).body(errorResponse);
+            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 

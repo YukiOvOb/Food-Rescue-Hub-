@@ -10,6 +10,8 @@ import com.google.zxing.MultiFormatReader;
 import com.google.zxing.Result;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -73,12 +75,12 @@ public class PickupTokenController {
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("error", "Failed to generate QR code: " + e.getMessage());
-            return ResponseEntity.status(500).body(error);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
 
-    @PostMapping("/decode-qrcode")
-    public ResponseEntity<Map<String, String>> decodeQRCode(@RequestParam("file") MultipartFile file) {
+    @PostMapping(value = "/decode-qrcode", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, String>> decodeQRCode(@RequestPart("file") MultipartFile file) {
         if (file == null || file.isEmpty()) {
             Map<String, String> error = new HashMap<>();
             error.put("error", "No file uploaded");
@@ -104,7 +106,7 @@ public class PickupTokenController {
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("error", "Failed to decode QR code: " + e.getMessage());
-            return ResponseEntity.status(500).body(error);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
 }

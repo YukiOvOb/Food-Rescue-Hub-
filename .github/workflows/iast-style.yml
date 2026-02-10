@@ -12,22 +12,44 @@ permissions:
 jobs:
   iast_style:
     runs-on: ubuntu-latest
+    env:
+      # Fallback profile for non-integration compose files.
+      SPRING_PROFILES_ACTIVE: test
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Select compose file
+        id: compose
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f "docker-compose.integration.yml" ]; then
+            echo "compose_file=docker-compose.integration.yml" >> "$GITHUB_OUTPUT"
+          elif [ -f "docker-compose.yml" ]; then
+            echo "compose_file=docker-compose.yml" >> "$GITHUB_OUTPUT"
+          elif [ -f "compose.yml" ]; then
+            echo "compose_file=compose.yml" >> "$GITHUB_OUTPUT"
+          else
+            echo "No compose file found."
+            exit 1
+          fi
+
       # 1) Start the app locally in CI
       - name: Start app (docker compose)
+        shell: bash
         run: |
-          docker compose up -d --build
-          docker compose ps
+          set -euo pipefail
+          docker compose -f "${{ steps.compose.outputs.compose_file }}" up -d --build
+          docker compose -f "${{ steps.compose.outputs.compose_file }}" ps
           docker ps
 
       # 2) Wait until backend is up (change URL if needed)
       - name: Wait for backend
+        shell: bash
         run: |
-          set -e
+          set -euo pipefail
           for i in {1..60}; do
             code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/hello || true)
             if [ "$code" = "200" ]; then
@@ -38,11 +60,12 @@ jobs:
             sleep 2
           done
           echo "Backend did not become ready"
-          docker compose logs --no-color || true
+          docker compose -f "${{ steps.compose.outputs.compose_file }}" logs --no-color || true
           exit 1
 
       # 3) Run basic attack payloads (customize endpoints)
       - name: Run security payloads (basic)
+        shell: bash
         run: |
           set +e
           mkdir -p security-out/responses
@@ -59,12 +82,13 @@ jobs:
       # 4) Collect runtime logs (auto-detect compose containers)
       - name: Collect service logs
         if: always()
+        shell: bash
         run: |
           set +e
           mkdir -p security-out/logs
 
           # Save compose logs (best overall view)
-          docker compose logs --no-color > security-out/logs/compose.log 2>&1 || true
+          docker compose -f "${{ steps.compose.outputs.compose_file }}" logs --no-color > security-out/logs/compose.log 2>&1 || true
 
           # Also save per-container logs (if possible)
           docker ps --format '{{.Names}}' > security-out/logs/containers.txt || true
@@ -75,8 +99,9 @@ jobs:
 
       # 5) Evaluate findings (HIGH-SIGNAL only)
       - name: Evaluate runtime findings (high-signal)
+        shell: bash
         run: |
-          set -e
+          set -euo pipefail
           echo "Evaluating runtime findings (high-signal only)..."
 
           # ---- High-signal patterns in LOGS (not generic 'Exception') ----
@@ -149,4 +174,5 @@ jobs:
       # Cleanup
       - name: Stop containers
         if: always()
-        run: docker compose down -v
+        shell: bash
+        run: docker compose -f "${{ steps.compose.outputs.compose_file }}" down -v

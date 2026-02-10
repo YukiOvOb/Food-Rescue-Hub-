@@ -29,6 +29,7 @@ import java.util.Map;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -106,6 +107,22 @@ class SupplierInventoryPageControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/supplier/inventory/100"))
                 .andExpect(flash().attributeExists("errorMsg"));
+    }
+
+    /* --------------------------------
+       INVENTORY ROW DTO GETTERS
+       -------------------------------- */
+    @Test
+    void inventoryRowDTO_getters() {
+
+        Listing listing = new Listing();
+        Inventory inventory = new Inventory();
+
+        SupplierInventoryPageController.InventoryRowDTO row =
+                new SupplierInventoryPageController.InventoryRowDTO(listing, inventory);
+
+        assertSame(listing, row.getListing());
+        assertSame(inventory, row.getInventory());
     }
 
         @TestConfiguration

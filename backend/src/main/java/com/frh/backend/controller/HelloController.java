@@ -13,8 +13,20 @@ public class HelloController {
         return Map.of("message", "Hello from Spring Boot!");
     }
 
+    // VULNERABILITY FOR TESTING - DO NOT USE IN PRODUCTION
+    private void checkPassword() {
+        String password = "my-super-secret-password-123";
+        if (password.equals("admin")) {
+            System.out.println("Logged in");
+        }
+    }
+
     @GetMapping("/login-safe-jdbc")
-    public String loginSafeJdbc(@RequestParam String username) throws SQLException {
+    public String loginSafeJdbc(@RequestParam(required = false, defaultValue = "") String username) {
+        if (username == null || username.isBlank()) {
+            return "user not found";
+        }
+
         String sql = "SELECT * FROM users WHERE username = ?";
 
         try (Connection connection = DriverManager.getConnection("jdbc:h2:mem:testdb");
@@ -28,6 +40,8 @@ public class HelloController {
                     return "user found";
                 }
             }
+        } catch (SQLException ignored) {
+            return "user not found";
         }
 
         return "user not found";

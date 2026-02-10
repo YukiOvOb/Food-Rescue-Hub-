@@ -43,6 +43,8 @@ public class SupplierInventoryController {
     } catch (IllegalArgumentException ex) {
       // "Cannot adjust below zero" - 400
       return ResponseEntity.badRequest().body(java.util.Map.of("error", ex.getMessage()));
+    } catch (Exception ex) {
+      return ResponseEntity.status(500).body(java.util.Map.of("error", ex.getMessage()));
     }
   }
 }

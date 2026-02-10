@@ -5,8 +5,10 @@ import com.frh.backend.service.CartService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
@@ -30,8 +32,20 @@ public class CartController {
             HttpSession session,
             @RequestBody Map<String, Object> request) {
 
-        Long listingId = Long.valueOf(request.get("listingId").toString());
-        Integer qty = Integer.valueOf(request.get("qty").toString());
+        Object listingIdRaw = request.get("listingId");
+        Object qtyRaw = request.get("qty");
+        if (listingIdRaw == null || qtyRaw == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "listingId and qty are required");
+        }
+
+        Long listingId;
+        Integer qty;
+        try {
+            listingId = Long.valueOf(listingIdRaw.toString());
+            qty = Integer.valueOf(qtyRaw.toString());
+        } catch (NumberFormatException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "listingId and qty must be numeric");
+        }
 
         CartResponseDto updatedCart = cartService.addItem(session, listingId, qty);
         return ResponseEntity.ok(updatedCart);
@@ -43,7 +57,18 @@ public class CartController {
             @PathVariable Long listingId,
             @RequestBody Map<String, Object> request) {
 
-        Integer qty = Integer.valueOf(request.get("qty").toString());
+        Object qtyRaw = request.get("qty");
+        if (qtyRaw == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "qty is required");
+        }
+
+        Integer qty;
+        try {
+            qty = Integer.valueOf(qtyRaw.toString());
+        } catch (NumberFormatException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "qty must be numeric");
+        }
+
         CartResponseDto updatedCart = cartService.updateQuantity(session, listingId, qty);
         return ResponseEntity.ok(updatedCart);
     }

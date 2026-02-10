@@ -1,5 +1,6 @@
 package com.frh.backend.config;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -18,6 +19,8 @@ public class JacksonConfig {
         
         // Disable writing dates as timestamps
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        // Accept unknown JSON fields instead of failing request deserialization.
+        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         
         return mapper;
     }
