@@ -23,7 +23,6 @@
 -- TRUNCATE TABLE payouts;
 -- TRUNCATE TABLE wallet_transactions;
 -- TRUNCATE TABLE wallets;
--- TRUNCATE TABLE admin_profiles;
 -- TRUNCATE TABLE supplier_profiles;
 -- TRUNCATE TABLE consumer_profiles;
 -- TRUNCATE TABLE dietary_tags;
@@ -48,46 +47,57 @@ INSERT INTO dietary_tags (tag_name) VALUES
 ('Organic');
 
 -- ============================================
--- 2. CONSUMER_PROFILES
+-- 2. FOOD_CATEGORIES (CO2 reference data)
 -- ============================================
--- Plain text password: "password123"
-INSERT INTO consumer_profiles (email, password, phone, display_name, status, role, default_lat, default_lng, preferences_json, created_at) VALUES
-('alice.tan@email.com', 'password123', '+6591234567', 'Alice Tan', 'ACTIVE', 'CONSUMER', 1.3521, 103.8198, '{"dietary": ["vegetarian"], "radius": 5}', NOW()),
-('bob.lim@email.com', 'password123', '+6591234568', 'Bob Lim', 'ACTIVE', 'CONSUMER', 1.2897, 103.8501, '{"dietary": ["halal"], "radius": 3}', NOW()),
-('charlie.wong@email.com', 'password123', '+6591234569', 'Charlie Wong', 'ACTIVE', 'CONSUMER', 1.3048, 103.8318, '{"dietary": [], "radius": 10}', NOW()),
-('diana.ng@email.com', 'password123', '+6591234570', 'Diana Ng', 'ACTIVE', 'CONSUMER', 1.3329, 103.7436, '{"dietary": ["vegan", "gluten-free"], "radius": 5}', NOW()),
-('emily.chen@email.com', 'password123', '+6591234571', 'Emily Chen', 'ACTIVE', 'CONSUMER', 1.3644, 103.9915, '{"dietary": ["dairy-free"], "radius": 7}', NOW()),
-('frank.koh@email.com', 'password123', '+6591234572', 'Frank Koh', 'ACTIVE', 'CONSUMER', 1.2800, 103.8400, '{"dietary": [], "radius": 5}', NOW()),
-('grace.lee@email.com', 'password123', '+6591234573', 'Grace Lee', 'ACTIVE', 'CONSUMER', 1.3200, 103.8600, '{"dietary": ["halal", "nut-free"], "radius": 8}', NOW()),
-('henry.teo@email.com', 'password123', '+6591234574', 'Henry Teo', 'ACTIVE', 'CONSUMER', 1.3100, 103.8500, '{"dietary": ["organic"], "radius": 6}', NOW());
+INSERT INTO food_categories (id, name, kg_co2_per_kg) VALUES
+(1, 'Beef (beef herd)', 99.48),
+(2, 'Lamb & Mutton', 39.72),
+(3, 'Cheese', 23.88),
+(4, 'Fish (farmed)', 13.63),
+(5, 'Poultry Meat', 9.87),
+(6, 'Eggs', 4.67),
+(7, 'Rice', 4.45),
+(8, 'Milk', 3.15),
+(9, 'Wheat & Rye (Bread)', 1.57),
+(10, 'Vegetables', 0.53)
+ON DUPLICATE KEY UPDATE
+name = VALUES(name),
+kg_co2_per_kg = VALUES(kg_co2_per_kg);
 
 -- ============================================
--- 3. SUPPLIER_PROFILES
+-- 3. CONSUMER_PROFILES
+-- ============================================
+-- BCrypt password for seeded users: "password123"
+INSERT INTO consumer_profiles (email, password, phone, display_name, status, role, default_lat, default_lng, preferences_json, created_at) VALUES
+('alice.tan@email.com', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6591234567', 'Alice Tan', 'ACTIVE', 'CONSUMER', 1.3521, 103.8198, '{"dietary": ["vegetarian"], "radius": 5}', NOW()),
+('bob.lim@email.com', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6591234568', 'Bob Lim', 'ACTIVE', 'CONSUMER', 1.2897, 103.8501, '{"dietary": ["halal"], "radius": 3}', NOW()),
+('charlie.wong@email.com', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6591234569', 'Charlie Wong', 'ACTIVE', 'CONSUMER', 1.3048, 103.8318, '{"dietary": [], "radius": 10}', NOW()),
+('diana.ng@email.com', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6591234570', 'Diana Ng', 'ACTIVE', 'CONSUMER', 1.3329, 103.7436, '{"dietary": ["vegan", "gluten-free"], "radius": 5}', NOW()),
+('emily.chen@email.com', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6591234571', 'Emily Chen', 'ACTIVE', 'CONSUMER', 1.3644, 103.9915, '{"dietary": ["dairy-free"], "radius": 7}', NOW()),
+('frank.koh@email.com', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6591234572', 'Frank Koh', 'ACTIVE', 'CONSUMER', 1.2800, 103.8400, '{"dietary": [], "radius": 5}', NOW()),
+('grace.lee@email.com', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6591234573', 'Grace Lee', 'ACTIVE', 'CONSUMER', 1.3200, 103.8600, '{"dietary": ["halal", "nut-free"], "radius": 8}', NOW()),
+('henry.teo@email.com', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6591234574', 'Henry Teo', 'ACTIVE', 'CONSUMER', 1.3100, 103.8500, '{"dietary": ["organic"], "radius": 6}', NOW());
+
+-- ============================================
+-- 4. SUPPLIER_PROFILES
 -- ============================================
 INSERT INTO supplier_profiles (email, password, phone, display_name, status, role, business_name, created_at) VALUES
-('bakery@breadtalk.sg', 'password123', '+6562345678', 'BreadTalk Manager', 'ACTIVE', 'SUPPLIER', 'BreadTalk Singapore Pte Ltd', NOW()),
-('cafe@toastbox.sg', 'password123', '+6562345679', 'Toast Box Manager', 'ACTIVE', 'SUPPLIER', 'Toast Box Pte Ltd', NOW()),
-('restaurant@paradise.sg', 'password123', '+6562345680', 'Paradise Dynasty Manager', 'ACTIVE', 'SUPPLIER', 'Paradise Group (Singapore) Pte Ltd', NOW()),
-('market@fairprice.sg', 'password123', '+6562345681', 'FairPrice Manager', 'ACTIVE', 'SUPPLIER', 'FairPrice Singapore', NOW()),
-('cafe@starbucks.sg', 'password123', '+6562345682', 'Starbucks Manager', 'ACTIVE', 'SUPPLIER', 'Starbucks Coffee Singapore', NOW()),
+('bakery@breadtalk.sg', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6562345678', 'BreadTalk Manager', 'ACTIVE', 'SUPPLIER', 'BreadTalk Singapore Pte Ltd', NOW()),
+('cafe@toastbox.sg', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6562345679', 'Toast Box Manager', 'ACTIVE', 'SUPPLIER', 'Toast Box Pte Ltd', NOW()),
+('restaurant@paradise.sg', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6562345680', 'Paradise Dynasty Manager', 'ACTIVE', 'SUPPLIER', 'Paradise Group (Singapore) Pte Ltd', NOW()),
+('market@fairprice.sg', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6562345681', 'FairPrice Manager', 'ACTIVE', 'SUPPLIER', 'FairPrice Singapore', NOW()),
+('cafe@starbucks.sg', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6562345682', 'Starbucks Manager', 'ACTIVE', 'SUPPLIER', 'Starbucks Coffee Singapore', NOW()),
 -- New suppliers near Alice's location
-('tongtong@bakehouse.sg', 'password123', '+6562345683', 'Tong Tong Manager', 'ACTIVE', 'SUPPLIER', 'Tong Tong Bakehouse Pte Ltd', NOW()),
-('greenbowl@healthy.sg', 'password123', '+6562345684', 'Green Bowl Manager', 'ACTIVE', 'SUPPLIER', 'Green Bowl Cafe Pte Ltd', NOW()),
-('pasta@paradise.sg', 'password123', '+6562345685', 'Pasta Paradise Manager', 'ACTIVE', 'SUPPLIER', 'Pasta Paradise Restaurant', NOW()),
-('sunrise@coffee.sg', 'password123', '+6562345686', 'Sunrise Manager', 'ACTIVE', 'SUPPLIER', 'Sunrise Coffee House Pte Ltd', NOW()),
-('freshbites@deli.sg', 'password123', '+6562345687', 'Fresh Bites Manager', 'ACTIVE', 'SUPPLIER', 'Fresh Bites Deli Pte Ltd', NOW()),
-('sweetheaven@dessert.sg', 'password123', '+6562345688', 'Sweet Heaven Manager', 'ACTIVE', 'SUPPLIER', 'Sweet Heaven Desserts Pte Ltd', NOW()),
-('laksa@delight.sg', 'password123', '+6562345689', 'Laksa Delight Manager', 'ACTIVE', 'SUPPLIER', 'Laksa Delight Restaurant', NOW()),
-('urban@bites.sg', 'password123', '+6562345690', 'Urban Bites Manager', 'ACTIVE', 'SUPPLIER', 'Urban Bites Kitchen Pte Ltd', NOW()),
-('morning@glory.sg', 'password123', '+6562345691', 'Morning Glory Manager', 'ACTIVE', 'SUPPLIER', 'Morning Glory Bakery Pte Ltd', NOW()),
-('spice@garden.sg', 'password123', '+6562345692', 'Spice Garden Manager', 'ACTIVE', 'SUPPLIER', 'Spice Garden Restaurant Pte Ltd', NOW());
-
--- ============================================
--- 4. ADMIN_PROFILES
--- ============================================
-INSERT INTO admin_profiles (email, password, phone, display_name, role, status, created_at) VALUES
-('admin@foodrescue.sg', 'password123', '+6590000001', 'System Admin', 'ADMIN', 'ACTIVE', NOW()),
-('support@foodrescue.sg', 'password123', '+6590000002', 'Support Admin', 'ADMIN', 'ACTIVE', NOW());
+('tongtong@bakehouse.sg', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6562345683', 'Tong Tong Manager', 'ACTIVE', 'SUPPLIER', 'Tong Tong Bakehouse Pte Ltd', NOW()),
+('greenbowl@healthy.sg', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6562345684', 'Green Bowl Manager', 'ACTIVE', 'SUPPLIER', 'Green Bowl Cafe Pte Ltd', NOW()),
+('pasta@paradise.sg', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6562345685', 'Pasta Paradise Manager', 'ACTIVE', 'SUPPLIER', 'Pasta Paradise Restaurant', NOW()),
+('sunrise@coffee.sg', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6562345686', 'Sunrise Manager', 'ACTIVE', 'SUPPLIER', 'Sunrise Coffee House Pte Ltd', NOW()),
+('freshbites@deli.sg', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6562345687', 'Fresh Bites Manager', 'ACTIVE', 'SUPPLIER', 'Fresh Bites Deli Pte Ltd', NOW()),
+('sweetheaven@dessert.sg', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6562345688', 'Sweet Heaven Manager', 'ACTIVE', 'SUPPLIER', 'Sweet Heaven Desserts Pte Ltd', NOW()),
+('laksa@delight.sg', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6562345689', 'Laksa Delight Manager', 'ACTIVE', 'SUPPLIER', 'Laksa Delight Restaurant', NOW()),
+('urban@bites.sg', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6562345690', 'Urban Bites Manager', 'ACTIVE', 'SUPPLIER', 'Urban Bites Kitchen Pte Ltd', NOW()),
+('morning@glory.sg', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6562345691', 'Morning Glory Manager', 'ACTIVE', 'SUPPLIER', 'Morning Glory Bakery Pte Ltd', NOW()),
+('spice@garden.sg', '$2a$10$a/8ZzMc.wpC7vec7MEQSWeS2rgKSE0Tco/sqyb1YXX0IHsDYzDip6', '+6562345692', 'Spice Garden Manager', 'ACTIVE', 'SUPPLIER', 'Spice Garden Restaurant Pte Ltd', NOW());
 
 -- ============================================
 -- 5. WALLETS (Depends on consumer_profiles)
@@ -750,3 +760,4 @@ INSERT INTO search_logs (consumer_id, query_text, results_count, clicked_listing
 -- ============================================
 -- END OF DATA INITIALIZATION
 -- ============================================
+
