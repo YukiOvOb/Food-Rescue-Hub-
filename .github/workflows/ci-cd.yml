@@ -386,22 +386,9 @@ jobs:
         with:
           languages: ${{ matrix.language }}
 
-      - name: Set up JDK 17 (Java CodeQL build)
-        if: matrix.language == 'java' && needs.detect.outputs.has_backend == 'true'
-        uses: actions/setup-java@v4
-        with:
-          java-version: "17"
-          distribution: "temurin"
-          cache: maven
-
-      - name: Build backend (required for Java CodeQL)
-        if: matrix.language == 'java' && needs.detect.outputs.has_backend == 'true'
-        shell: bash
-        run: |
-          set -e
-          cd backend
-          chmod +x mvnw
-          ./mvnw -q clean install -DskipTests
+      - name: Autobuild
+        if: matrix.language != 'python' || needs.detect.outputs.has_python_src == 'true'
+        uses: github/codeql-action/autobuild@v3
 
       - name: Perform CodeQL Analysis
         if: matrix.language != 'python' || needs.detect.outputs.has_python_src == 'true'
