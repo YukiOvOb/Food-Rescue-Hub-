@@ -168,22 +168,10 @@ const Dashboard = () => {
             </Link>
           </div>
           <div className="card">
-            <div className="card-icon">📦</div>
-            <h3>Products</h3>
-            <p>Manage your product catalog</p>
-            <button className="btn-card">View Products</button>
-          </div>
-          <div className="card">
             <div className="card-icon">📊</div>
             <h3>Orders</h3>
             <p>Track and manage orders</p>
             <button className="btn-card" onClick={goToOrders}>View Orders</button>
-          </div>
-          <div className="card">
-            <div className="card-icon">💰</div>
-            <h3>Revenue</h3>
-            <p>View your earnings</p>
-            <button className="btn-card">View Revenue</button>
           </div>
           <div className="card">
             <div className="card-icon">⚙️</div>
@@ -198,16 +186,10 @@ const Dashboard = () => {
             <button className="btn-card" onClick={goToAnalytics}>View Analytics</button>
           </div>
           <div className="card">
-            <div className="card-icon">👥</div>
-            <h3>Customers</h3>
-            <p>Manage customer relationships</p>
-            <button className="btn-card">View Customers</button>
-          </div>
-          <div className="card">
             <div className="card-icon">🧺</div>
             <h3>Listings</h3>
             <p>Create and manage rescue listings</p>
-            <button className="btn-card" onClick={goToListings}>Create Listing</button>
+            <button className="btn-card" onClick={goToListings}>View Listing</button>
           </div>
           <div className="card">
             <div className="card-icon">📱</div>

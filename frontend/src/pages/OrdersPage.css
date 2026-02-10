@@ -11,6 +11,21 @@
   margin-bottom: 16px;
 }
 
+.orders-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.orders-back {
+  padding: 8px 14px;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  background: #eef2ff;
+  color: #3730a3;
+  cursor: pointer;
+}
+
 .orders-refresh {
   padding: 8px 14px;
   border: none;

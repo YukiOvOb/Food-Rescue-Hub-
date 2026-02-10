@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import jsQR from 'jsqr';
+import { useNavigate } from 'react-router-dom';
 import axios from '../services/axiosConfig';
 import authService from '../services/authService';
 import './styles/QRCodeDecoder.css';
@@ -31,6 +32,7 @@ const normalizeOrders = (payload) => {
 };
 
 const QRCodeDecoder = () => {
+  const navigate = useNavigate();
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -316,7 +318,12 @@ const QRCodeDecoder = () => {
 
   return (
     <div className="qr-decoder-container">
-      <h2>QR Code Decoder</h2>
+      <div className="qr-decoder-header">
+        <h2>QR Code Decoder</h2>
+        <button className="dashboard-back-btn" onClick={() => navigate('/dashboard')}>
+          Back to Dashboard
+        </button>
+      </div>
 
       <div className="camera-section">
         <h3>Real-time Camera Detection</h3>

@@ -9,15 +9,37 @@
 }
 
 .qr-decoder-container h2 {
-  text-align: center;
   color: #111827;
-  margin-bottom: 16px;
+  margin: 0;
 }
 
 .qr-decoder-container h3 {
   color: #374151;
   margin-bottom: 12px;
   font-size: 16px;
+}
+
+.qr-decoder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.dashboard-back-btn {
+  padding: 8px 14px;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  background: #eef2ff;
+  color: #3730a3;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dashboard-back-btn:hover {
+  background: #e0e7ff;
 }
 
 .camera-section {

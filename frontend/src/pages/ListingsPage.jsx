@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import authService from '../services/authService';
+import { useNavigate } from 'react-router-dom';
 
 const cardStyle = {
   backgroundColor: '#fff',
@@ -27,6 +28,7 @@ const pillSubtle = {
 };
 
 export default function ListingsPage() {
+  const navigate = useNavigate();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [listings, setListings] = useState([]);
   const [user, setUser] = useState(null);
@@ -466,11 +468,16 @@ export default function ListingsPage() {
           <p style={{ margin: 0, color: '#6b7280', fontSize: 12 }}>Supplier</p>
           <h1 style={{ margin: 0, color: '#0f172a' }}>Listings</h1>
         </div>
-        {!showCreateForm && (
-          <button style={pillPrimary} onClick={() => setShowCreateForm(true)}>
-            + Create Listing
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <button style={pillSubtle} onClick={() => navigate('/dashboard')}>
+            Back to Dashboard
           </button>
-        )}
+          {!showCreateForm && (
+            <button style={pillPrimary} onClick={() => setShowCreateForm(true)}>
+              + Create Listing
+            </button>
+          )}
+        </div>
       </div>
 
       {successMessage && (

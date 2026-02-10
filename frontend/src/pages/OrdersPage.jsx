@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from '../services/axiosConfig';
 import authService from '../services/authService';
 import './OrdersPage.css';
 
 const OrdersPage = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [stores, setStores] = useState([]);
   const [selectedStoreId, setSelectedStoreId] = useState(null);
@@ -95,13 +97,18 @@ const OrdersPage = () => {
     <div className="orders-page">
       <div className="orders-header">
         <h2>Orders</h2>
-        <button
-          className="orders-refresh"
-          onClick={() => fetchOrders(selectedStoreId)}
-          disabled={loading || !selectedStoreId}
-        >
-          {loading ? 'Loading...' : 'Refresh'}
-        </button>
+        <div className="orders-header-actions">
+          <button className="orders-back" onClick={() => navigate('/dashboard')}>
+            Back to Dashboard
+          </button>
+          <button
+            className="orders-refresh"
+            onClick={() => fetchOrders(selectedStoreId)}
+            disabled={loading || !selectedStoreId}
+          >
+            {loading ? 'Loading...' : 'Refresh'}
+          </button>
+        </div>
       </div>
 
       {!storeLoading && stores.length > 1 && (
