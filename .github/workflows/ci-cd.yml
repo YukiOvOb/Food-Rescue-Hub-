@@ -213,6 +213,57 @@ jobs:
 
 
   # =========================================================
+  # STAGE 1: Unit Tests (Android) + JaCoCo
+  # =========================================================
+  android-unit-tests:
+    name: Unit Tests (Android) + JaCoCo
+    runs-on: ubuntu-latest
+    needs: [detect]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Skip (no android)
+        if: needs.detect.outputs.has_android != 'true'
+        run: echo "No android/gradlew found -> skipping Android unit tests."
+
+      - name: Set up JDK 17
+        if: needs.detect.outputs.has_android == 'true'
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: gradle
+
+      - name: Android unit tests + coverage (devDebug)
+        if: needs.detect.outputs.has_android == 'true'
+        shell: bash
+        run: |
+          set -e
+          cd "${ANDROID_DIR}"
+          chmod +x gradlew
+          ./gradlew :app:testDevDebugUnitTest :app:jacocoDevDebugUnitTestReport
+
+      - name: Upload Android unit test results (JUnit XML)
+        if: always() && needs.detect.outputs.has_android == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-unit-test-results
+          path: |
+            android/**/build/test-results/test*UnitTest/*.xml
+            android/**/build/reports/tests/test*UnitTest/**
+          if-no-files-found: warn
+
+      - name: Upload Android JaCoCo report
+        if: always() && needs.detect.outputs.has_android == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-jacoco-report
+          path: |
+            android/**/build/reports/jacoco/**
+          if-no-files-found: warn
+
+
+  # =========================================================
   # STAGE 1: Lint & Code Quality
   # =========================================================
   lint-code-quality:
@@ -364,7 +415,7 @@ jobs:
   sonarcloud:
     name: SonarCloud SAST
     runs-on: ubuntu-latest
-    needs: [detect, backend-junit, python-tests, lint-code-quality]
+    needs: [detect, backend-junit, python-tests, android-unit-tests, lint-code-quality]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -411,6 +462,27 @@ jobs:
           if [ -f ".artifacts/python-test-reports/ai_service/pytest-junit.xml" ]; then
             mkdir -p ai_service
             cp -f .artifacts/python-test-reports/ai_service/pytest-junit.xml ai_service/pytest-junit.xml
+          fi
+
+      - name: Download Android JaCoCo report artifact (for coverage in Sonar)
+        if: needs.detect.outputs.has_android == 'true'
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: android-jacoco-report
+          path: .artifacts/android-jacoco-report
+
+      - name: Place Android JaCoCo XML where Sonar expects
+        if: needs.detect.outputs.has_android == 'true'
+        shell: bash
+        run: |
+          set -e
+          # Copy any jacoco XMLs back into workspace under android/ so sonar-project.properties can reference them.
+          if ls .artifacts/android-jacoco-report/android/**/build/reports/jacoco/**/*.xml >/dev/null 2>&1; then
+            mkdir -p android
+            cp -r .artifacts/android-jacoco-report/android/* android/
+          else
+            echo "Android JaCoCo XML not found in artifact; Android coverage may be empty."
           fi
 
       - name: Set up JDK 17 (for build)
