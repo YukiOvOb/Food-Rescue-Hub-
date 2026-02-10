@@ -168,11 +168,11 @@ export default function ListingsPage() {
     }
     if (formData.categoryIds && formData.categoryIds.length > 0) {
       const invalidWeights = formData.categoryIds.filter((id) => {
-        const v = parseFloat(formData.categoryWeightById[id]);
-        return Number.isNaN(v) || v <= 0;
+        const grams = parseFloat(formData.categoryWeightById[id]);
+        return Number.isNaN(grams) || grams <= 0;
       });
       if (invalidWeights.length > 0) {
-        errs.push('Each selected category must have a weight (kg) greater than 0');
+        errs.push('Each selected category must have a weight (grams) greater than 0');
       }
     }
     return errs;
@@ -249,7 +249,7 @@ export default function ListingsPage() {
       expiryAt: expiryAtStr,
       categoryWeights: formData.categoryIds.map((id) => ({
         categoryId: id,
-        weightKg: parseFloat(formData.categoryWeightById[id])
+        weightKg: parseFloat(formData.categoryWeightById[id]) / 1000
       }))
     };
 
@@ -584,7 +584,7 @@ export default function ListingsPage() {
             {formData.categoryIds.length > 0 && (
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                  Category Weights (kg)
+                  Category Weights (grams)
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
                   {formData.categoryIds.map((id) => {
@@ -609,9 +609,9 @@ export default function ListingsPage() {
                           type="number"
                           value={formData.categoryWeightById[id] ?? ''}
                           onChange={(e) => handleCategoryWeightChange(id, e.target.value)}
-                          step="0.01"
-                          min="0"
-                          placeholder="kg"
+                          step="1"
+                          min="1"
+                          placeholder="grams"
                           style={{
                             width: 90,
                             padding: '6px 8px',
@@ -625,10 +625,14 @@ export default function ListingsPage() {
                   })}
                 </div>
                 <div style={{ marginTop: 8, color: '#6b7280', fontSize: 12 }}>
-                  Total weight: {formData.categoryIds.reduce((sum, id) => {
-                    const v = parseFloat(formData.categoryWeightById[id]);
-                    return Number.isNaN(v) ? sum : sum + v;
-                  }, 0).toFixed(2)} kg
+                  {(() => {
+                    const totalGrams = formData.categoryIds.reduce((sum, id) => {
+                      const v = parseFloat(formData.categoryWeightById[id]);
+                      return Number.isNaN(v) ? sum : sum + v;
+                    }, 0);
+                    const totalKg = totalGrams / 1000;
+                    return `Total weight: ${totalGrams.toFixed(0)} g (${totalKg.toFixed(3)} kg)`;
+                  })()}
                 </div>
               </div>
             )}
