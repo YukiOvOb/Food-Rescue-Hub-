@@ -375,6 +375,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=harini14hari
+            -Dsonar.projectKey=harini14hari
+            -Dsonar.branch.name=main
 
 
 
