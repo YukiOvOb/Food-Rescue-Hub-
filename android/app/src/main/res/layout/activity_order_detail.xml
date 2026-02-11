@@ -16,44 +16,62 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            android:elevation="4dp"
+            android:background="@color/white"
+            android:elevation="0dp"
             app:title="Order Details"
-            app:titleTextColor="@android:color/white"
-            app:navigationIcon="@drawable/ic_arrow_back" />
+            app:titleTextColor="#1A1A1A"
+            app:navigationIcon="@drawable/ic_arrow_back"
+            app:navigationIconTint="#1A1A1A" />
 
-        <!-- Content Card -->
+        <!-- Main Content Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
+            android:layout_margin="20dp"
             app:cardElevation="4dp"
-            app:cardCornerRadius="16dp">
+            app:cardCornerRadius="24dp"
+            app:cardBackgroundColor="@color/white">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="24dp">
 
-                <!-- Order Status Progress -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Order Status"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:layout_marginBottom="16dp" />
-
+                <!-- Order Status Section -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginBottom="8dp">
+                    android:layout_marginBottom="20dp">
 
-                    <!-- Paid -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📦"
+                        android:textSize="24sp"
+                        android:layout_marginEnd="12dp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Order Status"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#1A1A1A" />
+                </LinearLayout>
+
+                <!-- Status Progress -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp">
+
+                    <!-- Accepted -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -61,34 +79,45 @@
                         android:orientation="vertical"
                         android:gravity="center">
 
-                        <TextView
-                            android:id="@+id/statusPaidIcon"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:text="✓"
-                            android:textSize="24sp"
-                            android:textColor="@android:color/white"
-                            android:background="@drawable/bg_status_confirmed"
-                            android:gravity="center" />
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            app:cardCornerRadius="24dp"
+                            app:cardElevation="2dp"
+                            app:cardBackgroundColor="#66BB6A">
+
+                            <TextView
+                                android:id="@+id/statusPaidIcon"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:text="✓"
+                                android:textSize="24sp"
+                                android:textColor="@android:color/white"
+                                android:gravity="center" />
+                        </com.google.android.material.card.MaterialCardView>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Accepted"
                             android:textSize="12sp"
-                            android:layout_marginTop="4dp" />
+                            android:textColor="#1A1A1A"
+                            android:textStyle="bold"
+                            android:layout_marginTop="8dp" />
                     </LinearLayout>
 
                     <!-- Progress Line 1 -->
                     <View
                         android:id="@+id/progressLine1"
                         android:layout_width="0dp"
-                        android:layout_height="2dp"
+                        android:layout_height="3dp"
                         android:layout_weight="1"
-                        android:background="#4CAF50"
-                        android:layout_marginTop="-24dp" />
+                        android:background="#66BB6A"
+                        android:layout_marginTop="-32dp"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="4dp" />
 
-                    <!-- Ready for pickup -->
+                    <!-- Ready -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -96,32 +125,43 @@
                         android:orientation="vertical"
                         android:gravity="center">
 
-                        <TextView
-                            android:id="@+id/statusReadyIcon"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:text="✓"
-                            android:textSize="24sp"
-                            android:textColor="@android:color/white"
-                            android:background="@drawable/bg_status_confirmed"
-                            android:gravity="center" />
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            app:cardCornerRadius="24dp"
+                            app:cardElevation="2dp"
+                            app:cardBackgroundColor="#66BB6A">
+
+                            <TextView
+                                android:id="@+id/statusReadyIcon"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:text="✓"
+                                android:textSize="24sp"
+                                android:textColor="@android:color/white"
+                                android:gravity="center" />
+                        </com.google.android.material.card.MaterialCardView>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Ready"
                             android:textSize="12sp"
-                            android:layout_marginTop="4dp" />
+                            android:textColor="#1A1A1A"
+                            android:textStyle="bold"
+                            android:layout_marginTop="8dp" />
                     </LinearLayout>
 
                     <!-- Progress Line 2 -->
                     <View
                         android:id="@+id/progressLine2"
                         android:layout_width="0dp"
-                        android:layout_height="2dp"
+                        android:layout_height="3dp"
                         android:layout_weight="1"
                         android:background="#E0E0E0"
-                        android:layout_marginTop="-24dp" />
+                        android:layout_marginTop="-32dp"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="4dp" />
 
                     <!-- Collected -->
                     <LinearLayout
@@ -131,66 +171,114 @@
                         android:orientation="vertical"
                         android:gravity="center">
 
-                        <TextView
-                            android:id="@+id/statusCollectedIcon"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:text="○"
-                            android:textSize="24sp"
-                            android:textColor="#999999"
-                            android:background="@drawable/bg_status_pending"
-                            android:gravity="center" />
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            app:cardCornerRadius="24dp"
+                            app:cardElevation="2dp"
+                            app:cardBackgroundColor="#E0E0E0">
+
+                            <TextView
+                                android:id="@+id/statusCollectedIcon"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:text="○"
+                                android:textSize="24sp"
+                                android:textColor="#999999"
+                                android:gravity="center" />
+                        </com.google.android.material.card.MaterialCardView>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Collected"
                             android:textSize="12sp"
-                            android:layout_marginTop="4dp" />
+                            android:textColor="#999999"
+                            android:layout_marginTop="8dp" />
                     </LinearLayout>
 
                 </LinearLayout>
 
                 <!-- ETA Warning -->
-                <LinearLayout
+                <com.google.android.material.card.MaterialCardView
                     android:id="@+id/llEtaWarning"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:background="#FFF3E0"
-                    android:padding="12dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="16dp"
-                    android:gravity="center_vertical"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="20dp"
                     android:visibility="gone"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="#FFF3E0"
                     tools:visibility="visible">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="16dp"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⏱"
+                            android:textSize="24sp"
+                            android:layout_marginEnd="12dp" />
+
+                        <TextView
+                            android:id="@+id/tvEtaWarning"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="ETA: Time left to pick up: 49 mins"
+                            android:textSize="14sp"
+                            android:textColor="#F57C00"
+                            android:textStyle="bold"
+                            tools:text="ETA: Time left to pick up: 49 mins" />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#F0F0F0"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="20dp" />
+
+                <!-- Map Section -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="⏱"
-                        android:textSize="20sp"
-                        android:layout_marginEnd="8dp" />
+                        android:text="📍"
+                        android:textSize="24sp"
+                        android:layout_marginEnd="12dp" />
 
                     <TextView
-                        android:id="@+id/tvEtaWarning"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="ETA: Time left to pick up: 49 mins"
-                        android:textSize="13sp"
-                        android:textColor="#F57C00"
-                        tools:text="ETA: Time left to pick up: 49 mins" />
-
+                        android:text="Store Location"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#1A1A1A" />
                 </LinearLayout>
 
-                <!-- Map View -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
-                    android:layout_height="250dp"
-                    android:layout_marginBottom="16dp"
+                    android:layout_height="280dp"
+                    android:layout_marginBottom="20dp"
                     app:cardElevation="2dp"
-                    app:cardCornerRadius="12dp">
+                    app:cardCornerRadius="16dp">
 
                     <FrameLayout
                         android:layout_width="match_parent"
@@ -202,35 +290,43 @@
                             android:layout_height="match_parent" />
 
                         <!-- Store Info Overlay -->
-                        <LinearLayout
+                        <com.google.android.material.card.MaterialCardView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_gravity="bottom"
-                            android:background="#CC000000"
-                            android:orientation="vertical"
-                            android:padding="12dp">
+                            android:layout_margin="12dp"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="4dp"
+                            app:cardBackgroundColor="#FFFFFF">
 
-                            <TextView
-                                android:id="@+id/tvStoreName"
-                                android:layout_width="wrap_content"
+                            <LinearLayout
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Store Location"
-                                android:textSize="14sp"
-                                android:textStyle="bold"
-                                android:textColor="@android:color/white"
-                                tools:text="BreadTalk Orchard" />
+                                android:orientation="vertical"
+                                android:padding="16dp">
 
-                            <TextView
-                                android:id="@+id/tvStoreAddress"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Address"
-                                android:textSize="12sp"
-                                android:textColor="@android:color/white"
-                                android:layout_marginTop="2dp"
-                                tools:text="313 Orchard Road, #B2-01" />
+                                <TextView
+                                    android:id="@+id/tvStoreName"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Store Location"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#1A1A1A"
+                                    tools:text="BreadTalk Orchard" />
 
-                        </LinearLayout>
+                                <TextView
+                                    android:id="@+id/tvStoreAddress"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Address"
+                                    android:textSize="13sp"
+                                    android:textColor="#666666"
+                                    android:layout_marginTop="4dp"
+                                    tools:text="313 Orchard Road, #B2-01" />
+
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
 
                     </FrameLayout>
 
@@ -242,9 +338,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Order #1234A5"
-                    android:textSize="18sp"
+                    android:textSize="20sp"
                     android:textStyle="bold"
-                    android:textColor="?android:attr/textColorPrimary"
+                    android:textColor="#1A1A1A"
                     android:layout_marginBottom="8dp"
                     tools:text="Order #1234A5" />
 
@@ -254,8 +350,8 @@
                     android:layout_height="wrap_content"
                     android:text="Pickup Window: 7:00-9:00 PM"
                     android:textSize="14sp"
-                    android:textColor="?android:attr/textColorSecondary"
-                    android:layout_marginBottom="20dp"
+                    android:textColor="#666666"
+                    android:layout_marginBottom="24dp"
                     tools:text="Pickup Window: 7:00-9:00 PM" />
 
                 <!-- Action Buttons -->
@@ -265,20 +361,26 @@
                     android:layout_height="56dp"
                     android:text="View Pickup QR Code"
                     android:textColor="@android:color/white"
-                    android:backgroundTint="#4CAF50"
-                    app:cornerRadius="12dp"
-                    android:layout_marginBottom="12dp" />
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="false"
+                    android:backgroundTint="#66BB6A"
+                    app:cornerRadius="28dp"
+                    android:layout_marginBottom="12dp"
+                    android:elevation="0dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnGetDirections"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:text="🗺 Get directions"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:backgroundTint="#F5F5F5"
-                    app:cornerRadius="12dp"
+                    android:textColor="#1A1A1A"
+                    android:textSize="15sp"
+                    android:textAllCaps="false"
+                    android:backgroundTint="#F8F8F8"
+                    app:cornerRadius="28dp"
                     app:strokeColor="#E0E0E0"
-                    app:strokeWidth="1dp"
+                    app:strokeWidth="2dp"
                     style="@style/Widget.Material3.Button.OutlinedButton" />
 
                 <com.google.android.material.button.MaterialButton
@@ -287,37 +389,54 @@
                     android:layout_height="56dp"
                     android:layout_marginTop="12dp"
                     android:text="@string/review_listing_button"
+                    android:textAllCaps="false"
                     android:visibility="gone"
-                    app:cornerRadius="12dp" />
+                    app:cornerRadius="28dp" />
 
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Order Items Section -->
+        <!-- Order Items Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="24dp"
             app:cardElevation="4dp"
-            app:cardCornerRadius="16dp">
+            app:cardCornerRadius="24dp"
+            app:cardBackgroundColor="@color/white">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="24dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Order Items"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:layout_marginBottom="12dp" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🛍️"
+                        android:textSize="24sp"
+                        android:layout_marginEnd="12dp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Order Items"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#1A1A1A" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/llOrderItems"
@@ -331,32 +450,34 @@
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="?android:attr/listDivider"
-                    android:layout_marginTop="12dp"
-                    android:layout_marginBottom="12dp" />
+                    android:background="#F0F0F0"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="16dp" />
 
                 <!-- Total -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Total Amount"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#1A1A1A" />
 
                     <TextView
                         android:id="@+id/tvTotalAmount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="$25.50"
-                        android:textSize="20sp"
+                        android:textSize="24sp"
                         android:textStyle="bold"
-                        android:textColor="?android:attr/textColorPrimary"
+                        android:textColor="#66BB6A"
                         tools:text="$25.50" />
 
                 </LinearLayout>
