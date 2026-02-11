@@ -9,8 +9,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.frh.backend.Model.ConsumerProfile;
-import com.frh.backend.Model.SupplierProfile;
+import com.frh.backend.model.ConsumerProfile;
+import com.frh.backend.model.SupplierProfile;
 import com.frh.backend.dto.AuthResponse;
 import com.frh.backend.dto.LoginRequest;
 import com.frh.backend.dto.RegisterRequest;
@@ -277,3 +277,4 @@ class AuthServiceTest {
     verify(consumerRepo).findByEmail(eq("consumer@test.com"));
   }
 }
+

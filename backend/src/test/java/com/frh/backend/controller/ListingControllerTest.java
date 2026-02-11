@@ -9,8 +9,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.frh.backend.Model.Listing;
-import com.frh.backend.Model.ListingPhoto;
+import com.frh.backend.model.Listing;
+import com.frh.backend.model.ListingPhoto;
 import com.frh.backend.dto.ListingDTO;
 import com.frh.backend.repository.ListingRepository;
 import com.frh.backend.repository.StoreRepository;
@@ -693,3 +693,4 @@ class ListingControllerTest {
     assertTrue(errors.contains("Expiry time must be after pickup end time"));
   }
 }
+

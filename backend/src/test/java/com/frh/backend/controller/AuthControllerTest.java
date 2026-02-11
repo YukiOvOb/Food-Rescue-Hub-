@@ -4,8 +4,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.frh.backend.Model.ConsumerProfile;
-import com.frh.backend.Model.SupplierProfile;
+import com.frh.backend.model.ConsumerProfile;
+import com.frh.backend.model.SupplierProfile;
 import com.frh.backend.dto.AuthResponse;
 import com.frh.backend.dto.LoginRequest;
 import com.frh.backend.dto.RegisterRequest;
@@ -184,3 +184,4 @@ class AuthControllerTest {
         .andExpect(jsonPath("$.message").value("Validation failed"));
   }
 }
+

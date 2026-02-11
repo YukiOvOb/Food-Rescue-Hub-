@@ -1,6 +1,6 @@
 package com.frh.backend.controller;
 
-import com.frh.backend.dto.ListingDto;
+import com.frh.backend.dto.ListingDTO;
 import com.frh.backend.service.ListingService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +29,8 @@ public class ConsumerListingController {
    * @return List of all active listings
    */
   @GetMapping
-  public ResponseEntity<List<ListingDto>> getAllListings() {
-    List<ListingDto> listings = listingService.getAllActiveListings();
+  public ResponseEntity<List<ListingDTO>> getAllListings() {
+    List<ListingDTO> listings = listingService.getAllActiveListings();
     return ResponseEntity.ok(listings);
   }
 
@@ -44,11 +44,11 @@ public class ConsumerListingController {
    * @return List of nearby listings within the specified radius
    */
   @GetMapping("/nearby")
-  public ResponseEntity<List<ListingDto>> getNearbyListings(
+  public ResponseEntity<List<ListingDTO>> getNearbyListings(
       @RequestParam Double lat,
       @RequestParam Double lng,
       @RequestParam(required = false, defaultValue = "5.0") Double radius) {
-    List<ListingDto> listings = listingService.getNearbyListings(lat, lng, radius);
+    List<ListingDTO> listings = listingService.getNearbyListings(lat, lng, radius);
     return ResponseEntity.ok(listings);
   }
 
@@ -59,8 +59,8 @@ public class ConsumerListingController {
    * @return List of listings matching the category
    */
   @GetMapping("/category/{category}")
-  public ResponseEntity<List<ListingDto>> getListingsByCategory(@PathVariable String category) {
-    List<ListingDto> listings = listingService.getListingsByCategory(category);
+  public ResponseEntity<List<ListingDTO>> getListingsByCategory(@PathVariable String category) {
+    List<ListingDTO> listings = listingService.getListingsByCategory(category);
     return ResponseEntity.ok(listings);
   }
 }

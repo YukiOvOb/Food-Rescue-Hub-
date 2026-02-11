@@ -3,8 +3,8 @@ package com.frh.backend.controller;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.frh.backend.Model.ConsumerProfile;
-import com.frh.backend.Model.Order;
+import com.frh.backend.model.ConsumerProfile;
+import com.frh.backend.model.Order;
 import com.frh.backend.mapper.OrderResponseMapper;
 import com.frh.backend.service.ConsumerOrderService;
 import java.util.List;
@@ -255,3 +255,4 @@ class ConsumerOrderControllerTest {
         .andExpect(status().isNotFound());
   }
 }
+

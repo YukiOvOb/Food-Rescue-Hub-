@@ -1,6 +1,6 @@
 package com.frh.backend.controller;
 
-import com.frh.backend.dto.StoreRecommendationDto;
+import com.frh.backend.dto.StoreRecommendationDTO;
 import com.frh.backend.service.RecommendationService;
 import java.util.HashMap;
 import java.util.List;
@@ -41,7 +41,7 @@ public class RecommendationController {
       @RequestParam(required = false) Double lat,
       @RequestParam(required = false) Double lng) {
     try {
-      List<StoreRecommendationDto> recommendations =
+      List<StoreRecommendationDTO> recommendations =
           recommendationService.recommendStoresForHomepage(consumerId, topK, lat, lng);
 
       Map<String, Object> response = new HashMap<>();
@@ -86,7 +86,7 @@ public class RecommendationController {
       @RequestParam(required = false) Double lat,
       @RequestParam(required = false) Double lng) {
     try {
-      List<StoreRecommendationDto> recommendations =
+      List<StoreRecommendationDTO> recommendations =
           recommendationService.searchWithRecommendations(consumerId, query, topK, lat, lng);
 
       Map<String, Object> response = new HashMap<>();

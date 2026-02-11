@@ -3,41 +3,73 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="#F5F5F5"
     android:gravity="center"
     android:orientation="vertical"
     android:padding="24dp">
 
-    <ProgressBar
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:indeterminateTint="@color/primaryColor" />
+    <!-- Progress Indicator Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        app:cardCornerRadius="60dp"
+        app:cardElevation="8dp"
+        app:cardBackgroundColor="#E8F5E9">
 
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="28dp">
+
+            <ProgressBar
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:indeterminateTint="#66BB6A" />
+        </FrameLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Title -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="32dp"
         android:text="Payment in Progress"
-        android:textColor="@color/black"
-        android:textSize="20sp"
-        android:textStyle="bold" />
+        android:textColor="#1A1A1A"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:letterSpacing="-0.01" />
 
+    <!-- Description -->
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
         android:gravity="center"
         android:text="You have been redirected to the secure payment gateway. Once finished, you can return here."
-        android:textColor="@color/secondaryTextColor"
-        android:textSize="16sp" />
+        android:textColor="#999999"
+        android:textSize="16sp"
+        android:lineSpacingExtra="4dp" />
 
+    <!-- Spacer -->
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:minHeight="48dp" />
+
+    <!-- Check Status Button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnCheckStatus"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:layout_marginTop="48dp"
         android:text="Payment Completed? Tap here"
         android:textAllCaps="false"
-        app:cornerRadius="28dp" />
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:backgroundTint="#66BB6A"
+        app:cornerRadius="28dp"
+        android:elevation="0dp" />
 
 </LinearLayout>

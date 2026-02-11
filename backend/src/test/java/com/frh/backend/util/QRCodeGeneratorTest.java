@@ -25,10 +25,10 @@ class QRCodeGeneratorTest {
   }
 
   @Test
-  void generateQRCode_createsPngAndReturnsAbsolutePath() throws WriterException, IOException {
+  void generateQrCode_createsPngAndReturnsAbsolutePath() throws WriterException, IOException {
     String fileName = "qr-test-" + UUID.randomUUID();
 
-    String outputPath = QRCodeGenerator.generateQRCode("hello-world", fileName);
+    String outputPath = QrCodeGenerator.generateQrCode("hello-world", fileName);
     Path path = Path.of(outputPath);
     createdFiles.add(path);
 
@@ -38,12 +38,12 @@ class QRCodeGeneratorTest {
   }
 
   @Test
-  void generateQRCode_worksWhenDirectoryAlreadyExists() throws WriterException, IOException {
+  void generateQrCode_worksWhenDirectoryAlreadyExists() throws WriterException, IOException {
     String fileName1 = "qr-test-" + UUID.randomUUID();
     String fileName2 = "qr-test-" + UUID.randomUUID();
 
-    Path first = Path.of(QRCodeGenerator.generateQRCode("first", fileName1));
-    Path second = Path.of(QRCodeGenerator.generateQRCode("second", fileName2));
+    Path first = Path.of(QrCodeGenerator.generateQrCode("first", fileName1));
+    Path second = Path.of(QrCodeGenerator.generateQrCode("second", fileName2));
     createdFiles.add(first);
     createdFiles.add(second);
 

@@ -1,6 +1,6 @@
 package com.frh.backend.controller;
 
-import com.frh.backend.dto.OrderSummaryDto;
+import com.frh.backend.dto.OrderSummaryDTO;
 import com.frh.backend.service.OrderService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +29,7 @@ public class SupplierOrderQueuePageController {
       Model model,
       RedirectAttributes redirectAttributes) {
 
-    List<OrderSummaryDto> orders = orderService.getOrderQueue(storeId, status);
+    List<OrderSummaryDTO> orders = orderService.getOrderQueue(storeId, status);
 
     model.addAttribute("storeId", storeId);
     model.addAttribute("activeStatus", status);

@@ -1,6 +1,6 @@
 package com.frh.backend.controller;
 
-import com.frh.backend.dto.ListingDto;
+import com.frh.backend.dto.ListingDTO;
 import com.frh.backend.model.Listing;
 import com.frh.backend.model.ListingPhoto;
 import com.frh.backend.repository.ListingRepository;
@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -47,7 +48,7 @@ public class ListingController {
   @PostMapping
   public ResponseEntity<?> createListing(
       @RequestParam(name = "storeId", required = false) Long storeId,
-      @RequestBody ListingDto listingDto) {
+      @RequestBody ListingDTO listingDto) {
 
     List<String> errors = new ArrayList<>();
 
@@ -68,7 +69,7 @@ public class ListingController {
 
     // 3) Save – catch DB errors so they become readable 400s instead of generic 500
     try {
-      ListingDto savedListing = listingService.createListing(listingDto, storeId);
+      ListingDTO savedListing = listingService.createListing(listingDto, storeId);
       return ResponseEntity.ok(savedListing);
 
     } catch (DataIntegrityViolationException ex) {
@@ -136,8 +137,8 @@ public class ListingController {
   // READ ALL BY SUPPLIER
   // ==========================================
   @GetMapping("/supplier/{supplierId}")
-  public ResponseEntity<List<ListingDto>> getListingsBySupplier(@PathVariable Long supplierId) {
-    List<ListingDto> listings = listingService.getListingsBySupplier(supplierId);
+  public ResponseEntity<List<ListingDTO>> getListingsBySupplier(@PathVariable Long supplierId) {
+    List<ListingDTO> listings = listingService.getListingsBySupplier(supplierId);
     return ResponseEntity.ok(listings);
   }
 
@@ -160,7 +161,7 @@ public class ListingController {
   // ==========================================
   @PutMapping("/{id}")
   public ResponseEntity<?> updateListing(
-      @PathVariable Long id, @RequestBody ListingDto listingDetails) {
+      @PathVariable Long id, @RequestBody ListingDTO listingDetails) {
 
     if (!listingRepository.existsById(id)) {
       return ResponseEntity.status(404).body("Listing not found with id: " + id);
@@ -172,7 +173,7 @@ public class ListingController {
     }
 
     try {
-      ListingDto updatedListing = listingService.updateListing(id, listingDetails);
+      ListingDTO updatedListing = listingService.updateListing(id, listingDetails);
       return ResponseEntity.ok(updatedListing);
     } catch (DataIntegrityViolationException ex) {
       ex.printStackTrace();
@@ -256,7 +257,7 @@ public class ListingController {
     return errors;
   }
 
-  private List<String> validateListingDto(ListingDto listingDto) {
+  private List<String> validateListingDto(ListingDTO listingDto) {
     List<String> errors = new ArrayList<>();
 
     if (listingDto.getTitle() == null || listingDto.getTitle().trim().isEmpty()) {

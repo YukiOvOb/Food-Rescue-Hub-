@@ -2,6 +2,7 @@ package com.frh.backend.controller;
 
 import com.frh.backend.dto.CreateOrderRequest;
 import com.frh.backend.dto.OrderResponseDto;
+import com.frh.backend.dto.OrderSummaryDTO;
 import com.frh.backend.dto.RejectOrderRequest;
 import com.frh.backend.mapper.OrderResponseMapper;
 import com.frh.backend.model.Order;
@@ -50,10 +51,10 @@ public class SupplierOrderController {
    * <p>{@code status} is optional. Omit to get all orders for the store.
    */
   @GetMapping("/api/supplier/orders/{storeId}")
-  public ResponseEntity<List<OrderSummaryDto>> getOrderQueue(
+  public ResponseEntity<List<OrderSummaryDTO>> getOrderQueue(
       @PathVariable Long storeId, @RequestParam(required = false) String status) {
 
-    List<OrderSummaryDto> queue = orderService.getOrderQueue(storeId, status);
+    List<OrderSummaryDTO> queue = orderService.getOrderQueue(storeId, status);
     return ResponseEntity.ok(queue);
   }
 

@@ -5,18 +5,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?android:attr/colorBackground">
+    android:background="#F5F5F5">
 
     <!-- Toolbar -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        android:elevation="4dp"
+        android:background="@color/white"
+        android:elevation="0dp"
         app:title="My Orders"
-        app:titleTextColor="@android:color/white"
-        app:navigationIcon="@drawable/ic_arrow_back" />
+        app:titleTextColor="#1A1A1A"
+        android:layout_marginTop="40dp"
+        android:textAlignment="center"
+        app:navigationIcon="@drawable/ic_arrow_back"
+        app:navigationIconTint="#1A1A1A" />
 
     <!-- Main Content -->
     <FrameLayout
@@ -28,7 +31,7 @@
             android:id="@+id/rvOrders"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="16dp"
+            android:padding="20dp"
             android:clipToPadding="false"
             tools:listitem="@layout/item_order" />
 
@@ -38,6 +41,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:indeterminateTint="#66BB6A"
             android:visibility="gone" />
 
         <!-- Empty State -->
@@ -50,28 +54,41 @@
             android:padding="32dp"
             android:visibility="gone">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="📦"
-                android:textSize="64sp"
-                android:layout_marginBottom="16dp" />
+            <!-- Empty State Icon -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                app:cardCornerRadius="60dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#E8F5E9">
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:text="📦"
+                    android:textSize="60sp"
+                    android:gravity="center" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Empty State Title -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
                 android:text="No orders yet"
-                android:textSize="20sp"
+                android:textSize="22sp"
                 android:textStyle="bold"
-                android:textColor="?android:attr/textColorPrimary"
-                android:layout_marginBottom="8dp" />
+                android:textColor="#1A1A1A"
+                android:letterSpacing="-0.01" />
 
+            <!-- Empty State Description -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
                 android:text="Your order history will appear here\nonce you make your first purchase"
-                android:textSize="14sp"
-                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="15sp"
+                android:textColor="#999999"
                 android:gravity="center"
                 android:lineSpacingExtra="4dp" />
 

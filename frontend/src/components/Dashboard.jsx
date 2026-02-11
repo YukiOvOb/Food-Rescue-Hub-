@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
 import axiosInstance from '../services/axiosConfig';
+import ConfirmDialog from './ConfirmDialog';
 import './styles/Dashboard.css';
 
 const Dashboard = () => {
@@ -14,6 +15,9 @@ const Dashboard = () => {
   const [co2SavedKg, setCo2SavedKg] = useState(0);
   const [activeCustomers, setActiveCustomers] = useState(0);
   const [statsLoading, setStatsLoading] = useState(false);
+
+  // Logout confirmation dialog
+  const [confirmDialog, setConfirmDialog] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -134,11 +138,8 @@ const Dashboard = () => {
   }, [user?.userId, user?.supplierId]);
 
   const handleLogout = async () => {
-    const confirmLogout = window.confirm('Are you sure you want to logout?');
-    if (confirmLogout) {
-      await authService.logout();
-      navigate('/login');
-    }
+    await authService.logout();
+    navigate('/login');
   };
 
   const goToListings = () => navigate('/listings');
@@ -168,7 +169,7 @@ const Dashboard = () => {
         </div>
         <div className="header-right">
           <span className="user-greeting">Welcome, {user.displayName}!</span>
-          <button onClick={handleLogout} className="btn-logout">
+          <button onClick={() => setConfirmDialog(true)} className="btn-logout">
             Logout
           </button>
         </div>
@@ -258,6 +259,17 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDialog}
+        onClose={() => setConfirmDialog(false)}
+        onConfirm={handleLogout}
+        title="Confirm Logout"
+        message="Are you sure you want to logout?"
+        confirmText="Logout"
+        cancelText="Cancel"
+        type="warning"
+      />
     </div>
   );
 };

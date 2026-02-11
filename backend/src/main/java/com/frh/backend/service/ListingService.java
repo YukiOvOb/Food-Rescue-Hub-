@@ -1,7 +1,7 @@
 package com.frh.backend.service;
 
-import com.frh.backend.dto.ListingCategoryWeightDto;
-import com.frh.backend.dto.ListingDto;
+import com.frh.backend.dto.ListingCategoryWeightDTO;
+import com.frh.backend.dto.ListingDTO;
 import com.frh.backend.model.Listing;
 import com.frh.backend.model.ListingFoodCategory;
 import com.frh.backend.model.ListingPhoto;
@@ -29,7 +29,7 @@ public class ListingService {
 
   /** Get all active listings with available inventory */
   @Transactional(readOnly = true)
-  public List<ListingDto> getAllActiveListings() {
+  public List<ListingDTO> getAllActiveListings() {
     List<Listing> listings = listingRepository.findAllActiveListingsWithDetails();
     return listings.stream().map(this::convertToDto).collect(Collectors.toList());
   }
@@ -42,7 +42,7 @@ public class ListingService {
    * @param radius Search radius in kilometers (default: 5km)
    */
   @Transactional(readOnly = true)
-  public List<ListingDto> getNearbyListings(Double lat, Double lng, Double radius) {
+  public List<ListingDTO> getNearbyListings(Double lat, Double lng, Double radius) {
     if (radius == null || radius <= 0) {
       radius = 5.0; // Default 5km radius
     }
@@ -52,14 +52,14 @@ public class ListingService {
 
   /** Get listings for a supplier (DTO-safe) */
   @Transactional(readOnly = true)
-  public List<ListingDto> getListingsBySupplier(Long supplierId) {
+  public List<ListingDTO> getListingsBySupplier(Long supplierId) {
     List<Listing> listings = listingRepository.findByStore_SupplierProfile_SupplierId(supplierId);
     return listings.stream().map(this::convertToDto).collect(Collectors.toList());
   }
 
   /** Filter listings by category */
   @Transactional(readOnly = true)
-  public List<ListingDto> getListingsByCategory(String category) {
+  public List<ListingDTO> getListingsByCategory(String category) {
     List<Listing> allListings = listingRepository.findAllActiveListingsWithDetails();
     return allListings.stream()
         .filter(
@@ -71,9 +71,9 @@ public class ListingService {
         .collect(Collectors.toList());
   }
 
-  /** Convert Listing entity to ListingDto */
-  private ListingDto convertToDto(Listing listing) {
-    ListingDto dto = new ListingDto();
+  /** Convert Listing entity to ListingDTO */
+  private ListingDTO convertToDto(Listing listing) {
+    ListingDTO dto = new ListingDTO();
 
     // Basic listing info
     dto.setListingId(listing.getListingId());
@@ -142,7 +142,7 @@ public class ListingService {
           listing.getListingFoodCategories().stream()
               .map(
                   lfc -> {
-                    ListingCategoryWeightDto w = new ListingCategoryWeightDto();
+                    ListingCategoryWeightDTO w = new ListingCategoryWeightDTO();
                     w.setCategoryId(lfc.getCategory().getId());
                     w.setCategoryName(lfc.getCategory().getName());
                     w.setWeightKg(lfc.getWeightKg());
@@ -193,7 +193,7 @@ public class ListingService {
   }
 
   @Transactional
-  public ListingDto createListing(ListingDto dto, Long storeId) {
+  public ListingDTO createListing(ListingDTO dto, Long storeId) {
     Listing listing = new Listing();
 
     // 1. Map fields from DTO
@@ -216,7 +216,7 @@ public class ListingService {
   }
 
   @Transactional
-  public ListingDto updateListing(Long listingId, ListingDto dto) {
+  public ListingDTO updateListing(Long listingId, ListingDTO dto) {
     Listing listing =
         listingRepository
             .findById(listingId)
@@ -230,7 +230,7 @@ public class ListingService {
     return convertToDto(savedListing);
   }
 
-  private void applyListingFields(Listing listing, ListingDto dto) {
+  private void applyListingFields(Listing listing, ListingDTO dto) {
     listing.setTitle(dto.getTitle());
     listing.setDescription(dto.getDescription());
     listing.setOriginalPrice(dto.getOriginalPrice());
@@ -241,7 +241,7 @@ public class ListingService {
     listing.setEstimatedWeightKg(dto.getEstimatedWeightKg());
   }
 
-  private void applyFoodCategories(Listing listing, ListingDto dto, boolean clearWhenMissing) {
+  private void applyFoodCategories(Listing listing, ListingDTO dto, boolean clearWhenMissing) {
     boolean hasCategoryWeights = dto.getCategoryWeights() != null;
     boolean hasCategoryIds = dto.getCategoryIds() != null;
 
@@ -257,7 +257,7 @@ public class ListingService {
     if (dto.getCategoryWeights() != null && !dto.getCategoryWeights().isEmpty()) {
       List<Long> ids =
           dto.getCategoryWeights().stream()
-              .map(ListingCategoryWeightDto::getCategoryId)
+              .map(ListingCategoryWeightDTO::getCategoryId)
               .filter(id -> id != null)
               .distinct()
               .collect(Collectors.toList());
@@ -267,7 +267,7 @@ public class ListingService {
 
       BigDecimal totalWeight = BigDecimal.ZERO;
 
-      for (ListingCategoryWeightDto item : dto.getCategoryWeights()) {
+      for (ListingCategoryWeightDTO item : dto.getCategoryWeights()) {
         if (item.getCategoryId() == null) continue;
         com.frh.backend.model.FoodCategory category = categoryMap.get(item.getCategoryId());
         if (category == null) continue;

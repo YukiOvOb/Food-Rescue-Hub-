@@ -6,7 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.frh.backend.Model.Inventory;
+import com.frh.backend.model.Inventory;
 import com.frh.backend.exception.InsufficientStockException;
 import com.frh.backend.repository.InventoryRepository;
 import java.util.Optional;
@@ -132,3 +132,4 @@ class InventoryServiceTest {
     return inventory;
   }
 }
+

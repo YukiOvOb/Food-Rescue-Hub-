@@ -4,7 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.frh.backend.Model.Order;
+import com.frh.backend.model.Order;
 import com.frh.backend.dto.CreateOrderRequest;
 import com.frh.backend.dto.OrderSummaryDTO;
 import com.frh.backend.dto.RejectOrderRequest;
@@ -162,3 +162,4 @@ class SupplierOrderControllerTest {
         .andExpect(status().isOk());
   }
 }
+

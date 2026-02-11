@@ -1,13 +1,13 @@
 package com.frh.backend.util;
 
+import com.google.zxing.WriterException;
+import java.io.IOException;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
-import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,8 +25,8 @@ public class QrCodeGenerator {
    * Generate QR code and save to local directory.
    *
    * @param text QR code content (e.g., qrTokenHash)
-   * @param fileName File name (without extension)
-   * @return Saved file path
+   * @param fileName file name (without extension)
+   * @return saved file path
    */
   public static String generateQrCode(String text, String fileName)
       throws WriterException, IOException {

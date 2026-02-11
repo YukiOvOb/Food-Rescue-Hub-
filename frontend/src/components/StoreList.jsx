@@ -1,11 +1,21 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from "../services/axiosConfig";
+import PageHeader from './PageHeader';
+import ConfirmDialog from './ConfirmDialog';
+import Toast from './Toast';
+import './styles/StoreList.css';
 
 export default function StoreList() {
     const [stores, setStores] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+
+    const [supplierId, setSupplierId] = useState(null);
+
+    // Dialog states
+    const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, storeId: null });
+    const [toast, setToast] = useState({ isOpen: false, message: '', type: 'info' });
 
     useEffect(() => {
         const getSessionUser = async () => {
@@ -13,6 +23,7 @@ export default function StoreList() {
                 // Fetch the logged-in user's details
                 const response = await axiosInstance.get('/auth/me');
                 const id = response.data.userId ?? response.data.supplierId;
+                setSupplierId(id);
                 fetchStores(id); // Fetch stores for THIS specific supplier
             } catch (error) {
                 navigate('/login');
@@ -27,100 +38,122 @@ export default function StoreList() {
             const response = await axiosInstance.get(`/stores/supplier/${id}`);
             setStores(response.data);
         } catch (error) {
-            setStores([]);
+            console.error("Error fetching stores:", error);
         } finally {
             setLoading(false);
         }
     };
 
-    if (loading) return <p style={{ textAlign: 'center' }}>Loading your stores...</p>;
+    if (loading) {
+        return (
+            <div className="loading-message">
+                <div className="loading-spinner"></div>
+                <p>Loading your stores...</p>
+            </div>
+        );
+    }
 
     const handleDelete = async (storeId) => {
-        const confirmed = window.confirm("Are you sure you want to delete this store? This action cannot be undone.");
+        setConfirmDialog({ isOpen: true, storeId });
+    };
 
-        if (confirmed) {
-            try {
-                // axiosInstance already has the baseURL (http://localhost:8080/api)
-                // and includes withCredentials: true
-                await axiosInstance.delete(`/stores/delete/${storeId}`);
-
-                // Axios treats non-2xx status codes as errors, so if we reach here, it's a 200 OK
-                alert("Store deleted successfully.");
-                setStores(stores.filter(store => store.storeId !== storeId));
-            } catch (error) {
-                const message = error.response?.data?.message || "Failed to delete the store.";
-                alert(message);
-            }
+    const confirmDelete = async () => {
+        const storeId = confirmDialog.storeId;
+        try {
+            await axiosInstance.delete(`/stores/delete/${storeId}`);
+            setStores(stores.filter(store => store.storeId !== storeId));
+            setToast({ isOpen: true, message: 'Store deleted successfully!', type: 'success' });
+        } catch (error) {
+            console.error("Error deleting store:", error);
+            const message = error.response?.data?.message || "Failed to delete the store.";
+            setToast({ isOpen: true, message, type: 'error' });
         }
     };
 
     return (
-        <div style={{ padding: "20px", maxWidth: "1000px", margin: "0 auto", fontFamily: "Arial" }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                    <button onClick={() => navigate('/dashboard')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px' }}>
-                        ⬅️
-                    </button>
+        <div className="store-list-container">
+            <div className="store-list-content">
+                <div className="store-list-header">
+                    <PageHeader
+                        title="My Stores"
+                        subtitle="Supplier"
+                        actions={
+                            <button
+                                onClick={() => navigate('/add-store')}
+                                className="add-store-btn"
+                            >
+                                Add New Store
+                            </button>
+                        }
+                    />
                 </div>
-                <h2>My Stores</h2>
-                <button
-                    onClick={() => navigate('/add-store')}
-                    style={{ padding: "10px", background: "#007bff", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
-                >
-                    + Add New Store
-                </button>
+
+                {stores.length === 0 ? (
+                    <p className="no-stores-message">No stores found. Start by adding one!</p>
+                ) : (
+                    <div className="stores-table-container">
+                        <table className="stores-table">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Address</th>
+                                <th>Postal Code</th>
+                                <th>Pickup Instructions</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {stores.map((store) => (
+                                <tr key={store.storeId}>
+                                    <td><span className="store-name">{store.storeName}</span></td>
+                                    <td>{store.addressLine}</td>
+                                    <td>{store.postalCode}</td>
+                                    <td>
+                                        <span className="pickup-instructions">
+                                            {store.pickupInstructions || "No instructions provided"}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div className="store-actions">
+                                            <button
+                                                onClick={() => navigate(`/edit-store/${store.storeId}`)}
+                                                className="btn-edit"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(store.storeId)}
+                                                className="btn-delete"
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
 
-            {stores.length === 0 ? (
-                <p>No stores found. Start by adding one!</p>
-            ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "20px" }}>
-                    <thead>
-                    <tr style={{ backgroundColor: "#f4f4f4", textAlign: "left" }}>
-                        <th style={tableHeaderStyle}>Name</th>
-                        <th style={tableHeaderStyle}>Address</th>
-                        <th style={tableHeaderStyle}>Postal Code</th>
-                        <th style={tableHeaderStyle}>Pickup Instructions</th>
-                        <th style={tableHeaderStyle}>Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {stores.map((store) => (
-                        <tr key={store.storeId} style={{ borderBottom: "1px solid #ddd" }}>
-                            <td style={tableCellStyle}><strong>{store.storeName}</strong></td>
-                            <td style={tableCellStyle}>{store.addressLine}</td>
-                            <td style={tableCellStyle}>{store.postalCode}</td>
-                            <td style={tableCellStyle}>
-                                <small style={{ color: "#555" }}>{store.pickupInstructions || "No instructions provided"}</small>
-                            </td>
-                            {/* Combine all actions into this single cell */}
-                            <td style={tableCellStyle}>
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                    <button
-                                        onClick={() => navigate(`/edit-store/${store.storeId}`)}
-                                        style={editButtonStyle}
-                                    >
-                                        Edit
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(store.storeId)}
-                                        style={deleteButtonStyle}
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    ))}
-                    </tbody>
-                </table>
-            )}
+            <ConfirmDialog
+                isOpen={confirmDialog.isOpen}
+                onClose={() => setConfirmDialog({ isOpen: false, storeId: null })}
+                onConfirm={confirmDelete}
+                title="Delete Store"
+                message="Are you sure you want to delete this store? This action cannot be undone."
+                confirmText="Delete"
+                cancelText="Cancel"
+                type="danger"
+            />
+
+            <Toast
+                isOpen={toast.isOpen}
+                onClose={() => setToast({ ...toast, isOpen: false })}
+                message={toast.message}
+                type={toast.type}
+            />
         </div>
     );
 }
-
-// Minimal Styles
-const tableHeaderStyle = { padding: "12px", borderBottom: "2px solid #ddd" };
-const tableCellStyle = { padding: "12px" };
-const editButtonStyle = { background: "#ffc107", border: "none", padding: "5px 10px", cursor: "pointer", borderRadius: "4px" };
-const deleteButtonStyle = { background: "#dc3545", color: "white", border: "none", padding: "5px 10px", cursor: "pointer", borderRadius: "4px" };

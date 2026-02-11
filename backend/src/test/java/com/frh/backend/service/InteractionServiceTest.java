@@ -7,11 +7,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.frh.backend.Model.ConsumerProfile;
-import com.frh.backend.Model.ConsumerStats;
-import com.frh.backend.Model.Listing;
-import com.frh.backend.Model.ListingStats;
-import com.frh.backend.Model.UserInteraction;
+import com.frh.backend.model.ConsumerProfile;
+import com.frh.backend.model.ConsumerStats;
+import com.frh.backend.model.Listing;
+import com.frh.backend.model.ListingStats;
+import com.frh.backend.model.UserInteraction;
 import com.frh.backend.dto.UserInteractionRequest;
 import com.frh.backend.repository.ConsumerProfileRepository;
 import com.frh.backend.repository.ConsumerStatsRepository;
@@ -230,3 +230,4 @@ class InteractionServiceTest {
     return request;
   }
 }
+

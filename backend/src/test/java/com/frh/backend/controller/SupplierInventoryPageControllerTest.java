@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.frh.backend.Model.Inventory;
-import com.frh.backend.Model.Listing;
+import com.frh.backend.model.Inventory;
+import com.frh.backend.model.Listing;
 import com.frh.backend.repository.ListingRepository;
 import com.frh.backend.service.InventoryService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -143,3 +143,4 @@ class SupplierInventoryPageControllerTest {
     }
   }
 }
+

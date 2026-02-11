@@ -8,11 +8,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.frh.backend.Model.ConsumerProfile;
-import com.frh.backend.Model.Listing;
-import com.frh.backend.Model.ListingReview;
-import com.frh.backend.Model.Order;
-import com.frh.backend.Model.OrderItem;
+import com.frh.backend.model.ConsumerProfile;
+import com.frh.backend.model.Listing;
+import com.frh.backend.model.ListingReview;
+import com.frh.backend.model.Order;
+import com.frh.backend.model.OrderItem;
 import com.frh.backend.dto.CreateListingReviewRequest;
 import com.frh.backend.dto.ListingReviewResponse;
 import com.frh.backend.repository.ListingReviewRepository;
@@ -415,3 +415,4 @@ class ListingReviewServiceTest {
     return listing;
   }
 }
+

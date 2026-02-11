@@ -10,14 +10,14 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.frh.backend.Model.FoodCategory;
-import com.frh.backend.Model.Inventory;
-import com.frh.backend.Model.Listing;
-import com.frh.backend.Model.ListingFoodCategory;
-import com.frh.backend.Model.ListingPhoto;
-import com.frh.backend.Model.Store;
-import com.frh.backend.Model.StoreType;
-import com.frh.backend.Model.SupplierProfile;
+import com.frh.backend.model.FoodCategory;
+import com.frh.backend.model.Inventory;
+import com.frh.backend.model.Listing;
+import com.frh.backend.model.ListingFoodCategory;
+import com.frh.backend.model.ListingPhoto;
+import com.frh.backend.model.Store;
+import com.frh.backend.model.StoreType;
+import com.frh.backend.model.SupplierProfile;
 import com.frh.backend.dto.ListingCategoryWeightDTO;
 import com.frh.backend.dto.ListingDTO;
 import com.frh.backend.repository.FoodCategoryRepository;
@@ -349,3 +349,4 @@ class ListingServiceTest {
     return listing;
   }
 }
+

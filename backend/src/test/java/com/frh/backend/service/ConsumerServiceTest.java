@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-import com.frh.backend.Model.ConsumerProfile;
+import com.frh.backend.model.ConsumerProfile;
 import com.frh.backend.dto.ConsumerDTO;
 import com.frh.backend.repository.ConsumerProfileRepository;
 import java.math.BigDecimal;
@@ -89,3 +89,4 @@ class ConsumerServiceTest {
     assertTrue(result.isEmpty());
   }
 }
+

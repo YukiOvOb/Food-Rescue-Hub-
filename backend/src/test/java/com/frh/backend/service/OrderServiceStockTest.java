@@ -2,7 +2,7 @@ package com.frh.backend.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.frh.backend.Model.*;
+import com.frh.backend.model.*;
 import com.frh.backend.exception.InsufficientStockException;
 import com.frh.backend.repository.*;
 import java.math.BigDecimal;
@@ -186,3 +186,4 @@ class OrderServiceStockTest {
     cartItemRepository.save(cartItem);
   }
 }
+

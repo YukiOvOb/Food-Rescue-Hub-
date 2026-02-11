@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { GoogleMap, useLoadScript, Autocomplete, Marker } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from "../services/axiosConfig";
+import BackButton from './BackButton';
+import Toast from './Toast';
+import './styles/StoreForm.css';
 
 const libraries = ['places']; // Load the "Places" library for Autocomplete
 const mapContainerStyle = { width: '100%', height: '300px', marginTop: '10px' };
@@ -27,6 +30,9 @@ export default function AddStore() {
     const [pickupInstructions, setPickupInstructions] = useState("");
     const [coordinates, setCoordinates] = useState(center);
     const [autocomplete, setAutocomplete] = useState(null);
+
+    // Toast state
+    const [toast, setToast] = useState({ isOpen: false, message: '', type: 'info' });
 
     // 1. Handle Address Selection
     // prop name onLoad is fixed by google
@@ -79,13 +85,13 @@ export default function AddStore() {
         e.preventDefault();
 
         if (!supplierId) {
-            alert("Session expired. Please log in again.");
-            navigate('/login');
+            setToast({ isOpen: true, message: 'Session expired. Please log in again.', type: 'error' });
+            setTimeout(() => navigate('/login'), 2000);
             return;
         }
 
         if (openingTime && closingTime && closingTime <= openingTime) {
-            alert("Closing time must be later than opening time.");
+            setToast({ isOpen: true, message: 'Closing time must be later than opening time.', type: 'warning' });
             return;
         }
 
@@ -94,7 +100,7 @@ export default function AddStore() {
             : "";
 
         const payload = {
-            supplierId: supplierId, // Use the dynamic ID from session
+            supplierId: supplierId,
             storeName: storeName,
             addressLine: address,
             postalCode: postalCode,
@@ -106,105 +112,126 @@ export default function AddStore() {
         };
 
         try {
-            // Axios handles JSON stringification automatically
             const response = await axiosInstance.post('/stores/create', payload);
 
             if (response.status === 201 || response.status === 200) {
-                alert("Store Created Successfully!");
-                navigate('/stores');
+                setToast({ isOpen: true, message: 'Store created successfully!', type: 'success' });
+                setTimeout(() => navigate('/stores'), 1500);
             }
         } catch (error) {
             const errorMessage = error.response?.data?.message || "Failed to create store.";
-            alert("Error:\n" + errorMessage);
+            setToast({ isOpen: true, message: errorMessage, type: 'error' });
         }
     };
 
-    if (loadError) return "Error loading maps";
-    if (!isLoaded) return "Loading Maps...";
+    if (loadError) {
+        return (
+            <div className="error-maps">
+                Error loading maps
+            </div>
+        );
+    }
+
+    if (!isLoaded) {
+        return (
+            <div className="loading-maps">
+                <div className="loading-spinner"></div>
+                <p>Loading Maps...</p>
+            </div>
+        );
+    }
 
     return (
-
-        <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", fontFamily: "Arial" }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
-                <button
-                    type="button"
-                    onClick={() => navigate('/stores')}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', padding: 0 }}
-                >
-                    ⬅️
-                </button>
-                <h2 style={{ margin: 0 }}>Add New Store</h2>
-            </div>
-            <form onSubmit={handleSubmit}>
-                <div style={inputGroupStyle}>
-                    <label>Store Name*:</label>
-                    <input type="text" value={storeName} onChange={(e) => setStoreName(e.target.value)} required style={inputStyle} />
+        <div className="store-form-container">
+            <div className="store-form-content">
+                <div className="store-form-header">
+                    <BackButton to="/stores" variant="primary" />
+                    <h2>Add New Store</h2>
                 </div>
-
-                <div style={inputGroupStyle}>
-                    <label>Search Address*:</label>
-                    <Autocomplete onLoad={onLoad} onPlaceChanged={onPlaceChanged}>
-                        <input type="text" placeholder="Type location" style={inputStyle} required />
-                    </Autocomplete>
-                </div>
-
-                {/* Postal Code - Usually auto-filled by Google, but editable just in case */}
-                <div style={inputGroupStyle}>
-                    <label>Postal Code (6 digits)*:</label>
-                    <input type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} maxLength="6" required style={inputStyle} />
-                </div>
-
-                <div style={inputGroupStyle}>
-                    <label>Opening Hours:</label>
-                    <div style={{ display: "flex", gap: "10px" }}>
+                <form onSubmit={handleSubmit} className="store-form">
+                    <div className="form-field">
+                        <label>Store Name<span className="required-star">*</span></label>
                         <input
-                            type="time"
-                            value={openingTime}
-                            onChange={(e) => setOpeningTime(e.target.value)}
-                            style={inputStyle}
-                        />
-                        <input
-                            type="time"
-                            value={closingTime}
-                            onChange={(e) => setClosingTime(e.target.value)}
-                            style={inputStyle}
-                            min={openingTime || undefined}
+                            type="text"
+                            value={storeName}
+                            onChange={(e) => setStoreName(e.target.value)}
+                            required
                         />
                     </div>
-                    <small>Closing time must be later than opening time.</small>
-                </div>
 
-                <div style={inputGroupStyle}>
-                    <label>Description:</label>
-                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows="3" style={inputStyle} />
-                </div>
+                    <div className="form-field">
+                        <label>Search Address<span className="required-star">*</span></label>
+                        <Autocomplete onLoad={onLoad} onPlaceChanged={onPlaceChanged}>
+                            <input type="text" placeholder="Type location" required />
+                        </Autocomplete>
+                    </div>
 
-                <div style={inputGroupStyle}>
-                    <label>Pickup Instructions:</label>
-                    <textarea
-                        placeholder="e.g. Please collect from the side door."
-                        value={pickupInstructions}
-                        onChange={(e) => setPickupInstructions(e.target.value)}
-                        rows="2"
-                        style={inputStyle}
-                    />
-                </div>
+                    <div className="form-field">
+                        <label>Postal Code (6 digits)<span className="required-star">*</span></label>
+                        <input
+                            type="text"
+                            value={postalCode}
+                            onChange={(e) => setPostalCode(e.target.value)}
+                            maxLength="6"
+                            required
+                        />
+                    </div>
 
-                <div style={{ marginBottom: "15px", border: "1px solid #ccc" }}>
-                    <GoogleMap mapContainerStyle={mapContainerStyle} zoom={15} center={coordinates}>
-                        <Marker position={coordinates} />
-                    </GoogleMap>
-                </div>
+                    <div className="form-field">
+                        <label>Opening Hours</label>
+                        <div className="time-inputs">
+                            <input
+                                type="time"
+                                value={openingTime}
+                                onChange={(e) => setOpeningTime(e.target.value)}
+                            />
+                            <input
+                                type="time"
+                                value={closingTime}
+                                onChange={(e) => setClosingTime(e.target.value)}
+                                min={openingTime || undefined}
+                            />
+                        </div>
+                        <span className="form-hint">Closing time must be later than opening time.</span>
+                    </div>
 
-                <button type="submit" style={submitButtonStyle}>
-                    Save Store
-                </button>
-            </form>
+                    <div className="form-field">
+                        <label>Description</label>
+                        <textarea
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            rows="3"
+                        />
+                    </div>
+
+                    <div className="form-field">
+                        <label>Pickup Instructions</label>
+                        <textarea
+                            placeholder="e.g. Please collect from the side door."
+                            value={pickupInstructions}
+                            onChange={(e) => setPickupInstructions(e.target.value)}
+                            rows="2"
+                        />
+                    </div>
+
+                    <div className="map-container">
+                        <GoogleMap mapContainerStyle={mapContainerStyle} zoom={15} center={coordinates}>
+                            <Marker position={coordinates} />
+                        </GoogleMap>
+                    </div>
+
+                    <button type="submit" className="submit-btn">
+                        Save Store
+                    </button>
+                </form>
+            </div>
+
+            <Toast
+                isOpen={toast.isOpen}
+                onClose={() => setToast({ ...toast, isOpen: false })}
+                message={toast.message}
+                type={toast.type}
+            />
         </div>
     );
 }
-
-// Simple Styles
-const inputGroupStyle = { marginBottom: "15px" };
-const inputStyle = { width: "100%", padding: "8px", boxSizing: "border-box" };
-const submitButtonStyle = { width: "100%", padding: "10px", background: "#28a745", color: "white", border: "none", cursor: "pointer", fontWeight: "bold" };

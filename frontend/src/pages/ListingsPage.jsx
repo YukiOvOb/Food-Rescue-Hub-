@@ -1,31 +1,9 @@
 import { useEffect, useState } from 'react';
 import authService from '../services/authService';
 import { useNavigate } from 'react-router-dom';
-
-const cardStyle = {
-  backgroundColor: '#fff',
-  borderRadius: '14px',
-  boxShadow: '0 10px 30px rgba(31, 41, 55, 0.08)',
-  padding: '20px',
-  border: '1px solid #e5e7eb'
-};
-
-const pillPrimary = {
-  padding: '10px 16px',
-  backgroundColor: '#6366f1',
-  color: '#fff',
-  border: 'none',
-  borderRadius: '10px',
-  cursor: 'pointer',
-  fontWeight: 600,
-  fontSize: '14px'
-};
-
-const pillSubtle = {
-  ...pillPrimary,
-  backgroundColor: '#e5e7eb',
-  color: '#111827'
-};
+import PageHeader from '../components/PageHeader';
+import ConfirmDialog from '../components/ConfirmDialog';
+import './ListingsPage.css';
 
 export default function ListingsPage() {
   const navigate = useNavigate();
@@ -35,6 +13,7 @@ export default function ListingsPage() {
   const [editingId, setEditingId] = useState(null);
   const [foodCategories, setFoodCategories] = useState([]);
   const [successMessage, setSuccessMessage] = useState('');
+  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState({ isOpen: false, listingId: null });
   const [formData, setFormData] = useState({
     storeId: '',
     title: '',
@@ -203,8 +182,13 @@ export default function ListingsPage() {
 
   const handleDelete = (listingId) => {
     if (!listingId) return;
-    const confirmed = window.confirm('Delete this listing?');
-    if (!confirmed) return;
+    setConfirmDeleteDialog({ isOpen: true, listingId });
+  };
+
+  const confirmDelete = () => {
+    const listingId = confirmDeleteDialog.listingId;
+    if (!listingId) return;
+
     setErrors([]);
     setSuccessMessage('');
 
@@ -219,9 +203,11 @@ export default function ListingsPage() {
       .then((message) => {
         setSuccessMessage(message || 'Listing deleted successfully.');
         fetchListings();
+        setConfirmDeleteDialog({ isOpen: false, listingId: null });
       })
       .catch(() => {
         setErrors(['Failed to delete listing']);
+        setConfirmDeleteDialog({ isOpen: false, listingId: null });
       });
   };
 
@@ -457,63 +443,49 @@ export default function ListingsPage() {
   const timeErrors = getTimeErrors();
 
   return (
-    <div style={{ fontFamily: 'Inter, "Segoe UI", sans-serif', padding: 24, maxWidth: 1200, margin: '0 auto', background: '#f5f7fb', minHeight: '100vh' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <div>
-          <p style={{ margin: 0, color: '#6b7280', fontSize: 12 }}>Supplier</p>
-          <h1 style={{ margin: 0, color: '#0f172a' }}>Listings</h1>
-        </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <button style={pillSubtle} onClick={() => navigate('/dashboard')}>
-            Back to Dashboard
-          </button>
-          {!showCreateForm && (
-            <button style={pillPrimary} onClick={() => setShowCreateForm(true)}>
-              + Create Listing
-            </button>
-          )}
-        </div>
-      </div>
+    <div className="listings-page">
+      <div className="listings-content">
+        <PageHeader
+          title="Listings"
+          subtitle="Supplier"
+          actions={
+            !showCreateForm && (
+              <button className="listings-btn-primary" onClick={() => setShowCreateForm(true)}>
+                + Create Listing
+              </button>
+            )
+          }
+        />
 
-      {successMessage && (
-        <div
-          style={{
-            marginBottom: 16,
-            backgroundColor: '#e8f7eb',
-            border: '1px solid #c6e9cc',
-            color: '#14532d',
-            borderRadius: 10,
-            padding: '12px 14px'
-          }}
-        >
-          {successMessage}
-        </div>
-      )}
+        {successMessage && (
+          <div className="listings-success">
+            {successMessage}
+          </div>
+        )}
 
       {showCreateForm && (
-        <div style={{ ...cardStyle, marginBottom: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h2 style={{ margin: 0 }}>{editingId ? 'Edit Listing' : 'Create New Listing'}</h2>
+        <div className="listings-form-card">
+          <div className="listings-form-header">
+            <h2>{editingId ? 'Edit Listing' : 'Create New Listing'}</h2>
+            <button
+              type="button"
+              onClick={resetForm}
+              className="listings-btn-back"
+            >
+              ← Back to Listings
+            </button>
           </div>
           <form onSubmit={handleSubmit}>
             {errors.length > 0 && (
-              <div
-                style={{
-                  backgroundColor: '#ffebee',
-                  color: '#c62828',
-                  padding: '10px',
-                  borderRadius: '4px',
-                  marginBottom: '15px'
-                }}
-              >
+              <div className="listings-errors">
                 {errors.map((err, i) => (
                   <div key={i}>{err}</div>
                 ))}
               </div>
             )}
 
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Store ID *</label>
+            <div className="listings-form-field">
+              <label>Store ID *</label>
               <input
                 type="number"
                 name="storeId"
@@ -521,53 +493,31 @@ export default function ListingsPage() {
                 onChange={handleChange}
                 required={!editingId}
                 disabled={!!editingId}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '10px',
-                  border: '1px solid #d1d5db',
-                  boxSizing: 'border-box'
-                }}
               />
             </div>
 
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Title *</label>
+            <div className="listings-form-field">
+              <label>Title *</label>
               <input
                 type="text"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
                 required
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '10px',
-                  border: '1px solid #d1d5db',
-                  boxSizing: 'border-box'
-                }}
               />
             </div>
 
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Description</label>
+            <div className="listings-form-field">
+              <label>Description</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '10px',
-                  border: '1px solid #d1d5db',
-                  boxSizing: 'border-box',
-                  minHeight: '80px'
-                }}
               />
             </div>
 
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Photo</label>
+            <div className="listings-form-field">
+              <label>Photo</label>
               <input
                 type="file"
                 accept="image/*"
@@ -576,10 +526,10 @@ export default function ListingsPage() {
               {photoFile && <div style={{ color: '#6b7280', marginTop: 6 }}>Selected: {photoFile.name}</div>}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Original Price *</label>
-                <div style={{ position: 'relative' }}>
+            <div className="listings-grid-2">
+              <div className="listings-form-field">
+                <label>Original Price *</label>
+                <div className="listings-price-input-wrapper">
                   <input
                     type="number"
                     name="originalPrice"
@@ -589,21 +539,15 @@ export default function ListingsPage() {
                     min="0"
                     placeholder="0.00"
                     required
-                    style={{
-                      width: '100%',
-                      padding: '10px 10px 10px 26px',
-                      borderRadius: '10px',
-                      border: priceErrors.length > 0 ? '2px solid red' : '1px solid #d1d5db',
-                      boxSizing: 'border-box'
-                    }}
+                    className={priceErrors.length > 0 ? 'error-border' : ''}
                   />
-                  <span style={{ position: 'absolute', left: '10px', top: '10px', color: '#9ca3af' }}>$</span>
+                  <span className="listings-price-dollar">$</span>
                 </div>
               </div>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Rescue Price *</label>
-                <div style={{ position: 'relative' }}>
+              <div className="listings-form-field">
+                <label>Rescue Price *</label>
+                <div className="listings-price-input-wrapper">
                   <input
                     type="number"
                     name="rescuePrice"
@@ -613,34 +557,16 @@ export default function ListingsPage() {
                     min="0"
                     placeholder="0.00"
                     required
-                    style={{
-                      width: '100%',
-                      padding: '10px 10px 10px 26px',
-                      borderRadius: '10px',
-                      border: priceErrors.length > 0 ? '2px solid red' : '1px solid #d1d5db',
-                      boxSizing: 'border-box'
-                    }}
+                    className={priceErrors.length > 0 ? 'error-border' : ''}
                   />
-                  <span style={{ position: 'absolute', left: '10px', top: '10px', color: '#9ca3af' }}>$</span>
+                  <span className="listings-price-dollar">$</span>
                 </div>
               </div>
             </div>
 
             {priceErrors.length > 0 && (
-              <div
-                style={{
-                  backgroundColor: '#fff3cd',
-                  color: '#856404',
-                  padding: '10px 15px',
-                  borderRadius: '4px',
-                  marginBottom: '15px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  border: '1px solid #ffeaa7'
-                }}
-              >
-                <span style={{ fontSize: '18px' }}>⚠</span>
+              <div className="listings-warning">
+                <span className="listings-warning-icon">⚠</span>
                 <div>
                   {priceErrors.map((err, i) => (
                     <div key={i}>{err}</div>
@@ -650,20 +576,8 @@ export default function ListingsPage() {
             )}
 
             {timeErrors.length > 0 && (
-              <div
-                style={{
-                  backgroundColor: '#fff3cd',
-                  color: '#856404',
-                  padding: '10px 15px',
-                  borderRadius: '4px',
-                  marginBottom: '15px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  border: '1px solid #ffeaa7'
-                }}
-              >
-                <span style={{ fontSize: '18px' }}>🕒</span>
+              <div className="listings-warning">
+                <span className="listings-warning-icon">🕒</span>
                 <div>
                   {timeErrors.map((err, i) => (
                     <div key={i}>{err}</div>
@@ -672,89 +586,58 @@ export default function ListingsPage() {
               </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', marginBottom: '15px' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Pickup Start (Time) *</label>
+            <div className="listings-grid-3">
+              <div className="listings-form-field">
+                <label>Pickup Start (Time) *</label>
                 <input
                   type="time"
                   name="pickupStart"
                   value={formData.pickupStart}
                   onChange={handleChange}
                   required
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    borderRadius: '10px',
-                    border: '1px solid #d1d5db',
-                    boxSizing: 'border-box'
-                  }}
                 />
               </div>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Pickup End (Time) *</label>
+              <div className="listings-form-field">
+                <label>Pickup End (Time) *</label>
                 <input
                   type="time"
                   name="pickupEnd"
                   value={formData.pickupEnd}
                   onChange={handleChange}
                   required
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    borderRadius: '10px',
-                    border: '1px solid #d1d5db',
-                    boxSizing: 'border-box'
-                  }}
                 />
               </div>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Expiry *</label>
+              <div className="listings-form-field">
+                <label>Expiry *</label>
                 <input
                   type="datetime-local"
                   name="expiryAt"
                   value={formData.expiryAt}
                   onChange={handleChange}
                   required
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    borderRadius: '10px',
-                    border: '1px solid #d1d5db',
-                    boxSizing: 'border-box'
-                  }}
                 />
               </div>
             </div>
 
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                Food Categories
-              </label>
+            <div className="listings-form-field">
+              <label>Food Categories</label>
               {foodCategories.length === 0 ? (
                 <div style={{ color: '#6b7280', fontSize: 13 }}>No food categories found.</div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px' }}>
+                <div className="listings-categories-grid">
                   {foodCategories.map((cat) => (
                     <label
                       key={cat.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '8px 10px',
-                        borderRadius: '10px',
-                        border: getCategoryErrors().length > 0 ? '2px solid red' : '1px solid #e5e7eb',
-                        background: '#fff'
-                      }}
+                      className={`listings-category-checkbox ${getCategoryErrors().length > 0 ? 'error-border' : ''}`}
                     >
                       <input
                         type="checkbox"
                         checked={formData.categoryIds.includes(cat.id)}
                         onChange={() => toggleCategory(cat.id)}
                       />
-                      <span style={{ fontSize: 14, color: '#111827' }}>{cat.name}</span>
+                      <span>{cat.name}</span>
                     </label>
                   ))}
                 </div>
@@ -762,49 +645,33 @@ export default function ListingsPage() {
             </div>
 
             {formData.categoryIds.length > 0 && (
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                  Category Weights (grams)
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
+              <div className="listings-form-field">
+                <label>Category Weights (grams)</label>
+                <div className="listings-weights-grid">
                   {formData.categoryIds.map((id) => {
                     const cat = foodCategories.find((c) => c.id === id);
                     return (
                       <div
                         key={id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          padding: '8px 10px',
-                          borderRadius: '10px',
-                          border: getCategoryErrors().length > 0 ? '2px solid red' : '1px solid #e5e7eb',
-                          background: '#fff'
-                        }}
+                        className={`listings-weight-item ${getCategoryErrors().length > 0 ? 'error-border' : ''}`}
                       >
-                        <span style={{ flex: 1, fontSize: 14, color: '#111827' }}>
+                        <span className="listings-weight-name">
                           {cat ? cat.name : `Category ${id}`}
                         </span>
                         <input
                           type="number"
+                          className="listings-weight-input"
                           value={formData.categoryWeightById[id] ?? ''}
                           onChange={(e) => handleCategoryWeightChange(id, e.target.value)}
                           step="1"
                           min="1"
                           placeholder="grams"
-                          style={{
-                            width: 90,
-                            padding: '6px 8px',
-                            borderRadius: '8px',
-                            border: '1px solid #d1d5db',
-                            boxSizing: 'border-box'
-                          }}
                         />
                       </div>
                     );
                   })}
                 </div>
-                <div style={{ marginTop: 8, color: '#6b7280', fontSize: 12 }}>
+                <div className="listings-weight-total">
                   {(() => {
                     const totalGrams = formData.categoryIds.reduce((sum, id) => {
                       const v = parseFloat(formData.categoryWeightById[id]);
@@ -817,84 +684,95 @@ export default function ListingsPage() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button type="submit" style={pillPrimary}>
-                {editingId ? 'Update Listing' : 'Create'}
+            <div className="listings-form-actions">
+              <button type="submit" className="listings-btn-primary">
+                {editingId ? 'Update Listing' : 'Create Listing'}
               </button>
-              <button type="button" onClick={resetForm} style={pillSubtle}>
-                Cancel
+              <button type="button" onClick={resetForm} className="listings-btn-secondary">
+                Cancel & Back to Listings
               </button>
             </div>
           </form>
         </div>
       )}
 
-      <h2 style={{ marginTop: 10, marginBottom: 10, color: '#0f172a' }}>All Listings</h2>
+      <h2 className="listings-section-title">All Listings</h2>
       {listings.length === 0 ? (
-        <div style={{ ...cardStyle, textAlign: 'center', color: '#6b7280' }}>
+        <div className="listings-empty">
           No listings found.
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-          {listings.map((listing) => {
-            const primaryPhoto = getPrimaryPhoto(listing);
-            return (
-              <div key={listing.listingId || listing.id} style={{ ...cardStyle, padding: 18 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
-                  <h3 style={{ margin: 0, flex: 1 }}>{listing.title}</h3>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                    <span style={{ background: '#ecfdf3', color: '#166534', padding: '4px 10px', borderRadius: '999px', fontSize: 12 }}>
-                      {listing.status || 'ACTIVE'}
-                    </span>
-                    <button
-                      style={{ ...pillSubtle, padding: '6px 10px', fontSize: 12 }}
-                      onClick={() => startEdit(listing)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      style={{ ...pillSubtle, padding: '6px 10px', fontSize: 12, backgroundColor: '#fee2e2', color: '#b91c1c' }}
-                      onClick={() => handleDelete(listing.listingId || listing.id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-                <div style={{ marginTop: 12, borderRadius: 12, overflow: 'hidden', border: '1px solid #e5e7eb', height: 180, backgroundColor: '#f8fafc' }}>
-                  {primaryPhoto ? (
-                    <img
-                      src={primaryPhoto}
-                      alt={listing.title}
-                      style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }}
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: 13 }}>
-                      No photo uploaded
+        <div className="listings-grid">
+            {listings.map((listing) => {
+              const primaryPhoto = getPrimaryPhoto(listing);
+              return (
+                <div key={listing.listingId || listing.id} className="listings-card">
+                  <div className="listings-card-header">
+                    <h3 className="listings-card-title">{listing.title}</h3>
+                    <div className="listings-card-actions">
+                      <span className="listings-status-badge">
+                        {listing.status || 'ACTIVE'}
+                      </span>
+                      <button
+                        className="listings-btn-edit"
+                        onClick={() => startEdit(listing)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="listings-btn-delete"
+                        onClick={() => handleDelete(listing.listingId || listing.id)}
+                      >
+                        Delete
+                      </button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                  <div className="listings-card-image">
+                    {primaryPhoto ? (
+                      <img
+                        src={primaryPhoto}
+                        alt={listing.title}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="listings-card-image-placeholder">
+                        No photo uploaded
+                      </div>
+                    )}
+                  </div>
 
-                {listing.description && <p style={{ color: '#4b5563', marginTop: 10, marginBottom: 0 }}>{listing.description}</p>}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
-                  <div>
-                    <div style={{ color: '#6b7280', fontSize: 12 }}>Original</div>
-                    <div style={{ fontWeight: 700 }}>${listing.originalPrice}</div>
+                  {listing.description && <p className="listings-card-description">{listing.description}</p>}
+                  <div className="listings-card-prices">
+                    <div className="listings-price-box">
+                      <div className="listings-price-label">Original</div>
+                      <div className="listings-price-value">${listing.originalPrice}</div>
+                    </div>
+                    <div className="listings-price-box">
+                      <div className="listings-price-label">Rescue</div>
+                      <div className="listings-price-value rescue">${listing.rescuePrice}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div style={{ color: '#6b7280', fontSize: 12 }}>Rescue</div>
-                    <div style={{ fontWeight: 700, color: '#16a34a' }}>${listing.rescuePrice}</div>
+                  <div className="listings-card-meta">
+                    <div>Pickup: {formatTime(listing.pickupStart)} - {formatTime(listing.pickupEnd)}</div>
+                    <div>Expires: {formatDateTime(listing.expiryAt)}</div>
                   </div>
                 </div>
-                <div style={{ marginTop: 12, borderTop: '1px solid #e5e7eb', paddingTop: 10, color: '#4b5563', fontSize: 13 }}>
-                  <div>Pickup: {formatTime(listing.pickupStart)} - {formatTime(listing.pickupEnd)}</div>
-                  <div>Expires: {formatDateTime(listing.expiryAt)}</div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+
+        <ConfirmDialog
+          isOpen={confirmDeleteDialog.isOpen}
+          onClose={() => setConfirmDeleteDialog({ isOpen: false, listingId: null })}
+          onConfirm={confirmDelete}
+          title="Delete Listing"
+          message="Are you sure you want to delete this listing? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          type="danger"
+        />
+      </div>
     </div>
   );
 }

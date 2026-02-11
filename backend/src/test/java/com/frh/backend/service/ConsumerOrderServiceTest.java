@@ -6,7 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.frh.backend.Model.Order;
+import com.frh.backend.model.Order;
 import com.frh.backend.repository.ConsumerOrderRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -130,3 +130,4 @@ class ConsumerOrderServiceTest {
     assertEquals("Order not found with id: 77", ex.getMessage());
   }
 }
+

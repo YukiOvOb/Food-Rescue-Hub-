@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ConsumerDto {
+public class ConsumerDTO {
 
   private Long consumerId;
   private String email;

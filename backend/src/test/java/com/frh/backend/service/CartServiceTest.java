@@ -12,12 +12,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.frh.backend.Model.Cart;
-import com.frh.backend.Model.CartItem;
-import com.frh.backend.Model.ConsumerProfile;
-import com.frh.backend.Model.Listing;
-import com.frh.backend.Model.ListingPhoto;
-import com.frh.backend.Model.Store;
+import com.frh.backend.model.Cart;
+import com.frh.backend.model.CartItem;
+import com.frh.backend.model.ConsumerProfile;
+import com.frh.backend.model.Listing;
+import com.frh.backend.model.ListingPhoto;
+import com.frh.backend.model.Store;
 import com.frh.backend.dto.CartResponseDto;
 import com.frh.backend.exception.CrossStoreException;
 import com.frh.backend.repository.CartItemRepository;
@@ -453,3 +453,4 @@ class CartServiceTest {
     assertEquals(true, isEmpty);
   }
 }
+

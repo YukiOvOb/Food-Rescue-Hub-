@@ -2,7 +2,7 @@ package com.frh.backend.controller;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.frh.backend.Model.TestPerson;
+import com.frh.backend.model.TestPerson;
 import com.frh.backend.repository.TestPersonRepository;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -36,3 +36,4 @@ class PeopleControllerTest {
     assertTrue(found);
   }
 }
+

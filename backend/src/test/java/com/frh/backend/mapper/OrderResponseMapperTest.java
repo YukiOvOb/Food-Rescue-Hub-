@@ -5,12 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.frh.backend.Model.ConsumerProfile;
-import com.frh.backend.Model.Listing;
-import com.frh.backend.Model.Order;
-import com.frh.backend.Model.OrderItem;
-import com.frh.backend.Model.PickupToken;
-import com.frh.backend.Model.Store;
+import com.frh.backend.model.ConsumerProfile;
+import com.frh.backend.model.Listing;
+import com.frh.backend.model.Order;
+import com.frh.backend.model.OrderItem;
+import com.frh.backend.model.PickupToken;
+import com.frh.backend.model.Store;
 import com.frh.backend.dto.OrderResponseDto;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -133,3 +133,4 @@ class OrderResponseMapperTest {
     assertNull(dto.getPickupTokenExpiresAt());
   }
 }
+

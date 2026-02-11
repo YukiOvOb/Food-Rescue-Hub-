@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.frh.backend.Model.Store;
-import com.frh.backend.Model.SupplierProfile;
+import com.frh.backend.model.Store;
+import com.frh.backend.model.SupplierProfile;
 import com.frh.backend.dto.StoreRequest;
 import com.frh.backend.dto.StoreResponse;
 import com.frh.backend.repository.StoreRepository;
@@ -232,3 +232,4 @@ public class StoreServiceTest {
     verify(storeRepository, never()).save(any(Store.class));
   }
 }
+

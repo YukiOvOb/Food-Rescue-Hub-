@@ -1,6 +1,6 @@
 package com.frh.backend.service;
 
-import com.frh.backend.dto.ConsumerDto;
+import com.frh.backend.dto.ConsumerDTO;
 import com.frh.backend.model.ConsumerProfile;
 import com.frh.backend.repository.ConsumerProfileRepository;
 import java.util.Optional;
@@ -16,7 +16,7 @@ public class ConsumerService {
   private final ConsumerProfileRepository consumerProfileRepository;
 
   /** Get consumer profile by ID */
-  public Optional<ConsumerDto> getConsumerById(Long consumerId) {
+  public Optional<ConsumerDTO> getConsumerById(Long consumerId) {
     log.info("Fetching consumer profile for ID: {}", consumerId);
 
     Optional<ConsumerProfile> consumerOpt = consumerProfileRepository.findById(consumerId);
@@ -25,7 +25,7 @@ public class ConsumerService {
   }
 
   /** Get consumer profile by email */
-  public Optional<ConsumerDto> getConsumerByEmail(String email) {
+  public Optional<ConsumerDTO> getConsumerByEmail(String email) {
     log.info("Fetching consumer profile for email: {}", email);
 
     Optional<ConsumerProfile> consumerOpt = consumerProfileRepository.findByEmail(email);
@@ -34,8 +34,8 @@ public class ConsumerService {
   }
 
   /** Convert ConsumerProfile entity to DTO */
-  private ConsumerDto convertToDto(ConsumerProfile consumer) {
-    ConsumerDto dto = new ConsumerDto();
+  private ConsumerDTO convertToDto(ConsumerProfile consumer) {
+    ConsumerDTO dto = new ConsumerDTO();
     dto.setConsumerId(consumer.getConsumerId());
     dto.setEmail(consumer.getEmail());
     dto.setPhone(consumer.getPhone());
