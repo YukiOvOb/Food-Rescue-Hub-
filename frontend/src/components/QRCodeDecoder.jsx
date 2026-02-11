@@ -3,7 +3,6 @@ import jsQR from 'jsqr';
 import { useNavigate } from 'react-router-dom';
 import axios from '../services/axiosConfig';
 import authService from '../services/authService';
-import PageHeader from './PageHeader';
 import './styles/QRCodeDecoder.css';
 
 const CAMERA_CONSTRAINTS = [
@@ -402,11 +401,27 @@ const QRCodeDecoder = () => {
 
   return (
     <div className="qr-decoder-container">
+      {/* Header Banner */}
+      <div className="qr-decoder-header-banner">
+        <div className="banner-content">
+          <div className="banner-left">
+            <span className="banner-tag">SUPPLIER</span>
+            <h1 className="banner-title">QR Code Decoder</h1>
+          </div>
+          <div className="banner-right">
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard')}
+              className="btn-back-dashboard"
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
       <div className="qr-decoder-content">
-        <PageHeader
-          title="QR Code Decoder"
-          subtitle="Supplier"
-        />
 
       <div className="camera-section">
         <h3>Real-time Camera Detection</h3>
