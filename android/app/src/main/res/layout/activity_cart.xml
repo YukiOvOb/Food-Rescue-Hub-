@@ -46,7 +46,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Clear Cart"
             android:src="@android:drawable/ic_menu_delete"
-            android:tint="#000000"
+            app:tint="#000000"
              />
     </RelativeLayout>
 
@@ -162,7 +162,7 @@
                     android:background="#F0F0F0"
                     android:layout_marginBottom="20dp" />
 
-                <!-- Summary Section - Like reference -->
+                <!-- Summary Section-->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -216,7 +216,7 @@
                             tools:text="$5" />
                     </LinearLayout>
 
-                    <!-- Total - Like reference with green color -->
+                    <!-- Total -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -242,7 +242,7 @@
                             tools:text="$26.43" />
                     </LinearLayout>
 
-                    <!-- Checkout Button - Like reference -->
+                    <!-- Checkout Button-->
                     <Button
                         android:id="@+id/btnCheckout"
                         android:layout_width="match_parent"
