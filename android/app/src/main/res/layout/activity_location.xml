@@ -19,20 +19,19 @@
         android:background="@android:color/transparent"
         app:elevation="0dp">
 
+        <!-- Toolbar hidden to save space -->
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@color/white"
-            app:navigationIcon="@drawable/ic_arrow_back"
-            app:title="Nearby Stores"
-            app:titleTextColor="@color/black" />
+            android:layout_height="0dp"
+            android:visibility="gone" />
 
         <!-- Search View -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
+            android:layout_marginTop="56dp"
             app:cardCornerRadius="12dp"
             app:cardElevation="4dp">
 
@@ -95,10 +94,25 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|start"
         android:layout_margin="24dp"
+        android:layout_marginBottom="80dp"
         android:text="Change Location"
         android:textColor="@color/black"
         app:icon="@android:drawable/ic_menu_mylocation"
         app:iconTint="@color/black"
         app:backgroundTint="@color/white" />
+
+    <!-- Bottom Navigation -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        app:menu="@menu/bottom_nav_menu"
+        app:itemIconTint="@color/bottom_nav_item_color"
+        app:itemTextColor="@color/bottom_nav_item_color"
+        app:backgroundTint="#FFFFFF"
+        app:elevation="8dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

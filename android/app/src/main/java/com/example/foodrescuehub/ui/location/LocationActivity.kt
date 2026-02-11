@@ -61,6 +61,7 @@ class LocationActivity : AppCompatActivity(), OnMapReadyCallback {
         setupToolbar()
         setupSearchView()
         setupChangeLocationButton()
+        setupBottomNavigation()
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
@@ -80,8 +81,32 @@ class LocationActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun setupToolbar() {
-        toolbar.setNavigationOnClickListener {
-            finish()
+        // Toolbar setup without back button
+    }
+
+    private fun setupBottomNavigation() {
+        val bottomNav = findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavigation)
+        bottomNav.selectedItemId = R.id.nav_location
+        bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    startActivity(android.content.Intent(this, com.example.foodrescuehub.ui.home.HomeActivity::class.java))
+                    finish()
+                    true
+                }
+                R.id.nav_location -> true  // Already on this page
+                R.id.nav_orders -> {
+                    startActivity(android.content.Intent(this, com.example.foodrescuehub.ui.orders.OrdersActivity::class.java))
+                    finish()
+                    true
+                }
+                R.id.nav_profile -> {
+                    startActivity(android.content.Intent(this, com.example.foodrescuehub.ui.profile.ProfileActivity::class.java))
+                    finish()
+                    true
+                }
+                else -> false
+            }
         }
     }
 

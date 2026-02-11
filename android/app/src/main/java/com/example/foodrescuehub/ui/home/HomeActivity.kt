@@ -443,26 +443,21 @@ class HomeActivity : AppCompatActivity() {
 
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.nav_home -> {
-                    // Already on home
+                R.id.nav_home -> true  // Already on home
+                R.id.nav_location -> {
+                    startActivity(Intent(this, com.example.foodrescuehub.ui.location.LocationActivity::class.java))
+                    finish()
                     true
                 }
                 R.id.nav_orders -> {
                     startActivity(Intent(this, OrdersActivity::class.java))
-                    false
-                }
-
-                R.id.nav_location -> {
-                    // Navigate to LocationActivity
-                    val intent = Intent(this, com.example.foodrescuehub.ui.location.LocationActivity::class.java)
-                    startActivity(intent)
-                    false
+                    finish()
+                    true
                 }
                 R.id.nav_profile -> {
-                    // Navigate to ProfileActivity
-                    val intent = Intent(this, ProfileActivity::class.java)
-                    startActivity(intent)
-                    false
+                    startActivity(Intent(this, ProfileActivity::class.java))
+                    finish()
+                    true
                 }
                 else -> false
             }

@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.foodrescuehub.R
 import com.example.foodrescuehub.data.api.RetrofitClient
 import com.example.foodrescuehub.databinding.ActivityOrdersBinding
 import kotlinx.coroutines.launch
@@ -26,12 +27,36 @@ class OrdersActivity : AppCompatActivity() {
 
         setupToolbar()
         setupRecyclerView()
+        setupBottomNavigation()
         loadOrders()
     }
 
     private fun setupToolbar() {
-        binding.toolbar.setNavigationOnClickListener {
-            finish()
+        // Toolbar setup without back button
+    }
+
+    private fun setupBottomNavigation() {
+        binding.bottomNavigation.selectedItemId = R.id.nav_orders
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    startActivity(Intent(this, com.example.foodrescuehub.ui.home.HomeActivity::class.java))
+                    finish()
+                    true
+                }
+                R.id.nav_location -> {
+                    startActivity(Intent(this, com.example.foodrescuehub.ui.location.LocationActivity::class.java))
+                    finish()
+                    true
+                }
+                R.id.nav_orders -> true  // Already on this page
+                R.id.nav_profile -> {
+                    startActivity(Intent(this, com.example.foodrescuehub.ui.profile.ProfileActivity::class.java))
+                    finish()
+                    true
+                }
+                else -> false
+            }
         }
     }
 

@@ -7,24 +7,19 @@
     android:orientation="vertical"
     android:background="#F5F5F5">
 
-    <!-- Toolbar -->
+    <!-- Toolbar - Hidden to save space -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/white"
-        android:elevation="0dp"
-        app:title="My Orders"
-        app:titleTextColor="#1A1A1A"
-        android:layout_marginTop="40dp"
-        android:textAlignment="center"
-        app:navigationIcon="@drawable/ic_arrow_back"
-        app:navigationIconTint="#1A1A1A" />
+        android:layout_height="0dp"
+        android:visibility="gone" />
 
     <!-- Main Content -->
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingTop="56dp">
 
         <!-- Orders RecyclerView -->
         <androidx.recyclerview.widget.RecyclerView
@@ -32,6 +27,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:padding="20dp"
+            android:paddingBottom="80dp"
             android:clipToPadding="false"
             tools:listitem="@layout/item_order" />
 
@@ -95,5 +91,18 @@
         </LinearLayout>
 
     </FrameLayout>
+
+    <!-- Bottom Navigation -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:menu="@menu/bottom_nav_menu"
+        app:itemIconTint="@color/bottom_nav_item_color"
+        app:itemTextColor="@color/bottom_nav_item_color"
+        app:backgroundTint="#FFFFFF"
+        app:elevation="8dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"/>
 
 </LinearLayout>

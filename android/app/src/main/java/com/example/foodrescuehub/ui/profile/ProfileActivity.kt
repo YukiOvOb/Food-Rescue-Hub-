@@ -26,12 +26,36 @@ class ProfileActivity : AppCompatActivity() {
 
         setupToolbar()
         setupListeners()
+        setupBottomNavigation()
         observeAuthState()
     }
 
     private fun setupToolbar() {
-        binding.toolbar.setNavigationOnClickListener {
-            finish()
+        // Toolbar setup without back button
+    }
+
+    private fun setupBottomNavigation() {
+        binding.bottomNavigation.selectedItemId = R.id.nav_profile
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    startActivity(Intent(this, com.example.foodrescuehub.ui.home.HomeActivity::class.java))
+                    finish()
+                    true
+                }
+                R.id.nav_location -> {
+                    startActivity(Intent(this, com.example.foodrescuehub.ui.location.LocationActivity::class.java))
+                    finish()
+                    true
+                }
+                R.id.nav_orders -> {
+                    startActivity(Intent(this, com.example.foodrescuehub.ui.orders.OrdersActivity::class.java))
+                    finish()
+                    true
+                }
+                R.id.nav_profile -> true  // Already on this page
+                else -> false
+            }
         }
     }
 

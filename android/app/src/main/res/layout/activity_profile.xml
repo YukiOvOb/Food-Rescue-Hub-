@@ -7,27 +7,25 @@
     android:orientation="vertical"
     android:background="#F5F5F5">
 
-    <!-- Toolbar -->
+    <!-- Toolbar - Hidden to save space -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/white"
-        android:elevation="0dp"
-        app:title="@string/profile_title"
-        app:titleTextColor="#1A1A1A"
-        app:navigationIcon="@drawable/ic_arrow_back"
-        app:navigationIconTint="#1A1A1A" />
+        android:layout_height="0dp"
+        android:visibility="gone" />
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingTop="56dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:padding="20dp"
+            android:paddingBottom="80dp">
 
             <!-- Guest Message Card -->
             <com.google.android.material.card.MaterialCardView
@@ -434,5 +432,18 @@
         </LinearLayout>
 
     </ScrollView>
+
+    <!-- Bottom Navigation -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:menu="@menu/bottom_nav_menu"
+        app:itemIconTint="@color/bottom_nav_item_color"
+        app:itemTextColor="@color/bottom_nav_item_color"
+        app:backgroundTint="#FFFFFF"
+        app:elevation="8dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"/>
 
 </LinearLayout>
