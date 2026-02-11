@@ -74,6 +74,10 @@ class OrdersActivity : AppCompatActivity() {
             layoutManager = LinearLayoutManager(this@OrdersActivity)
             adapter = ordersAdapter
             setHasFixedSize(true)
+            // Set padding to avoid overlap with refresh button
+            val paddingPx = resources.getDimensionPixelSize(R.dimen.orders_top_padding)
+            setPadding(paddingLeft, paddingPx, paddingRight, paddingBottom)
+            clipToPadding = false
         }
     }
 

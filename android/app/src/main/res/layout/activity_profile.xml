@@ -102,7 +102,7 @@
                         android:layout_gravity="center_horizontal"
                         app:cardCornerRadius="50dp"
                         app:cardElevation="4dp"
-                        app:cardBackgroundColor="#E8F5E9">
+                        app:cardBackgroundColor="#E3F2ED">
 
                         <ImageView
                             android:id="@+id/ivAvatar"
@@ -111,7 +111,7 @@
                             android:layout_gravity="center"
                             android:src="@android:drawable/ic_menu_myplaces"
                             android:contentDescription="@string/profile_title"
-                            app:tint="#66BB6A" />
+                            app:tint="#2d6a5a" />
                     </com.google.android.material.card.MaterialCardView>
 
                     <!-- Display Name -->
@@ -146,14 +146,14 @@
                         android:layout_marginTop="12dp"
                         app:cardCornerRadius="12dp"
                         app:cardElevation="0dp"
-                        app:cardBackgroundColor="#E8F5E9">
+                        app:cardBackgroundColor="#E3F2ED">
 
                         <TextView
                             android:id="@+id/tvMemberSince"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textSize="12sp"
-                            android:textColor="#66BB6A"
+                            android:textColor="#2d6a5a"
                             android:textStyle="bold"
                             android:paddingStart="16dp"
                             android:paddingEnd="16dp"
@@ -176,7 +176,7 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textAllCaps="false"
-                android:backgroundTint="#66BB6A"
+                android:backgroundTint="#2d6a5a"
                 app:cornerRadius="28dp"
                 android:elevation="0dp"
                 android:visibility="gone"
@@ -214,7 +214,7 @@
                             android:layout_height="40dp"
                             app:cardCornerRadius="10dp"
                             app:cardElevation="0dp"
-                            app:cardBackgroundColor="#E8F5E9">
+                            app:cardBackgroundColor="#E3F2ED">
 
                             <ImageView
                                 android:layout_width="20dp"
@@ -222,7 +222,7 @@
                                 android:layout_gravity="center"
                                 android:src="@android:drawable/ic_menu_agenda"
                                 android:contentDescription="@string/my_orders"
-                                app:tint="#66BB6A" />
+                                app:tint="#2d6a5a" />
                         </com.google.android.material.card.MaterialCardView>
 
                         <TextView
@@ -269,7 +269,7 @@
                             android:layout_height="40dp"
                             app:cardCornerRadius="10dp"
                             app:cardElevation="0dp"
-                            app:cardBackgroundColor="#E8F5E9">
+                            app:cardBackgroundColor="#E3F2ED">
 
                             <ImageView
                                 android:layout_width="20dp"
@@ -277,7 +277,7 @@
                                 android:layout_gravity="center"
                                 android:src="@android:drawable/star_on"
                                 android:contentDescription="@string/saved_stores"
-                                app:tint="#66BB6A" />
+                                app:tint="#2d6a5a" />
                         </com.google.android.material.card.MaterialCardView>
 
                         <TextView
@@ -324,7 +324,7 @@
                             android:layout_height="40dp"
                             app:cardCornerRadius="10dp"
                             app:cardElevation="0dp"
-                            app:cardBackgroundColor="#E8F5E9">
+                            app:cardBackgroundColor="#E3F2ED">
 
                             <ImageView
                                 android:layout_width="20dp"
@@ -332,7 +332,7 @@
                                 android:layout_gravity="center"
                                 android:src="@android:drawable/ic_menu_preferences"
                                 android:contentDescription="@string/settings"
-                                app:tint="#66BB6A" />
+                                app:tint="#2d6a5a" />
                         </com.google.android.material.card.MaterialCardView>
 
                         <TextView
@@ -379,7 +379,7 @@
                             android:layout_height="40dp"
                             app:cardCornerRadius="10dp"
                             app:cardElevation="0dp"
-                            app:cardBackgroundColor="#E8F5E9">
+                            app:cardBackgroundColor="#E3F2ED">
 
                             <ImageView
                                 android:layout_width="20dp"
@@ -387,7 +387,7 @@
                                 android:layout_gravity="center"
                                 android:src="@android:drawable/ic_menu_help"
                                 android:contentDescription="@string/help_support"
-                                app:tint="#66BB6A" />
+                                app:tint="#2d6a5a" />
                         </com.google.android.material.card.MaterialCardView>
 
                         <TextView

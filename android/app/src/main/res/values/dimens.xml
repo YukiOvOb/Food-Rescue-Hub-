@@ -26,4 +26,7 @@
     <!-- Image -->
     <dimen name="listing_image_size">100dp</dimen>
     <dimen name="rank_badge_size">32dp</dimen>
+
+    <!-- Orders -->
+    <dimen name="orders_top_padding">100dp</dimen>
 </resources>
