@@ -37,42 +37,48 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:text="Name (A-Z)"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:buttonTint="#2d6a5a" />
 
         <RadioButton
             android:id="@+id/rbNameDesc"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:text="Name (Z-A)"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:buttonTint="#2d6a5a" />
 
         <RadioButton
             android:id="@+id/rbPriceLowHigh"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:text="Price (Low to High)"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:buttonTint="#2d6a5a" />
 
         <RadioButton
             android:id="@+id/rbPriceHighLow"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:text="Price (High to Low)"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:buttonTint="#2d6a5a" />
 
         <RadioButton
             android:id="@+id/rbPopularity"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:text="Most Popular"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:buttonTint="#2d6a5a" />
 
         <RadioButton
             android:id="@+id/rbDistance"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:text="Nearest First"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:buttonTint="#2d6a5a" />
     </RadioGroup>
 
     <!-- Price Filter Section -->
@@ -101,7 +107,10 @@
         android:valueFrom="0"
         android:valueTo="50"
         app:labelBehavior="gone"
-        app:values="@array/initial_price_range" />
+        app:values="@array/initial_price_range"
+        app:thumbColor="#2d6a5a"
+        app:trackColorActive="#5a9e8a"
+        app:trackColorInactive="#E0E0E0" />
 
     <!-- Action Buttons -->
     <LinearLayout
