@@ -242,7 +242,7 @@
                 android:text="$25.50"
                 android:textSize="22sp"
                 android:textStyle="bold"
-                android:textColor="#66BB6A"
+                android:textColor="#2d6a5a"
                 tools:text="$25.50" />
 
         </LinearLayout>

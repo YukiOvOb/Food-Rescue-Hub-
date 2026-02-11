@@ -37,7 +37,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:indeterminateTint="#66BB6A"
+            android:indeterminateTint="#2d6a5a"
             android:visibility="gone" />
 
         <!-- Empty State -->
