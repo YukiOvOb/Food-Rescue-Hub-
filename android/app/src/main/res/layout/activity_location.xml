@@ -54,7 +54,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:layout_margin="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="72dp"
         android:visibility="gone"
         app:cardCornerRadius="12dp"
         app:cardElevation="6dp">
@@ -92,14 +95,57 @@
         android:id="@+id/fabChangeLocation"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|start"
-        android:layout_margin="24dp"
-        android:layout_marginBottom="80dp"
+        android:layout_gravity="top|start"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="100dp"
+        android:layout_marginEnd="16dp"
         android:text="Change Location"
         android:textColor="@color/black"
         app:icon="@android:drawable/ic_menu_mylocation"
         app:iconTint="@color/black"
         app:backgroundTint="@color/white" />
+
+    <!-- Zoom In Button -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabZoomIn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="100dp"
+        android:layout_marginEnd="16dp"
+        android:contentDescription="Zoom In"
+        app:srcCompat="@android:drawable/ic_input_add"
+        app:fabSize="normal"
+        app:backgroundTint="@color/white"
+        app:tint="@color/black" />
+
+    <!-- My Location Button -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabMyLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="168dp"
+        android:layout_marginEnd="16dp"
+        android:contentDescription="My Location"
+        app:srcCompat="@android:drawable/ic_menu_mylocation"
+        app:fabSize="normal"
+        app:backgroundTint="@color/white"
+        app:tint="@color/black" />
+
+    <!-- Zoom Out Button -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabZoomOut"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="236dp"
+        android:layout_marginEnd="16dp"
+        android:contentDescription="Zoom Out"
+        app:srcCompat="@drawable/ic_minus"
+        app:fabSize="normal"
+        app:backgroundTint="@color/white"
+        app:tint="@color/black" />
 
     <!-- Bottom Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
@@ -112,7 +158,7 @@
         app:itemTextColor="@color/bottom_nav_item_color"
         app:backgroundTint="#FFFFFF"
         app:elevation="8dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"/>
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

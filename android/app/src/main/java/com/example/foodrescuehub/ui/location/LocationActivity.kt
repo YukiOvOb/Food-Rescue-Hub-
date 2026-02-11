@@ -44,6 +44,9 @@ class LocationActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var toolbar: MaterialToolbar
     private lateinit var searchView: SearchView
     private lateinit var fabChangeLocation: ExtendedFloatingActionButton
+    private lateinit var fabZoomIn: com.google.android.material.floatingactionbutton.FloatingActionButton
+    private lateinit var fabZoomOut: com.google.android.material.floatingactionbutton.FloatingActionButton
+    private lateinit var fabMyLocation: com.google.android.material.floatingactionbutton.FloatingActionButton
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private var googleMap: GoogleMap? = null
@@ -61,6 +64,7 @@ class LocationActivity : AppCompatActivity(), OnMapReadyCallback {
         setupToolbar()
         setupSearchView()
         setupChangeLocationButton()
+        setupMapControlButtons()
         setupBottomNavigation()
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -78,6 +82,9 @@ class LocationActivity : AppCompatActivity(), OnMapReadyCallback {
         toolbar = findViewById(R.id.toolbar)
         searchView = findViewById(R.id.searchView)
         fabChangeLocation = findViewById(R.id.fabChangeLocation)
+        fabZoomIn = findViewById(R.id.fabZoomIn)
+        fabZoomOut = findViewById(R.id.fabZoomOut)
+        fabMyLocation = findViewById(R.id.fabMyLocation)
     }
 
     private fun setupToolbar() {
@@ -131,13 +138,36 @@ class LocationActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    private fun setupMapControlButtons() {
+        // Zoom In Button
+        fabZoomIn.setOnClickListener {
+            googleMap?.animateCamera(CameraUpdateFactory.zoomIn())
+        }
+
+        // Zoom Out Button
+        fabZoomOut.setOnClickListener {
+            googleMap?.animateCamera(CameraUpdateFactory.zoomOut())
+        }
+
+        // My Location Button - Move to database saved location
+        fabMyLocation.setOnClickListener {
+            googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, DEFAULT_ZOOM))
+            Toast.makeText(this, "Centered on your saved location", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
 
         googleMap?.apply {
             uiSettings.isZoomControlsEnabled = true
-            uiSettings.isMyLocationButtonEnabled = true
+            // Disable My Location button - use database location instead
+            uiSettings.isMyLocationButtonEnabled = false
             uiSettings.isMapToolbarEnabled = true
+
+            // Move zoom controls to top-right corner
+            // setPadding(left, top, right, bottom)
+            setPadding(0, 200, 50, 0)
 
             setOnMapClickListener { latLng ->
                 if (isSelectingLocation) {
@@ -147,7 +177,8 @@ class LocationActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
-        requestLocationPermission()
+        // Load saved location from database
+        loadSavedLocation()
     }
 
     private fun requestLocationPermission() {
@@ -180,6 +211,7 @@ class LocationActivity : AppCompatActivity(), OnMapReadyCallback {
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
+                // Always update map, using either saved location or default location
                 updateMapAndMarkers()
             }
         }

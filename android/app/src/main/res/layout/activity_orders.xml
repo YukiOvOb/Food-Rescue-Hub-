@@ -102,7 +102,7 @@
         app:itemTextColor="@color/bottom_nav_item_color"
         app:backgroundTint="#FFFFFF"
         app:elevation="8dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"/>
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"/>
 
 </LinearLayout>
