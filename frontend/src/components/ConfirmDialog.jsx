@@ -7,14 +7,14 @@ const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, message }) => {
   return (
     <div className="confirm-dialog-overlay" onClick={onClose}>
       <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
-        <h3>{title || '确认操作'}</h3>
-        <p>{message || '您确定要执行此操作吗？'}</p>
+        <h3>{title || 'Confirm Action'}</h3>
+        <p>{message || 'Are you sure you want to perform this action?'}</p>
         <div className="confirm-dialog-actions">
           <button onClick={onClose} className="btn-cancel">
-            取消
+            Cancel
           </button>
           <button onClick={onConfirm} className="btn-confirm">
-            确认
+            Confirm
           </button>
         </div>
       </div>

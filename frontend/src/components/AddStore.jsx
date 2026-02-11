@@ -142,96 +142,133 @@ export default function AddStore() {
     }
 
     return (
-        <div className="store-form-container">
-            <div className="store-form-content">
-                <div className="store-form-header">
-                    <BackButton to="/stores" variant="primary" />
-                    <h2>Add New Store</h2>
+        <div className="store-form-page">
+            {/* Header Banner */}
+            <div className="form-header-banner">
+                <div className="banner-content">
+                    <div className="banner-left">
+                        <span className="banner-tag">SUPPLIER</span>
+                        <h1 className="banner-title">Add New Store</h1>
+                    </div>
+                    <div className="banner-right">
+                        <button
+                            type="button"
+                            onClick={() => navigate('/stores')}
+                            className="btn-back-stores"
+                        >
+                            ← Back to Stores
+                        </button>
+                    </div>
                 </div>
-                <form onSubmit={handleSubmit} className="store-form">
-                    <div className="form-field">
-                        <label>Store Name<span className="required-star">*</span></label>
-                        <input
-                            type="text"
-                            value={storeName}
-                            onChange={(e) => setStoreName(e.target.value)}
-                            required
-                        />
-                    </div>
-
-                    <div className="form-field">
-                        <label>Search Address<span className="required-star">*</span></label>
-                        <Autocomplete onLoad={onLoad} onPlaceChanged={onPlaceChanged}>
-                            <input type="text" placeholder="Type location" required />
-                        </Autocomplete>
-                    </div>
-
-                    <div className="form-field">
-                        <label>Postal Code (6 digits)<span className="required-star">*</span></label>
-                        <input
-                            type="text"
-                            value={postalCode}
-                            onChange={(e) => setPostalCode(e.target.value)}
-                            maxLength="6"
-                            required
-                        />
-                    </div>
-
-                    <div className="form-field">
-                        <label>Opening Hours</label>
-                        <div className="time-inputs">
-                            <input
-                                type="time"
-                                value={openingTime}
-                                onChange={(e) => setOpeningTime(e.target.value)}
-                            />
-                            <input
-                                type="time"
-                                value={closingTime}
-                                onChange={(e) => setClosingTime(e.target.value)}
-                                min={openingTime || undefined}
-                            />
-                        </div>
-                        <span className="form-hint">Closing time must be later than opening time.</span>
-                    </div>
-
-                    <div className="form-field">
-                        <label>Description</label>
-                        <textarea
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            rows="3"
-                        />
-                    </div>
-
-                    <div className="form-field">
-                        <label>Pickup Instructions</label>
-                        <textarea
-                            placeholder="e.g. Please collect from the side door."
-                            value={pickupInstructions}
-                            onChange={(e) => setPickupInstructions(e.target.value)}
-                            rows="2"
-                        />
-                    </div>
-
-                    <div className="map-container">
-                        <GoogleMap mapContainerStyle={mapContainerStyle} zoom={15} center={coordinates}>
-                            <Marker position={coordinates} />
-                        </GoogleMap>
-                    </div>
-
-                    <button type="submit" className="submit-btn">
-                        Save Store
-                    </button>
-                </form>
             </div>
 
-            <Toast
-                isOpen={toast.isOpen}
-                onClose={() => setToast({ ...toast, isOpen: false })}
-                message={toast.message}
-                type={toast.type}
-            />
+            {/* Form Content */}
+            <div className="form-content-wrapper">
+                <div className="form-card">
+                    <form onSubmit={handleSubmit} className="store-form">
+                        <div className="form-field">
+                            <label>Store Name<span className="required-star">*</span></label>
+                            <input
+                                type="text"
+                                value={storeName}
+                                onChange={(e) => setStoreName(e.target.value)}
+                                placeholder="Enter store name"
+                                required
+                            />
+                        </div>
+
+                        <div className="form-field">
+                            <label>Search Address<span className="required-star">*</span></label>
+                            <Autocomplete onLoad={onLoad} onPlaceChanged={onPlaceChanged}>
+                                <input type="text" placeholder="Type location" required />
+                            </Autocomplete>
+                        </div>
+
+                        <div className="form-field">
+                            <label>Postal Code (6 digits)<span className="required-star">*</span></label>
+                            <input
+                                type="text"
+                                value={postalCode}
+                                onChange={(e) => setPostalCode(e.target.value)}
+                                placeholder="Enter postal code"
+                                maxLength="6"
+                                required
+                            />
+                        </div>
+
+                        <div className="form-field">
+                            <label>Opening Hours</label>
+                            <div className="time-inputs">
+                                <input
+                                    type="time"
+                                    value={openingTime}
+                                    onChange={(e) => setOpeningTime(e.target.value)}
+                                />
+                                <span className="time-separator">to</span>
+                                <input
+                                    type="time"
+                                    value={closingTime}
+                                    onChange={(e) => setClosingTime(e.target.value)}
+                                    min={openingTime || undefined}
+                                />
+                            </div>
+                            <span className="form-hint">Closing time must be later than opening time.</span>
+                        </div>
+
+                        <div className="form-field">
+                            <label>Description</label>
+                            <textarea
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                rows="3"
+                                placeholder="Describe your store"
+                            />
+                        </div>
+
+                        <div className="form-field">
+                            <label>Pickup Instructions</label>
+                            <textarea
+                                value={pickupInstructions}
+                                onChange={(e) => setPickupInstructions(e.target.value)}
+                                rows="3"
+                                placeholder="Add pickup instructions for customers"
+                            />
+                        </div>
+
+                        <div className="form-field">
+                            <label>Location on Map</label>
+                            <GoogleMap
+                                mapContainerStyle={mapContainerStyle}
+                                center={coordinates}
+                                zoom={15}
+                            >
+                                <Marker position={coordinates} />
+                            </GoogleMap>
+                        </div>
+
+                        <div className="form-actions">
+                            <button
+                                type="button"
+                                onClick={() => navigate('/stores')}
+                                className="btn-cancel"
+                            >
+                                Cancel
+                            </button>
+                            <button type="submit" className="btn-submit">
+                                Create Store
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {toast.isOpen && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast({ ...toast, isOpen: false })}
+                />
+            )}
         </div>
     );
 }

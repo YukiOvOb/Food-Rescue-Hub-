@@ -279,8 +279,8 @@ const Dashboard = () => {
         isOpen={confirmDialog}
         onClose={() => setConfirmDialog(false)}
         onConfirm={handleLogout}
-        title="确认登出"
-        message="您确定要登出吗？"
+        title="Confirm Logout"
+        message="Are you sure you want to logout?"
       />
     </div>
   );

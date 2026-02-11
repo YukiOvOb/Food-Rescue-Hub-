@@ -72,26 +72,38 @@ export default function StoreList() {
 
     return (
         <div className="store-list-container">
-            <div className="store-list-content">
-                <div className="store-list-header">
-                    <PageHeader
-                        title="My Stores"
-                        subtitle="Supplier"
-                        actions={
-                            <button
-                                onClick={() => navigate('/add-store')}
-                                className="add-store-btn"
-                            >
-                                Add New Store
-                            </button>
-                        }
-                    />
+            {/* Header Banner */}
+            <div className="store-header-banner">
+                <div className="banner-content">
+                    <div className="banner-left">
+                        <span className="banner-tag">SUPPLIER</span>
+                        <h1 className="banner-title">My Stores</h1>
+                    </div>
+                    <div className="banner-right">
+                        <button
+                            onClick={() => navigate('/dashboard')}
+                            className="btn-back-dashboard"
+                        >
+                            ← Back to Dashboard
+                        </button>
+                        <button
+                            onClick={() => navigate('/add-store')}
+                            className="btn-add-store"
+                        >
+                            + Add New Store
+                        </button>
+                    </div>
                 </div>
+            </div>
 
+            {/* Main Content */}
+            <div className="store-list-content">
                 {stores.length === 0 ? (
-                    <p className="no-stores-message">No stores found. Start by adding one!</p>
+                    <div className="no-stores-message">
+                        <p>No stores found. Start by adding one!</p>
+                    </div>
                 ) : (
-                    <div className="stores-table-container">
+                    <div className="stores-table-wrapper">
                         <table className="stores-table">
                             <thead>
                             <tr>
@@ -143,17 +155,15 @@ export default function StoreList() {
                 onConfirm={confirmDelete}
                 title="Delete Store"
                 message="Are you sure you want to delete this store? This action cannot be undone."
-                confirmText="Delete"
-                cancelText="Cancel"
-                type="danger"
             />
 
-            <Toast
-                isOpen={toast.isOpen}
-                onClose={() => setToast({ ...toast, isOpen: false })}
-                message={toast.message}
-                type={toast.type}
-            />
+            {toast.isOpen && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast({ ...toast, isOpen: false })}
+                />
+            )}
         </div>
     );
 }
