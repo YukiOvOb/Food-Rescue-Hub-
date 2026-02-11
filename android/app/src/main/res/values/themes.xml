@@ -2,7 +2,9 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.FoodRescueHub" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">#2d6a5a</item>
+        <item name="colorSecondary">#5a9e8a</item>
+        <item name="colorAccent">#2d6a5a</item>
     </style>
 
     <style name="Theme.FoodRescueHub" parent="Base.Theme.FoodRescueHub" />

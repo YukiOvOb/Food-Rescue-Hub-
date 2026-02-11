@@ -38,7 +38,7 @@
             android:layout_height="48dp"
             android:text="Name (A-Z)"
             android:textSize="14sp"
-            android:buttonTint="#2d6a5a" />
+            app:buttonTint="@color/radio_button_color" />
 
         <RadioButton
             android:id="@+id/rbNameDesc"
@@ -46,7 +46,7 @@
             android:layout_height="48dp"
             android:text="Name (Z-A)"
             android:textSize="14sp"
-            android:buttonTint="#2d6a5a" />
+            app:buttonTint="@color/radio_button_color" />
 
         <RadioButton
             android:id="@+id/rbPriceLowHigh"
@@ -54,7 +54,7 @@
             android:layout_height="48dp"
             android:text="Price (Low to High)"
             android:textSize="14sp"
-            android:buttonTint="#2d6a5a" />
+            app:buttonTint="@color/radio_button_color" />
 
         <RadioButton
             android:id="@+id/rbPriceHighLow"
@@ -62,7 +62,7 @@
             android:layout_height="48dp"
             android:text="Price (High to Low)"
             android:textSize="14sp"
-            android:buttonTint="#2d6a5a" />
+            app:buttonTint="@color/radio_button_color" />
 
         <RadioButton
             android:id="@+id/rbPopularity"
@@ -70,7 +70,7 @@
             android:layout_height="48dp"
             android:text="Most Popular"
             android:textSize="14sp"
-            android:buttonTint="#2d6a5a" />
+            app:buttonTint="@color/radio_button_color" />
 
         <RadioButton
             android:id="@+id/rbDistance"
@@ -78,7 +78,7 @@
             android:layout_height="48dp"
             android:text="Nearest First"
             android:textSize="14sp"
-            android:buttonTint="#2d6a5a" />
+            app:buttonTint="@color/radio_button_color" />
     </RadioGroup>
 
     <!-- Price Filter Section -->
@@ -126,7 +126,9 @@
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
             android:text="Reset"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"
+            app:strokeColor="#2d6a5a"
+            android:textColor="#2d6a5a" />
 
         <Button
             android:id="@+id/btnApply"
