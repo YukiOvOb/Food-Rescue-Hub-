@@ -41,6 +41,7 @@ const QRCodeDecoder = () => {
   const [cameraActive, setCameraActive] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [captureResult, setCaptureResult] = useState(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
@@ -96,8 +97,13 @@ const QRCodeDecoder = () => {
   }, [stopCamera]);
 
   const startCamera = async () => {
-    if (!window.isSecureContext && window.location.hostname !== 'localhost') {
-      setError('Camera access needs HTTPS or localhost.');
+    // allow HTTPS and localhost
+    const isHttps = window.location.protocol === 'https:';
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const isSecure = window.isSecureContext || isHttps;
+    
+    if (!isSecure && !isLocalhost) {
+      setError('Camera access requires HTTPS or localhost.');
       return;
     }
 
@@ -200,18 +206,29 @@ const QRCodeDecoder = () => {
     const formData = new FormData();
     formData.append('file', inputFile);
 
-    const response = await fetch('/api/pickup-tokens/decode-qrcode', {
-      method: 'POST',
-      body: formData,
-      credentials: 'include'
-    });
+    try {
+      const response = await fetch('/api/pickup-tokens/decode-qrcode', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
 
-    const data = await parseResponseData(response);
-    if (!response.ok) {
-      throw new Error(data?.error || data?.message || 'Failed to decode QR code');
+      const data = await parseResponseData(response);
+      
+      // 如果后端返回500且错误信息包含null，说明没有QR码
+      if (!response.ok) {
+        const errorMsg = data?.error || data?.message || '';
+        if (errorMsg.includes('null') || errorMsg.includes('NotFoundException')) {
+          return ''; // 返回空字符串表示没有QR码
+        }
+        throw new Error(errorMsg || 'Failed to decode QR code');
+      }
+
+      return (data?.content || '').trim();
+    } catch (fetchError) {
+      // 网络错误或其他错误
+      throw fetchError;
     }
-
-    return (data?.content || '').trim();
   };
 
   const handleFileChange = (event) => {
@@ -246,6 +263,58 @@ const QRCodeDecoder = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const capturePhoto = async () => {
+    if (!videoRef.current || !canvasRef.current) {
+      setError('Camera not ready.');
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+
+    // 设置canvas大小与视频相同
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const context = canvas.getContext('2d');
+    if (!context) {
+      setError('Cannot capture photo.');
+      return;
+    }
+
+    // 绘制当前视频帧到canvas
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // 将canvas转换为blob并上传
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        setError('Failed to capture photo.');
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+      setCaptureResult(null);
+
+      try {
+        const decodedText = await decodeWithBackend(blob);
+        
+        if (!decodedText || decodedText === '') {
+          setCaptureResult('None QRCode');
+          setError(null);
+        } else {
+          setCaptureResult(decodedText);
+          setResult(decodedText);
+          setSuccessMessage('QR code detected successfully!');
+        }
+      } catch (captureError) {
+        setError(captureError.message);
+      } finally {
+        setLoading(false);
+      }
+    }, 'image/jpeg', 0.8);
   };
 
   const resolveSupplierId = async () => {
@@ -341,28 +410,43 @@ const QRCodeDecoder = () => {
 
       <div className="camera-section">
         <h3>Real-time Camera Detection</h3>
-        {!cameraActive && (
+        {!cameraActive ? (
           <button onClick={startCamera} className="camera-btn">
-            Open Camera & Start Scanning
+            Start Camera
           </button>
-        )}
+        ) : null}
+        
+        {/* Video element always in DOM */}
         <video
           ref={videoRef}
           autoPlay
           playsInline
-          className={`camera-video ${cameraActive ? '' : 'camera-video-hidden'}`}
+          className={`camera-video-display ${cameraActive ? 'active' : 'hidden'}`}
+          style={{ display: cameraActive ? 'block' : 'none' }}
         />
+        
         {cameraActive && (
-          <>
-            <p className="scan-status">Scanning live camera feed...</p>
-            <div className="camera-controls">
-              <button onClick={stopCamera} className="stop-camera-btn">
-                Stop Camera
-              </button>
-            </div>
-          </>
+          <div className="camera-controls">
+            <button onClick={capturePhoto} disabled={loading} className="capture-btn">
+              {loading ? 'Processing...' : 'Capture & Decode'}
+            </button>
+            <button onClick={stopCamera} className="stop-camera-btn">
+              Stop Camera
+            </button>
+            <p className="scan-status">Position QR code in frame and click Capture</p>
+          </div>
         )}
+        
         <canvas ref={canvasRef} style={{ display: 'none' }} />
+        
+        {captureResult && (
+          <div className="capture-result">
+            <h4>Decode Result:</h4>
+            <div className={`result-content ${captureResult === 'None QRCode' ? 'no-qrcode' : 'has-qrcode'}`}>
+              {captureResult}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="divider">Or</div>

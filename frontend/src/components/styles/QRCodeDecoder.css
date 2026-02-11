@@ -65,6 +65,21 @@
   background-color: #2563eb;
 }
 
+.camera-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.camera-video-display {
+  width: 100%;
+  max-height: 480px;
+  border-radius: 8px;
+  background-color: #000;
+  object-fit: cover;
+  border: 2px solid #3b82f6;
+}
+
 .camera-video {
   width: 100%;
   border-radius: 6px;
@@ -77,8 +92,8 @@
 }
 
 .scan-status {
-  margin: 0 0 12px;
-  font-size: 14px;
+  margin: 0;
+  font-size: 13px;
   color: #1f2937;
   background-color: #e0f2fe;
   border-left: 4px solid #0284c7;
@@ -104,8 +119,14 @@
   transition: background-color 0.2s;
 }
 
-.capture-btn:hover {
+.capture-btn:hover:not(:disabled) {
   background-color: #059669;
+}
+
+.capture-btn:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .capture-btn:disabled {
@@ -258,6 +279,41 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.capture-result {
+  margin-top: 16px;
+  padding: 12px;
+  background-color: #f0fdf4;
+  border: 2px solid #86efac;
+  border-radius: 8px;
+}
+
+.capture-result h4 {
+  margin: 0 0 8px;
+  color: #166534;
+  font-size: 14px;
+}
+
+.result-content {
+  padding: 12px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 13px;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+.result-content.has-qrcode {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.result-content.no-qrcode {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
 }
 
 .confirm-btn {

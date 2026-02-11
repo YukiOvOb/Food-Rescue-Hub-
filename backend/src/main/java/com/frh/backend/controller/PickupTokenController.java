@@ -123,6 +123,11 @@ public class PickupTokenController {
       Map<String, String> response = new HashMap<>();
       response.put("content", result.getText());
       return ResponseEntity.ok(response);
+    } catch (com.google.zxing.NotFoundException e) {
+      // No QR code found in image - this is not an error, just no QR code detected
+      Map<String, String> response = new HashMap<>();
+      response.put("content", "");
+      return ResponseEntity.ok(response);
     } catch (Exception e) {
       Map<String, String> error = new HashMap<>();
       error.put("error", "Failed to decode QR code: " + e.getMessage());
