@@ -3,6 +3,7 @@ package com.example.foodrescuehub.ui.search
 import android.os.Bundle
 import android.view.View
 import android.widget.*
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.lifecycleScope
@@ -13,7 +14,6 @@ import com.example.foodrescuehub.data.api.RetrofitClient
 import com.example.foodrescuehub.data.model.StoreRecommendation
 import com.example.foodrescuehub.data.model.UserInteractionRequest
 import com.example.foodrescuehub.data.repository.AuthManager
-import com.example.foodrescuehub.ui.home.RecommendationAdapter
 import kotlinx.coroutines.launch
 
 /**
@@ -31,7 +31,7 @@ class SearchResultsActivity : AppCompatActivity() {
     private lateinit var spinnerSort: Spinner
     private lateinit var btnBack: ImageButton
 
-    private lateinit var adapter: RecommendationAdapter
+    private lateinit var adapter: SearchResultsAdapter
     private var currentResults: List<StoreRecommendation> = emptyList()
     private var currentUserId: Long? = null
     private var userLat: Double? = null
@@ -63,7 +63,7 @@ class SearchResultsActivity : AppCompatActivity() {
         btnBack = findViewById(R.id.btnBack)
 
         // Setup RecyclerView
-        adapter = RecommendationAdapter { recommendation ->
+        adapter = SearchResultsAdapter { recommendation ->
             // Record CLICK interaction
             recordInteraction(recommendation, "CLICK")
 
@@ -111,8 +111,19 @@ class SearchResultsActivity : AppCompatActivity() {
 
         // Back button
         btnBack.setOnClickListener {
+            // Clear focus from search view to prevent double-click issue
+            searchView.clearFocus()
             finish()
         }
+
+        // Handle system back button
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // Clear focus from search view to prevent issues
+                searchView.clearFocus()
+                finish()
+            }
+        })
 
         // Perform initial search if query is provided
         if (currentQuery.isNotEmpty() && currentUserId != null) {
