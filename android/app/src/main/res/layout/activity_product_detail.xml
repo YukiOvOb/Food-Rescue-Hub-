@@ -29,7 +29,7 @@
                 android:layout_centerVertical="true"
                 android:background="@drawable/circle_background"
                 android:contentDescription="Back"
-                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:src="@android:drawable/ic_menu_revert"
                 app:tint="#000000" />
 
             <ImageButton
@@ -397,17 +397,16 @@
                 </LinearLayout>
 
                 <!-- Buy Now Button -->
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/btnBuyNow"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:backgroundTint="#4CAF50"
+                    android:background="@drawable/gradient_green_button"
                     android:text="Buy Now"
                     android:textAllCaps="false"
                     android:textColor="#FFFFFF"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    app:cornerRadius="28dp"
                     android:elevation="4dp" />
 
             </LinearLayout>
