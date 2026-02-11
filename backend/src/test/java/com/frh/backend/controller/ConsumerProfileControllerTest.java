@@ -111,5 +111,115 @@ class ConsumerProfileControllerTest {
         .perform(get("/api/consumer/profile/{consumerId}/location", 88L))
         .andExpect(status().isNotFound());
   }
+
+  /* --------------------------------
+  UPDATE CURRENT USER LOCATION – SUCCESS
+  -------------------------------- */
+  @Test
+  void updateCurrentUserLocation_success() throws Exception {
+
+    ConsumerProfile consumer = new ConsumerProfile();
+    consumer.setConsumerId(1L);
+    consumer.setDefault_lat(BigDecimal.valueOf(1.0));
+    consumer.setDefault_lng(BigDecimal.valueOf(1.0));
+
+    Mockito.when(consumerProfileRepository.findById(1L)).thenReturn(Optional.of(consumer));
+    Mockito.when(consumerProfileRepository.save(Mockito.any())).thenReturn(consumer);
+
+    UpdateLocationRequest request = new UpdateLocationRequest();
+    request.setLatitude(BigDecimal.valueOf(1.3521));
+    request.setLongitude(BigDecimal.valueOf(103.8198));
+
+    mockMvc
+        .perform(
+            put("/api/consumer/profile/location")
+                .sessionAttr("USER_ID", 1L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.latitude").value(1.3521))
+        .andExpect(jsonPath("$.longitude").value(103.8198));
+  }
+
+  /* --------------------------------
+  UPDATE CURRENT USER LOCATION – UNAUTHORIZED
+  -------------------------------- */
+  @Test
+  void updateCurrentUserLocation_unauthorized() throws Exception {
+
+    UpdateLocationRequest request = new UpdateLocationRequest();
+    request.setLatitude(BigDecimal.valueOf(1.0));
+    request.setLongitude(BigDecimal.valueOf(1.0));
+
+    mockMvc
+        .perform(
+            put("/api/consumer/profile/location")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isUnauthorized());
+  }
+
+  /* --------------------------------
+  UPDATE CURRENT USER LOCATION – NOT FOUND
+  -------------------------------- */
+  @Test
+  void updateCurrentUserLocation_notFound() throws Exception {
+
+    Mockito.when(consumerProfileRepository.findById(99L)).thenReturn(Optional.empty());
+
+    UpdateLocationRequest request = new UpdateLocationRequest();
+    request.setLatitude(BigDecimal.valueOf(1.0));
+    request.setLongitude(BigDecimal.valueOf(1.0));
+
+    mockMvc
+        .perform(
+            put("/api/consumer/profile/location")
+                .sessionAttr("USER_ID", 99L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isNotFound());
+  }
+
+  /* --------------------------------
+  GET CURRENT USER LOCATION – SUCCESS
+  -------------------------------- */
+  @Test
+  void getCurrentUserLocation_success() throws Exception {
+
+    ConsumerProfile consumer = new ConsumerProfile();
+    consumer.setConsumerId(1L);
+    consumer.setDefault_lat(BigDecimal.valueOf(1.3000));
+    consumer.setDefault_lng(BigDecimal.valueOf(103.8000));
+
+    Mockito.when(consumerProfileRepository.findById(1L)).thenReturn(Optional.of(consumer));
+
+    mockMvc
+        .perform(get("/api/consumer/profile/location").sessionAttr("USER_ID", 1L))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.latitude").value(1.3000))
+        .andExpect(jsonPath("$.longitude").value(103.8000));
+  }
+
+  /* --------------------------------
+  GET CURRENT USER LOCATION – UNAUTHORIZED
+  -------------------------------- */
+  @Test
+  void getCurrentUserLocation_unauthorized() throws Exception {
+
+    mockMvc.perform(get("/api/consumer/profile/location")).andExpect(status().isUnauthorized());
+  }
+
+  /* --------------------------------
+  GET CURRENT USER LOCATION – NOT FOUND
+  -------------------------------- */
+  @Test
+  void getCurrentUserLocation_notFound() throws Exception {
+
+    Mockito.when(consumerProfileRepository.findById(99L)).thenReturn(Optional.empty());
+
+    mockMvc
+        .perform(get("/api/consumer/profile/location").sessionAttr("USER_ID", 99L))
+        .andExpect(status().isNotFound());
+  }
 }
 
