@@ -11,17 +11,41 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Toolbar -->
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar"
+        <!-- Top Bar -->
+        <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@color/white"
-            android:elevation="0dp"
-            app:title="Order Details"
-            app:titleTextColor="#1A1A1A"
-            app:navigationIcon="@drawable/ic_arrow_back"
-            app:navigationIconTint="#1A1A1A" />
+            android:layout_height="wrap_content"
+            app:elevation="0dp">
+
+            <RelativeLayout
+                android:layout_marginTop="40dp"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="#FFFFFF"
+                android:padding="16dp">
+
+                <ImageButton
+                    android:id="@+id/btnBack"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/circle_background"
+                    android:contentDescription="Back"
+                    android:src="@android:drawable/ic_menu_revert"
+                    app:tint="#000000" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:text="Order Details"
+                    android:textColor="#1A1A1A"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </RelativeLayout>
+
+        </com.google.android.material.appbar.AppBarLayout>
 
         <!-- Main Content Card -->
         <com.google.android.material.card.MaterialCardView
@@ -101,7 +125,7 @@
                             android:layout_height="wrap_content"
                             android:text="Accepted"
                             android:textSize="12sp"
-                            android:textColor="#1A1A1A"
+                            android:textColor="#999999"
                             android:textStyle="bold"
                             android:layout_marginTop="8dp" />
                     </LinearLayout>
@@ -113,7 +137,7 @@
                         android:layout_height="3dp"
                         android:layout_weight="1"
                         android:background="#66BB6A"
-                        android:layout_marginTop="-32dp"
+                        android:layout_marginTop="-24dp"
                         android:layout_marginStart="4dp"
                         android:layout_marginEnd="4dp" />
 
@@ -147,7 +171,7 @@
                             android:layout_height="wrap_content"
                             android:text="Ready"
                             android:textSize="12sp"
-                            android:textColor="#1A1A1A"
+                            android:textColor="#999999"
                             android:textStyle="bold"
                             android:layout_marginTop="8dp" />
                     </LinearLayout>
@@ -159,7 +183,7 @@
                         android:layout_height="3dp"
                         android:layout_weight="1"
                         android:background="#E0E0E0"
-                        android:layout_marginTop="-32dp"
+                        android:layout_marginTop="-24dp"
                         android:layout_marginStart="4dp"
                         android:layout_marginEnd="4dp" />
 

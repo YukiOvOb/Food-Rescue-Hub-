@@ -111,8 +111,9 @@ class OrdersAdapter(
 
         private fun getStatusBackground(status: String): Int {
             return when (status.uppercase()) {
-                "PENDING" -> R.drawable.bg_status_pending
-                "CONFIRMED", "READY" -> R.drawable.bg_status_confirmed
+                "PENDING_PAYMENT", "PENDING" -> R.drawable.bg_status_pending
+                "PAID" -> R.drawable.bg_status_confirmed
+                "ACCEPTED", "CONFIRMED", "READY" -> R.drawable.bg_status_confirmed
                 "COMPLETED" -> R.drawable.bg_status_completed
                 "CANCELLED" -> R.drawable.bg_status_cancelled
                 else -> R.drawable.bg_status_pending

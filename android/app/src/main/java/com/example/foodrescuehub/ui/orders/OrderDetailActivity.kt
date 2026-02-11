@@ -74,10 +74,7 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun setupToolbar() {
-        binding.toolbar.setNavigationOnClickListener {
-            val intent = Intent(this, HomeActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            startActivity(intent)
+        binding.btnBack.setOnClickListener {
             finish()
         }
     }
@@ -203,24 +200,35 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun setupQRCodeButton(status: String) {
         when (status.uppercase()) {
-            "CANCELLED", "PENDING_PAYMENT" -> {
-                binding.btnViewQrCode.isEnabled = false
-                binding.btnViewQrCode.alpha = 0.5f
-                binding.btnViewQrCode.setOnClickListener(null)
-            }
-            "READY", "COMPLETED", "COLLECTED" -> {
+            "ACCEPTED" -> {
+                // Store accepted - can view QR code, use green color
                 binding.btnViewQrCode.isEnabled = true
                 binding.btnViewQrCode.alpha = 1.0f
-                binding.btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.status_confirmed))
+                binding.btnViewQrCode.setTextColor(android.graphics.Color.WHITE)
+                binding.btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                    android.graphics.Color.parseColor("#2d6a5a")
+                )
                 binding.btnViewQrCode.setOnClickListener { navigateToQRCode() }
             }
-            else -> {
-                binding.btnViewQrCode.isEnabled = true
+            "PENDING_PAYMENT", "PENDING" -> {
+                // Waiting for payment - dark gray background, white text
+                binding.btnViewQrCode.isEnabled = false
                 binding.btnViewQrCode.alpha = 1.0f
-                binding.btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.status_pending))
-                binding.btnViewQrCode.setOnClickListener {
-                    Toast.makeText(this, "Order must be ready before viewing QR code.", Toast.LENGTH_LONG).show()
-                }
+                binding.btnViewQrCode.setTextColor(android.graphics.Color.WHITE)
+                binding.btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                    android.graphics.Color.parseColor("#666666")
+                )
+                binding.btnViewQrCode.setOnClickListener(null)
+            }
+            else -> {
+                // Cannot view QR code (PAID, COMPLETED, CANCELLED) - light gray
+                binding.btnViewQrCode.isEnabled = false
+                binding.btnViewQrCode.alpha = 1.0f
+                binding.btnViewQrCode.setTextColor(android.graphics.Color.WHITE)
+                binding.btnViewQrCode.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                    android.graphics.Color.parseColor("#CCCCCC")
+                )
+                binding.btnViewQrCode.setOnClickListener(null)
             }
         }
     }
@@ -237,28 +245,32 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun updateOrderStatus(status: String) {
         when (status.uppercase()) {
-            "PENDING_PAYMENT" -> {
+            "PENDING_PAYMENT", "PENDING" -> {
+                // Waiting for payment - all status icons gray
                 setStatusIcon(binding.statusPaidIcon, false)
                 setStatusIcon(binding.statusReadyIcon, false)
                 setStatusIcon(binding.statusCollectedIcon, false)
                 setProgressLine(binding.progressLine1, false)
                 setProgressLine(binding.progressLine2, false)
             }
-            "PAID", "PENDING", "ACCEPTED", "CONFIRMED" -> {
-                setStatusIcon(binding.statusPaidIcon, true)
-                setStatusIcon(binding.statusReadyIcon, false)
-                setStatusIcon(binding.statusCollectedIcon, false)
-                setProgressLine(binding.progressLine1, false)
-                setProgressLine(binding.progressLine2, false)
+            "PAID" -> {
+                // Paid, waiting for store confirmation - all icons orange
+                setStatusIcon(binding.statusPaidIcon, false, false, true)
+                setStatusIcon(binding.statusReadyIcon, false, false, true)
+                setStatusIcon(binding.statusCollectedIcon, false, false, true)
+                setProgressLine(binding.progressLine1, false, false, true)
+                setProgressLine(binding.progressLine2, false, false, true)
             }
-            "READY" -> {
+            "ACCEPTED" -> {
+                // Store accepted, ready for pickup
                 setStatusIcon(binding.statusPaidIcon, true)
                 setStatusIcon(binding.statusReadyIcon, true)
                 setStatusIcon(binding.statusCollectedIcon, false)
                 setProgressLine(binding.progressLine1, true)
                 setProgressLine(binding.progressLine2, false)
             }
-            "COMPLETED", "COLLECTED" -> {
+            "COMPLETED" -> {
+                // Order completed (QR code scanned)
                 setStatusIcon(binding.statusPaidIcon, true)
                 setStatusIcon(binding.statusReadyIcon, true)
                 setStatusIcon(binding.statusCollectedIcon, true)
@@ -266,6 +278,7 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
                 setProgressLine(binding.progressLine2, true)
             }
             "CANCELLED" -> {
+                // Order cancelled
                 setStatusIcon(binding.statusPaidIcon, false, true)
                 setStatusIcon(binding.statusReadyIcon, false, true)
                 setStatusIcon(binding.statusCollectedIcon, false, true)
@@ -275,11 +288,16 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun setStatusIcon(icon: TextView, completed: Boolean, cancelled: Boolean = false) {
+    private fun setStatusIcon(icon: TextView, completed: Boolean, cancelled: Boolean = false, pending: Boolean = false) {
         when {
             cancelled -> {
                 icon.text = "✕"
                 icon.setBackgroundResource(R.drawable.bg_status_cancelled)
+                icon.setTextColor(getColor(android.R.color.white))
+            }
+            pending -> {
+                icon.text = "○"
+                icon.setBackgroundResource(R.drawable.bg_status_pending)
                 icon.setTextColor(getColor(android.R.color.white))
             }
             completed -> {
@@ -295,9 +313,10 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun setProgressLine(line: View, completed: Boolean, cancelled: Boolean = false) {
+    private fun setProgressLine(line: View, completed: Boolean, cancelled: Boolean = false, pending: Boolean = false) {
         line.setBackgroundColor(when {
             cancelled -> getColor(R.color.status_cancelled)
+            pending -> android.graphics.Color.parseColor("#FFA000")
             completed -> getColor(R.color.status_confirmed)
             else -> getColor(android.R.color.darker_gray)
         })
