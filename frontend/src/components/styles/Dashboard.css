@@ -115,12 +115,12 @@
   font-size: 14px;
 }
 
-.info-label {
+.welcome-card .info-label {
   font-weight: 600;
   color: rgba(255, 255, 255, 0.7);
 }
 
-.info-value {
+.welcome-card .info-value {
   color: white;
   font-weight: 500;
 }

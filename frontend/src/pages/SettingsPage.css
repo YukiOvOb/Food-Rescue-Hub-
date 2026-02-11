@@ -155,13 +155,13 @@
   gap: 24px;
 }
 
-.info-item {
+.settings-card .info-item {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.info-label {
+.settings-card .info-label {
   font-size: 12px;
   font-weight: 600;
   color: #666;
@@ -169,7 +169,7 @@
   letter-spacing: 0.5px;
 }
 
-.info-value {
+.settings-card .info-value {
   font-size: 16px;
   font-weight: 500;
   color: #333;
