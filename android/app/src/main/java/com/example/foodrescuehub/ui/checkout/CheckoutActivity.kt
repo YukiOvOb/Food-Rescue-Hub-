@@ -71,7 +71,7 @@ class CheckoutActivity : AppCompatActivity() {
     }
 
     private fun setupToolbar() {
-        binding.toolbar.setNavigationOnClickListener { finish() }
+        binding.btnBack.setOnClickListener { finish() }
     }
 
     private fun displayOrderSummary() {
