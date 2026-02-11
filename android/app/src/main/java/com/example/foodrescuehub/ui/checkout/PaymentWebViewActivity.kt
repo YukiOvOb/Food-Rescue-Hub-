@@ -49,7 +49,7 @@ class PaymentWebViewActivity : AppCompatActivity() {
     }
 
     private fun setupToolbar() {
-        binding.toolbar.setNavigationOnClickListener {
+        binding.btnBack.setOnClickListener {
             finish()
         }
     }
