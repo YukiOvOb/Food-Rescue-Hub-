@@ -182,7 +182,7 @@
                         android:layout_centerVertical="true"
                         android:text="See All"
                         android:textStyle="bold"
-                        android:textColor="#8BC34A"
+                        android:textColor="#2d6a5a"
                         android:textSize="14sp" />
                 </RelativeLayout>
 
