@@ -200,8 +200,8 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun setupQRCodeButton(status: String) {
         when (status.uppercase()) {
-            "ACCEPTED" -> {
-                // Store accepted - can view QR code, use green color
+            "ACCEPTED", "READY" -> {
+                // Store accepted or ready - can view QR code, use green color
                 binding.btnViewQrCode.isEnabled = true
                 binding.btnViewQrCode.alpha = 1.0f
                 binding.btnViewQrCode.setTextColor(android.graphics.Color.WHITE)
@@ -262,7 +262,15 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
                 setProgressLine(binding.progressLine2, false, false, true)
             }
             "ACCEPTED" -> {
-                // Store accepted, ready for pickup
+                // Store accepted - only first icon green, second icon orange
+                setStatusIcon(binding.statusPaidIcon, true)
+                setStatusIcon(binding.statusReadyIcon, false, false, true)
+                setStatusIcon(binding.statusCollectedIcon, false)
+                setProgressLine(binding.progressLine1, true)
+                setProgressLine(binding.progressLine2, false)
+            }
+            "READY" -> {
+                // Ready for pickup - first two icons green
                 setStatusIcon(binding.statusPaidIcon, true)
                 setStatusIcon(binding.statusReadyIcon, true)
                 setStatusIcon(binding.statusCollectedIcon, false)

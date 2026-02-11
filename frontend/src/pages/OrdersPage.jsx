@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from '../services/axiosConfig';
 import authService from '../services/authService';
 import PageHeader from '../components/PageHeader';
+import CancelOrderDialog from '../components/CancelOrderDialog';
 import './OrdersPage.css';
 
 const OrdersPage = () => {
@@ -13,6 +14,8 @@ const OrdersPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [storeLoading, setStoreLoading] = useState(true);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
   const normalizeOrders = (payload) => {
     if (Array.isArray(payload)) return payload;
@@ -113,6 +116,55 @@ const OrdersPage = () => {
     }
   };
 
+  const handleAcceptOrder = async (orderId) => {
+    try {
+      await axios.put(`/supplier/orders/${orderId}/accept`);
+      console.log(`Order ${orderId} accepted`);
+      fetchOrders(selectedStoreId);
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to accept order');
+    }
+  };
+
+  const handleCancelOrder = (orderId) => {
+    setSelectedOrderId(orderId);
+    setCancelDialogOpen(true);
+  };
+
+  const confirmCancelOrder = async (reason) => {
+    try {
+      await axios.put(`/supplier/orders/${selectedOrderId}/cancel`, { reason });
+      console.log(`Order ${selectedOrderId} cancelled`);
+      setCancelDialogOpen(false);
+      setSelectedOrderId(null);
+      fetchOrders(selectedStoreId);
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to cancel order');
+      setCancelDialogOpen(false);
+      setSelectedOrderId(null);
+    }
+  };
+
+  const handleSetReady = async (orderId) => {
+    try {
+      await axios.put(`/supplier/orders/${orderId}/ready`);
+      console.log(`Order ${orderId} set to ready`);
+      fetchOrders(selectedStoreId);
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to set order ready');
+    }
+  };
+
+  const handleCompleteOrder = async (orderId) => {
+    try {
+      await axios.put(`/supplier/orders/${orderId}/complete`);
+      console.log(`Order ${orderId} completed`);
+      fetchOrders(selectedStoreId);
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to complete order');
+    }
+  };
+
   const fetchOrders = async (storeId) => {
     setLoading(true);
     setError(null);
@@ -172,6 +224,17 @@ const OrdersPage = () => {
 
   return (
     <div className="orders-page">
+      {/* Cancel Order Dialog */}
+      <CancelOrderDialog
+        isOpen={cancelDialogOpen}
+        onClose={() => {
+          setCancelDialogOpen(false);
+          setSelectedOrderId(null);
+        }}
+        onConfirm={confirmCancelOrder}
+        orderId={selectedOrderId}
+      />
+
       {/* Header Banner */}
       <div className="orders-header-banner">
         <div className="banner-content">
@@ -245,12 +308,13 @@ const OrdersPage = () => {
                   <th>Pickup Token</th>
                   <th>Pickup Slot</th>
                   <th>Created</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {!loading && (!Array.isArray(orders) || orders.length === 0) && (
                   <tr>
-                    <td colSpan="9" className="empty-cell">
+                    <td colSpan="10" className="empty-cell">
                       No orders found.
                     </td>
                   </tr>
@@ -284,6 +348,52 @@ const OrdersPage = () => {
                       {formatPickupSlot(order.pickupSlotStart, order.pickupSlotEnd)}
                     </td>
                     <td>{formatDateTime(order.createdAt)}</td>
+                    <td className="actions-cell">
+                      {order.status === 'PAID' && (
+                        <div className="action-buttons">
+                          <button
+                            className="btn-accept"
+                            onClick={() => handleAcceptOrder(order.orderId)}
+                            title="Accept this order"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            className="btn-cancel"
+                            onClick={() => handleCancelOrder(order.orderId)}
+                            title="Cancel this order"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                      {order.status === 'ACCEPTED' && (
+                        <div className="action-buttons">
+                          <button
+                            className="btn-ready"
+                            onClick={() => handleSetReady(order.orderId)}
+                            title="Mark as ready for pickup"
+                          >
+                            Set Ready
+                          </button>
+                          <button
+                            className="btn-cancel"
+                            onClick={() => handleCancelOrder(order.orderId)}
+                            title="Cancel this order"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                      {order.status === 'READY' && (
+                        <div className="action-buttons">
+                          <span className="status-info">✓ Ready for QR scan</span>
+                        </div>
+                      )}
+                      {!['PAID', 'ACCEPTED', 'READY'].includes(order.status) && (
+                        <span className="no-actions">-</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

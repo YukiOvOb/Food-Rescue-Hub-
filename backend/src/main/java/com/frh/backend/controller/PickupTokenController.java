@@ -5,6 +5,7 @@ import com.frh.backend.model.Order;
 import com.frh.backend.model.PickupToken;
 import com.frh.backend.repository.OrderRepository;
 import com.frh.backend.repository.PickupTokenRepository;
+import com.frh.backend.service.OrderService;
 import com.frh.backend.util.QrCodeGenerator;
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.MultiFormatReader;
@@ -12,6 +13,7 @@ import com.google.zxing.Result;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
 import java.awt.image.BufferedImage;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import javax.imageio.ImageIO;
@@ -32,11 +34,15 @@ public class PickupTokenController {
 
   private final PickupTokenRepository pickupTokenRepository;
   private final OrderRepository orderRepository;
+  private final OrderService orderService;
 
   public PickupTokenController(
-      PickupTokenRepository pickupTokenRepository, OrderRepository orderRepository) {
+      PickupTokenRepository pickupTokenRepository,
+      OrderRepository orderRepository,
+      OrderService orderService) {
     this.pickupTokenRepository = pickupTokenRepository;
     this.orderRepository = orderRepository;
+    this.orderService = orderService;
   }
 
   /** Retrieves the pickup token for an order, if present. */
@@ -131,6 +137,50 @@ public class PickupTokenController {
     } catch (Exception e) {
       Map<String, String> error = new HashMap<>();
       error.put("error", "Failed to decode QR code: " + e.getMessage());
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+  }
+
+  /** Verify pickup token and complete order POST /api/pickup-tokens/verify */
+  @PostMapping("/verify")
+  public ResponseEntity<Map<String, Object>> verifyToken(@org.springframework.web.bind.annotation.RequestBody Map<String, String> request) {
+    String qrTokenHash = request.get("qrTokenHash");
+    if (qrTokenHash == null || qrTokenHash.trim().isEmpty()) {
+      Map<String, Object> error = new HashMap<>();
+      error.put("error", "QR token hash is required");
+      return ResponseEntity.badRequest().body(error);
+    }
+
+    try {
+      PickupToken token = pickupTokenRepository.findByQrTokenHash(qrTokenHash)
+          .orElseThrow(() -> new RuntimeException("Invalid pickup token"));
+
+      // Check if token is expired
+      if (token.getExpiresAt() != null && LocalDateTime.now().isAfter(token.getExpiresAt())) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", "Pickup token has expired");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+      }
+
+      // Check if token was already used
+      if (token.getUsedAt() != null) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", "Pickup token has already been used");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+      }
+
+      // Complete the order
+      Order completedOrder = orderService.completeOrder(token.getOrderId());
+
+      Map<String, Object> response = new HashMap<>();
+      response.put("success", true);
+      response.put("message", "Order completed successfully");
+      response.put("orderId", completedOrder.getOrderId());
+      response.put("status", completedOrder.getStatus());
+      return ResponseEntity.ok(response);
+    } catch (Exception e) {
+      Map<String, Object> error = new HashMap<>();
+      error.put("error", "Failed to verify token: " + e.getMessage());
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
   }

@@ -266,9 +266,15 @@
   color: #fff;
 }
 
-/* Paid - Blue */
+/* Paid - Green */
 .status-paid {
-  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: #fff;
+}
+
+/* Accepted - Green */
+.status-accepted {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
   color: #fff;
 }
 
@@ -279,17 +285,17 @@
   color: #fff;
 }
 
-/* Ready for Pickup - Teal */
+/* Ready for Pickup - Green */
 .status-ready,
 .status-ready_for_pickup {
-  background: linear-gradient(135deg, #2d6a5a 0%, #5a9e8a 100%);
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
   color: #fff;
 }
 
-/* Completed/Picked Up - Green */
+/* Completed/Picked Up - Gray */
 .status-completed,
 .status-picked_up {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
   color: #fff;
 }
 
@@ -327,6 +333,86 @@
   font-size: 13px;
   color: #666;
   white-space: nowrap;
+}
+
+/* Actions Cell */
+.actions-cell {
+  white-space: nowrap;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.action-buttons button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.status-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  color: #2e7d32;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.btn-accept {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+}
+
+.btn-accept:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.btn-cancel {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+}
+
+.btn-cancel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.btn-ready {
+  background: linear-gradient(135deg, #2d6a5a 0%, #5a9e8a 100%);
+  color: white;
+}
+
+.btn-ready:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(45, 106, 90, 0.3);
+}
+
+.btn-complete {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  color: white;
+}
+
+.btn-complete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+}
+
+.no-actions {
+  color: #999;
+  font-size: 13px;
 }
 
 /* Responsive Design */

@@ -88,6 +88,24 @@ public class SupplierOrderController {
     Order updated = orderService.cancelAcceptedOrder(orderId, body.getReason());
     return ResponseEntity.ok(orderResponseMapper.toOrderResponse(updated));
   }
+
+  // SUPPLIER – mark order as ready for pickup
+
+  /** PUT /api/supplier/orders/{orderId}/ready No body required. */
+  @PutMapping("/api/supplier/orders/{orderId}/ready")
+  public ResponseEntity<OrderResponseDto> setOrderReady(@PathVariable Long orderId) {
+    Order updated = orderService.setOrderReady(orderId);
+    return ResponseEntity.ok(orderResponseMapper.toOrderResponse(updated));
+  }
+
+  // SUPPLIER – complete order (after QR code scan)
+
+  /** PUT /api/supplier/orders/{orderId}/complete No body required. */
+  @PutMapping("/api/supplier/orders/{orderId}/complete")
+  public ResponseEntity<OrderResponseDto> completeOrder(@PathVariable Long orderId) {
+    Order updated = orderService.completeOrder(orderId);
+    return ResponseEntity.ok(orderResponseMapper.toOrderResponse(updated));
+  }
 }
 
 // * URL layout

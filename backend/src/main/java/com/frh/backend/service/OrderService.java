@@ -169,8 +169,9 @@ public class OrderService {
         Order order = orderRepository.findByIdForUpdate(orderId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with id: " + orderId));
 
-        if (!"PENDING".equals(order.getStatus())) {
-            throw new OrderStateException(orderId, order.getStatus(), "PENDING");
+        // Support both PENDING and PAID status
+        if (!"PENDING".equals(order.getStatus()) && !"PAID".equals(order.getStatus())) {
+            throw new OrderStateException(orderId, order.getStatus(), "PENDING or PAID");
         }
 
         for (OrderItem item : order.getOrderItems()) {
@@ -202,9 +203,9 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
-    // CANCEL an already-ACCEPTED order (to restore the stock)
+    // SET READY – supplier marks order as ready for pickup
     @Transactional
-    public Order cancelAcceptedOrder(Long orderId, String reason) {
+    public Order setOrderReady(Long orderId) {
         Order order = orderRepository.findByIdForUpdate(orderId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with id: " + orderId));
 
@@ -212,9 +213,49 @@ public class OrderService {
             throw new OrderStateException(orderId, order.getStatus(), "ACCEPTED");
         }
 
-        for (OrderItem item : order.getOrderItems()) {
-            inventoryService.restoreStock(item.getListing().getListingId(), item.getQuantity());
+        order.setStatus("READY");
+        return orderRepository.save(order);
+    }
+
+    // COMPLETE ORDER – called when pickup token is verified
+    @Transactional
+    public Order completeOrder(Long orderId) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with id: " + orderId));
+
+        // Allow completion from ACCEPTED or READY status
+        if (!"ACCEPTED".equals(order.getStatus()) && !"READY".equals(order.getStatus())) {
+            throw new OrderStateException(orderId, order.getStatus(), "ACCEPTED or READY");
         }
+
+        order.setStatus("COMPLETED");
+
+        // Mark pickup token as used if exists
+        if (order.getPickupToken() != null) {
+            order.getPickupToken().setUsedAt(LocalDateTime.now());
+        }
+
+        return orderRepository.save(order);
+    }
+
+    // CANCEL an already-ACCEPTED order (to restore the stock)
+    @Transactional
+    public Order cancelAcceptedOrder(Long orderId, String reason) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with id: " + orderId));
+
+        // Allow cancellation of PAID or ACCEPTED orders
+        if (!"ACCEPTED".equals(order.getStatus()) && !"PAID".equals(order.getStatus())) {
+            throw new OrderStateException(orderId, order.getStatus(), "PAID or ACCEPTED");
+        }
+
+        // Only restore stock if order was already ACCEPTED (inventory was decremented)
+        if ("ACCEPTED".equals(order.getStatus())) {
+            for (OrderItem item : order.getOrderItems()) {
+                inventoryService.restoreStock(item.getListing().getListingId(), item.getQuantity());
+            }
+        }
+
         order.setStatus("CANCELLED");
         order.setCancelReason(reason);
         return orderRepository.save(order);
