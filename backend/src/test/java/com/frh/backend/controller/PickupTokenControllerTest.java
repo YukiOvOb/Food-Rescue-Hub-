@@ -324,5 +324,158 @@ class PickupTokenControllerTest {
         .perform(multipart("/api/pickup-tokens/decode-qrcode").file(emptyFile))
         .andExpect(status().isBadRequest());
   }
+
+  /* --------------------------------
+  VERIFY TOKEN – MISSING HASH
+  -------------------------------- */
+  @Test
+  void verifyToken_missingHash() throws Exception {
+
+    mockMvc
+        .perform(
+            post("/api/pickup-tokens/verify")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("QR token hash is required"));
+  }
+
+  /* --------------------------------
+  VERIFY TOKEN – EMPTY HASH
+  -------------------------------- */
+  @Test
+  void verifyToken_emptyHash() throws Exception {
+
+    mockMvc
+        .perform(
+            post("/api/pickup-tokens/verify")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"qrTokenHash\": \"   \"}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("QR token hash is required"));
+  }
+
+  /* --------------------------------
+  VERIFY TOKEN – TOKEN NOT FOUND
+  -------------------------------- */
+  @Test
+  void verifyToken_tokenNotFound() throws Exception {
+
+    Mockito.when(pickupTokenRepository.findByQrTokenHash("INVALID"))
+        .thenReturn(java.util.Optional.empty());
+
+    mockMvc
+        .perform(
+            post("/api/pickup-tokens/verify")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"qrTokenHash\": \"INVALID\"}"))
+        .andExpect(status().isInternalServerError())
+        .andExpect(jsonPath("$.error").value("Failed to verify token: Invalid pickup token"));
+  }
+
+  /* --------------------------------
+  VERIFY TOKEN – TOKEN EXPIRED
+  -------------------------------- */
+  @Test
+  void verifyToken_tokenExpired() throws Exception {
+
+    PickupToken token = new PickupToken();
+    token.setQrTokenHash("EXPIRED-TOKEN");
+    token.setExpiresAt(LocalDateTime.now().minusDays(1));
+
+    Mockito.when(pickupTokenRepository.findByQrTokenHash("EXPIRED-TOKEN"))
+        .thenReturn(java.util.Optional.of(token));
+
+    mockMvc
+        .perform(
+            post("/api/pickup-tokens/verify")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"qrTokenHash\": \"EXPIRED-TOKEN\"}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("Pickup token has expired"));
+  }
+
+  /* --------------------------------
+  VERIFY TOKEN – TOKEN ALREADY USED
+  -------------------------------- */
+  @Test
+  void verifyToken_tokenAlreadyUsed() throws Exception {
+
+    PickupToken token = new PickupToken();
+    token.setQrTokenHash("USED-TOKEN");
+    token.setExpiresAt(LocalDateTime.now().plusDays(1));
+    token.setUsedAt(LocalDateTime.now().minusHours(1));
+
+    Mockito.when(pickupTokenRepository.findByQrTokenHash("USED-TOKEN"))
+        .thenReturn(java.util.Optional.of(token));
+
+    mockMvc
+        .perform(
+            post("/api/pickup-tokens/verify")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"qrTokenHash\": \"USED-TOKEN\"}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("Pickup token has already been used"));
+  }
+
+  /* --------------------------------
+  VERIFY TOKEN – SUCCESS
+  -------------------------------- */
+  @Test
+  void verifyToken_success() throws Exception {
+
+    PickupToken token = new PickupToken();
+    token.setQrTokenHash("VALID-TOKEN");
+    token.setOrderId(100L);
+    token.setExpiresAt(LocalDateTime.now().plusDays(1));
+    token.setUsedAt(null);
+
+    Order completedOrder = new Order();
+    completedOrder.setOrderId(100L);
+    completedOrder.setStatus("COMPLETED");
+
+    Mockito.when(pickupTokenRepository.findByQrTokenHash("VALID-TOKEN"))
+        .thenReturn(java.util.Optional.of(token));
+
+    Mockito.when(orderService.completeOrder(100L)).thenReturn(completedOrder);
+
+    mockMvc
+        .perform(
+            post("/api/pickup-tokens/verify")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"qrTokenHash\": \"VALID-TOKEN\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.message").value("Order completed successfully"))
+        .andExpect(jsonPath("$.orderId").value(100L))
+        .andExpect(jsonPath("$.status").value("COMPLETED"));
+  }
+
+  /* --------------------------------
+  VERIFY TOKEN – SERVICE ERROR
+  -------------------------------- */
+  @Test
+  void verifyToken_serviceError() throws Exception {
+
+    PickupToken token = new PickupToken();
+    token.setQrTokenHash("ERROR-TOKEN");
+    token.setOrderId(200L);
+    token.setExpiresAt(LocalDateTime.now().plusDays(1));
+    token.setUsedAt(null);
+
+    Mockito.when(pickupTokenRepository.findByQrTokenHash("ERROR-TOKEN"))
+        .thenReturn(java.util.Optional.of(token));
+
+    Mockito.when(orderService.completeOrder(200L))
+        .thenThrow(new RuntimeException("Order completion failed"));
+
+    mockMvc
+        .perform(
+            post("/api/pickup-tokens/verify")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"qrTokenHash\": \"ERROR-TOKEN\"}"))
+        .andExpect(status().isInternalServerError())
+        .andExpect(jsonPath("$.error").value("Failed to verify token: Order completion failed"));
+  }
 }
 
