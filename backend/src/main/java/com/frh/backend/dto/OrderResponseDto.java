@@ -61,5 +61,6 @@ public class OrderResponseDto {
   public static class ListingDto {
     private Long listingId;
     private String title;
+    private Boolean hasReviewed;
   }
 }

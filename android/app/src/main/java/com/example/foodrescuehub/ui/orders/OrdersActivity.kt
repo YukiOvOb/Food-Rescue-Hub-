@@ -32,7 +32,10 @@ class OrdersActivity : AppCompatActivity() {
     }
 
     private fun setupToolbar() {
-        // Toolbar setup without back button
+        binding.btnRefresh.setOnClickListener {
+            loadOrders()
+            Toast.makeText(this, "Refreshing orders...", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun setupBottomNavigation() {

@@ -44,7 +44,7 @@ class ReviewActivity : AppCompatActivity() {
     }
 
     private fun setupToolbar() {
-        binding.toolbar.setNavigationOnClickListener { finish() }
+        binding.btnBack.setOnClickListener { finish() }
     }
 
     private fun setupContent() {
@@ -95,10 +95,16 @@ class ReviewActivity : AppCompatActivity() {
                     ).show()
                     finish()
                 } else {
+                    val errorMsg = when (response.code()) {
+                        401 -> "Please login as a consumer to submit reviews"
+                        403 -> "You don't have permission to review this item"
+                        409 -> "You have already reviewed this item"
+                        else -> getString(R.string.review_submit_failed_with_code, response.code())
+                    }
                     Toast.makeText(
                         this@ReviewActivity,
-                        getString(R.string.review_submit_failed_with_code, response.code()),
-                        Toast.LENGTH_SHORT
+                        errorMsg,
+                        Toast.LENGTH_LONG
                     ).show()
                     setSubmitting(false)
                 }

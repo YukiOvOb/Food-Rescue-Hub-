@@ -3,12 +3,17 @@ package com.frh.backend.mapper;
 import com.frh.backend.dto.OrderResponseDto;
 import com.frh.backend.model.Order;
 import com.frh.backend.model.OrderItem;
+import com.frh.backend.repository.ListingReviewRepository;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class OrderResponseMapper {
+
+  private final ListingReviewRepository listingReviewRepository;
 
   public List<OrderResponseDto> toOrderResponseList(List<Order> orders) {
     if (orders == null) {
@@ -54,9 +59,11 @@ public class OrderResponseMapper {
     }
 
     if (order.getOrderItems() != null) {
+      Long orderId = order.getOrderId();
+      Long consumerId = order.getConsumer() != null ? order.getConsumer().getConsumerId() : null;
       List<OrderResponseDto.OrderItemDto> itemDtos =
           order.getOrderItems().stream()
-              .map(this::toOrderItemResponse)
+              .map(item -> toOrderItemResponse(item, orderId, consumerId))
               .collect(Collectors.toList());
       dto.setOrderItems(itemDtos);
     }
@@ -69,7 +76,7 @@ public class OrderResponseMapper {
     return dto;
   }
 
-  private OrderResponseDto.OrderItemDto toOrderItemResponse(OrderItem item) {
+  private OrderResponseDto.OrderItemDto toOrderItemResponse(OrderItem item, Long orderId, Long consumerId) {
     OrderResponseDto.OrderItemDto itemDto = new OrderResponseDto.OrderItemDto();
     if (item == null) {
       return itemDto;
@@ -84,6 +91,15 @@ public class OrderResponseMapper {
       OrderResponseDto.ListingDto listingDto = new OrderResponseDto.ListingDto();
       listingDto.setListingId(item.getListing().getListingId());
       listingDto.setTitle(item.getListing().getTitle());
+
+      // Check if this listing has been reviewed
+      boolean hasReviewed = false;
+      if (orderId != null && consumerId != null) {
+        hasReviewed = listingReviewRepository.existsByOrder_OrderIdAndListing_ListingIdAndConsumer_ConsumerId(
+            orderId, item.getListing().getListingId(), consumerId);
+      }
+      listingDto.setHasReviewed(hasReviewed);
+
       itemDto.setListing(listingDto);
     }
 

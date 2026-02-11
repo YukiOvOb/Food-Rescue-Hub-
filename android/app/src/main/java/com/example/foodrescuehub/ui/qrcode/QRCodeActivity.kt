@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Base64
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -11,7 +12,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.foodrescuehub.R
 import com.example.foodrescuehub.data.api.RetrofitClient
-import com.google.android.material.appbar.MaterialToolbar
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -28,7 +28,7 @@ class QRCodeActivity : AppCompatActivity() {
         const val EXTRA_PICKUP_END = "pickup_end"
     }
 
-    private lateinit var toolbar: MaterialToolbar
+    private lateinit var btnBack: ImageButton
     private lateinit var ivQrCode: ImageView
     private lateinit var tvQrCodeText: TextView
     private lateinit var tvStoreName: TextView
@@ -53,7 +53,7 @@ class QRCodeActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
-        toolbar = findViewById(R.id.toolbar)
+        btnBack = findViewById(R.id.btnBack)
         ivQrCode = findViewById(R.id.ivQrCode)
         tvQrCodeText = findViewById(R.id.tvQrCodeText)
         tvStoreName = findViewById(R.id.tvStoreName)
@@ -61,7 +61,7 @@ class QRCodeActivity : AppCompatActivity() {
     }
 
     private fun setupToolbar() {
-        toolbar.setNavigationOnClickListener {
+        btnBack.setOnClickListener {
             finish()
         }
     }

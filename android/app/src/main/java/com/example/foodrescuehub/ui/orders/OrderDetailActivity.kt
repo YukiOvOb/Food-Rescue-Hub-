@@ -141,6 +141,7 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         order.pickupSlotEnd?.let { calculateETA(it) }
         reviewableListings = order.orderItems.orEmpty()
             .mapNotNull { it.listing }
+            .filter { !it.hasReviewed }  // Only include listings that haven't been reviewed
             .distinctBy { it.listingId }
         updateReviewButton(order.status)
 
@@ -418,6 +419,8 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onResume() {
         super.onResume()
         binding.mapView.onResume()
+        // Reload order details to refresh review button state
+        loadOrderDetails()
     }
 
     override fun onPause() {

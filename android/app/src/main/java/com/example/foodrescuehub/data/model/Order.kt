@@ -112,7 +112,10 @@ data class OrderListingInfo(
     val listingId: Long,
 
     @SerializedName("title")
-    val title: String
+    val title: String,
+
+    @SerializedName("hasReviewed")
+    val hasReviewed: Boolean = false
 )
 
 // CreateOrderResponseDto.kt
