@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../services/axiosConfig';
 import authService from '../services/authService';
@@ -100,10 +100,9 @@ const OrdersPage = () => {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      const response = await axios.patch(`/orders/${orderId}/status`, null, {
+      await axios.patch(`/orders/${orderId}/status`, null, {
         params: { status: newStatus }
       });
-      console.log(`Order ${orderId} updated to ${newStatus}`);
       fetchOrders(selectedStoreId);
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to update order status');
@@ -258,6 +257,18 @@ const OrdersPage = () => {
             </div>
             <div>{formatDateTime(order.createdAt)}</div>
             <div className="actions-col">
+              {order.status === 'PAID' && (
+                <button
+                  className="btn-ready"
+                  onClick={() => updateOrderStatus(order.orderId, 'READY')}
+                  title="Mark order as ready for pickup"
+                >
+                  Mark Ready
+                </button>
+              )}
+              {order.status === 'READY' && (
+                <span className="status-text">Waiting for pickup scan</span>
+              )}
               {order.status === 'PENDING' && (
                 <button
                   className="btn-complete"
@@ -270,7 +281,10 @@ const OrdersPage = () => {
               {order.status === 'COMPLETED' && (
                 <span className="status-text">Done</span>
               )}
-              {order.status !== 'PENDING' && order.status !== 'COMPLETED' && (
+              {order.status !== 'PAID' &&
+                order.status !== 'READY' &&
+                order.status !== 'PENDING' &&
+                order.status !== 'COMPLETED' && (
                 <span className="status-text">{order.status}</span>
               )}
             </div>

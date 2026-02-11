@@ -288,27 +288,41 @@ const QRCodeDecoder = () => {
       const allOrders = orderResponses.flatMap((response) => normalizeOrders(response?.data));
       const scannedToken = result.trim();
 
+      const readyOrderMatch = allOrders.find(
+        (order) => order?.status === 'READY' && (order?.pickupToken?.qrTokenHash || order?.pickupTokenHash) === scannedToken
+      );
+
       const pendingOrderMatch = allOrders.find(
         (order) => order?.status === 'PENDING' && (order?.pickupToken?.qrTokenHash || order?.pickupTokenHash) === scannedToken
       );
 
-      if (!pendingOrderMatch) {
+      const pickupReadyOrder = readyOrderMatch || pendingOrderMatch;
+
+      if (!pickupReadyOrder) {
+        const paidOrderMatch = allOrders.find(
+          (order) => order?.status === 'PAID' && (order?.pickupToken?.qrTokenHash || order?.pickupTokenHash) === scannedToken
+        );
+
         const completedOrderMatch = allOrders.find(
           (order) => order?.status === 'COMPLETED' && (order?.pickupToken?.qrTokenHash || order?.pickupTokenHash) === scannedToken
         );
+
+        if (paidOrderMatch) {
+          throw new Error(`Order #${paidOrderMatch.orderId} is paid but not marked READY by supplier yet.`);
+        }
 
         if (completedOrderMatch) {
           throw new Error(`Order #${completedOrderMatch.orderId} is already completed.`);
         }
 
-        throw new Error('No pending order found for this pickup token.');
+        throw new Error('No ready order found for this pickup token.');
       }
 
-      await axios.patch(`/orders/${pendingOrderMatch.orderId}/status`, null, {
+      await axios.patch(`/orders/${pickupReadyOrder.orderId}/status`, null, {
         params: { status: 'COMPLETED' }
       });
 
-      setSuccessMessage(`Order #${pendingOrderMatch.orderId} marked as completed.`);
+      setSuccessMessage(`Order #${pickupReadyOrder.orderId} marked as completed.`);
     } catch (confirmError) {
       setError(confirmError?.response?.data?.message || confirmError.message || 'Failed to confirm order.');
     } finally {

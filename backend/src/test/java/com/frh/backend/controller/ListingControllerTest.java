@@ -6,6 +6,7 @@ import com.frh.backend.dto.ListingDTO;
 import com.frh.backend.repository.ListingRepository;
 import com.frh.backend.repository.StoreRepository;
 import com.frh.backend.service.ListingService;
+import com.frh.backend.service.PhotoStorageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.Test;
@@ -23,13 +24,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +34,6 @@ import java.util.Optional;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -48,8 +44,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest(ListingController.class)
 class ListingControllerTest {
-    private static final String LISTING_UPLOAD_PREFIX = "/uploads/listings/";
-
     @Autowired
     private MockMvc mockMvc;
 
@@ -64,6 +58,9 @@ class ListingControllerTest {
 
     @MockitoBean
     private ListingService listingService;
+
+    @MockitoBean
+    private PhotoStorageService photoStorageService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -537,22 +534,21 @@ class ListingControllerTest {
 
         MultipartFile file = Mockito.mock(MultipartFile.class);
         Mockito.when(file.isEmpty()).thenReturn(false);
-        Mockito.when(file.getOriginalFilename()).thenReturn("fresh.png");
-        Mockito.when(file.getInputStream())
-                .thenReturn(new ByteArrayInputStream("image".getBytes(StandardCharsets.UTF_8)));
+        String uploadedUrl = "https://cdn.example.com/listing_11_abc.png";
 
         Mockito.when(listingRepository.findById(11L)).thenReturn(Optional.of(listing));
+        Mockito.when(photoStorageService.store(11L, file)).thenReturn(uploadedUrl);
         Mockito.when(listingRepository.save(any(Listing.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         ResponseEntity<?> response = listingController.uploadListingPhoto(11L, file);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         String relativeUrl = (String) response.getBody();
-        assertTrue(relativeUrl.startsWith(LISTING_UPLOAD_PREFIX + "listing_11_"));
-        assertTrue(relativeUrl.endsWith(".png"));
+        assertEquals(uploadedUrl, relativeUrl);
 
         ArgumentCaptor<Listing> captor = ArgumentCaptor.forClass(Listing.class);
         verify(listingRepository).save(captor.capture());
+        verify(photoStorageService).store(11L, file);
         Listing saved = captor.getValue();
 
         assertEquals(3, saved.getPhotos().size());
@@ -562,8 +558,6 @@ class ListingControllerTest {
                 .anyMatch(p -> p.getSortOrder() == 2 && "/uploads/listings/old_1.jpg".equals(p.getPhotoUrl())));
         assertTrue(saved.getPhotos().stream()
                 .anyMatch(p -> p.getSortOrder() == 3 && "/uploads/listings/old_2.jpg".equals(p.getPhotoUrl())));
-
-        deleteUploadedFile(relativeUrl);
     }
 
     @Test
@@ -574,21 +568,17 @@ class ListingControllerTest {
 
         MultipartFile file = Mockito.mock(MultipartFile.class);
         Mockito.when(file.isEmpty()).thenReturn(false);
-        Mockito.when(file.getOriginalFilename()).thenReturn("noext");
-        Mockito.when(file.getInputStream())
-                .thenReturn(new ByteArrayInputStream("image".getBytes(StandardCharsets.UTF_8)));
+        String uploadedUrl = "https://cdn.example.com/listing_12_noext";
 
         Mockito.when(listingRepository.findById(12L)).thenReturn(Optional.of(listing));
+        Mockito.when(photoStorageService.store(12L, file)).thenReturn(uploadedUrl);
         Mockito.when(listingRepository.save(any(Listing.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         ResponseEntity<?> response = listingController.uploadListingPhoto(12L, file);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        String relativeUrl = (String) response.getBody();
-        String filename = relativeUrl.substring(LISTING_UPLOAD_PREFIX.length());
-        assertFalse(filename.contains("."));
-
-        deleteUploadedFile(relativeUrl);
+        assertEquals(uploadedUrl, response.getBody());
+        verify(photoStorageService).store(12L, file);
     }
 
     @Test
@@ -599,21 +589,17 @@ class ListingControllerTest {
 
         MultipartFile file = Mockito.mock(MultipartFile.class);
         Mockito.when(file.isEmpty()).thenReturn(false);
-        Mockito.when(file.getOriginalFilename()).thenReturn(null);
-        Mockito.when(file.getInputStream())
-                .thenReturn(new ByteArrayInputStream("image".getBytes(StandardCharsets.UTF_8)));
+        String uploadedUrl = "https://cdn.example.com/listing_13";
 
         Mockito.when(listingRepository.findById(13L)).thenReturn(Optional.of(listing));
+        Mockito.when(photoStorageService.store(13L, file)).thenReturn(uploadedUrl);
         Mockito.when(listingRepository.save(any(Listing.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         ResponseEntity<?> response = listingController.uploadListingPhoto(13L, file);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        String relativeUrl = (String) response.getBody();
-        String filename = relativeUrl.substring(LISTING_UPLOAD_PREFIX.length());
-        assertFalse(filename.contains("."));
-
-        deleteUploadedFile(relativeUrl);
+        assertEquals(uploadedUrl, response.getBody());
+        verify(photoStorageService).store(13L, file);
     }
 
     @Test
@@ -624,8 +610,7 @@ class ListingControllerTest {
 
         MultipartFile file = Mockito.mock(MultipartFile.class);
         Mockito.when(file.isEmpty()).thenReturn(false);
-        Mockito.when(file.getOriginalFilename()).thenReturn("failed.jpg");
-        Mockito.when(file.getInputStream()).thenThrow(new IOException("disk down"));
+        Mockito.when(photoStorageService.store(14L, file)).thenThrow(new IOException("storage down"));
 
         Mockito.when(listingRepository.findById(14L)).thenReturn(Optional.of(listing));
 
@@ -635,12 +620,66 @@ class ListingControllerTest {
         assertEquals("Failed to store photo", response.getBody());
     }
 
-    private static void deleteUploadedFile(String relativeUrl) throws IOException {
-        if (relativeUrl == null || !relativeUrl.startsWith(LISTING_UPLOAD_PREFIX)) {
-            return;
-        }
-        String filename = relativeUrl.substring(LISTING_UPLOAD_PREFIX.length());
-        Path filePath = Paths.get("uploads", "listings", filename).toAbsolutePath();
-        Files.deleteIfExists(filePath);
+    @SuppressWarnings("unchecked")
+    private List<String> invokeValidateListing(Listing listing) throws Exception {
+        Method validateListingMethod = ListingController.class.getDeclaredMethod("validateListing", Listing.class);
+        validateListingMethod.setAccessible(true);
+        return (List<String>) validateListingMethod.invoke(listingController, listing);
+    }
+
+    @Test
+    void validateListing_validInput_returnsNoErrors() throws Exception {
+        Listing listing = validListing();
+
+        List<String> errors = invokeValidateListing(listing);
+
+        assertTrue(errors.isEmpty());
+    }
+
+    @Test
+    void validateListing_missingRequiredFields_returnsRequiredFieldErrors() throws Exception {
+        Listing listing = validListing();
+        listing.setTitle(null);
+        listing.setOriginalPrice(null);
+        listing.setRescuePrice(null);
+        listing.setPickupStart(null);
+        listing.setPickupEnd(null);
+        listing.setExpiryAt(null);
+
+        List<String> errors = invokeValidateListing(listing);
+
+        assertTrue(errors.contains("Title is required"));
+        assertTrue(errors.contains("Original price is required"));
+        assertTrue(errors.contains("Rescue price is required"));
+        assertTrue(errors.contains("Pickup start time is required"));
+        assertTrue(errors.contains("Pickup end time is required"));
+        assertTrue(errors.contains("Expiry time is required"));
+    }
+
+    @Test
+    void validateListing_blankTitle_hitsTrimBranch() throws Exception {
+        Listing listing = validListing();
+        listing.setTitle("   ");
+
+        List<String> errors = invokeValidateListing(listing);
+
+        assertTrue(errors.contains("Title is required"));
+    }
+
+    @Test
+    void validateListing_invalidTimingAndPricing_returnsRelationshipErrors() throws Exception {
+        Listing listing = validListing();
+        listing.setRescuePrice(BigDecimal.valueOf(10));
+        listing.setOriginalPrice(BigDecimal.valueOf(10));
+        listing.setPickupStart(LocalDateTime.now().minusMinutes(5));
+        listing.setPickupEnd(LocalDateTime.now().minusMinutes(10));
+        listing.setExpiryAt(LocalDateTime.now().minusMinutes(15));
+
+        List<String> errors = invokeValidateListing(listing);
+
+        assertTrue(errors.contains("Rescue price must be lower than original price"));
+        assertTrue(errors.contains("Pickup start time must be in the future"));
+        assertTrue(errors.contains("Pickup end time cannot be before start time"));
+        assertTrue(errors.contains("Expiry time must be after pickup end time"));
     }
 }

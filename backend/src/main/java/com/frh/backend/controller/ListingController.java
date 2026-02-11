@@ -32,6 +32,8 @@ public class ListingController {
 
     @Autowired
     private ListingService listingService;
+
+    @Autowired
     private PhotoStorageService photoStorageService;
 
     // ==========================================
