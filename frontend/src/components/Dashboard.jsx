@@ -162,100 +162,115 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      {/* Header */}
-      <header className="dashboard-header">
-        <div className="header-left">
-          <h1>Supplier Dashboard</h1>
+      {/* Top Navigation Bar */}
+      <nav className="top-nav">
+        <div className="nav-left">
+          <h1 className="nav-title">Supplier Dashboard</h1>
         </div>
-        <div className="header-right">
-          <span className="user-greeting">Welcome, {user.displayName}!</span>
+        <div className="nav-right">
+          <span className="nav-welcome">
+            <span className="welcome-icon">👤</span>
+            Welcome, {user.displayName}!
+          </span>
           <button onClick={() => setConfirmDialog(true)} className="btn-logout">
             Logout
           </button>
         </div>
-      </header>
+      </nav>
 
       {/* Main Content */}
       <div className="dashboard-content">
-        {/* Welcome Section */}
-        <div className="welcome-section">
-          <h2>Welcome back, {user.displayName}!</h2>
-          <div className="user-info">
-            <p><strong>Email:</strong> {user.email}</p>
-            <p><strong>Supplier ID:</strong> {user.userId ?? user.supplierId}</p>
-            <p><strong>Role:</strong> {user.role}</p>
-            {user.businessName && <p><strong>Business:</strong> {user.businessName}</p>}
-            {user.phone && <p><strong>Phone:</strong> {user.phone}</p>}
+        {/* Welcome Card */}
+        <div className="welcome-card">
+          <h2 className="welcome-title">Welcome back, {user.displayName}!</h2>
+          <div className="welcome-info">
+            <div className="info-item">
+              <span className="info-label">Email:</span>
+              <span className="info-value">{user.email}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Supplier ID:</span>
+              <span className="info-value">{user.userId ?? user.supplierId}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Role:</span>
+              <span className="info-value">{user.role}</span>
+            </div>
           </div>
         </div>
 
-        {/* Dashboard Cards */}
-        <div className="dashboard-cards">
-          <div className="card">
-            <div className="card-icon">🏪</div>
-            <h3>Store Management</h3>
-            <p>View and manage your store details</p>
-            <Link to="/stores" className="btn-card" style={{ textDecoration: 'none', textAlign: 'center' }}>
+        {/* Feature Cards Grid */}
+        <div className="feature-cards-grid">
+          <div className="feature-card">
+            <div className="feature-icon">🏪</div>
+            <h3 className="feature-title">Store Management</h3>
+            <p className="feature-description">View and manage your store details</p>
+            <Link to="/stores" className="btn-feature">
               Go to Stores
             </Link>
           </div>
-          <div className="card">
-            <div className="card-icon">📊</div>
-            <h3>Orders</h3>
-            <p>Track and manage orders</p>
-            <button className="btn-card" onClick={goToOrders}>View Orders</button>
+
+          <div className="feature-card">
+            <div className="feature-icon">📦</div>
+            <h3 className="feature-title">Orders</h3>
+            <p className="feature-description">Track and manage orders</p>
+            <button className="btn-feature" onClick={goToOrders}>View Orders</button>
           </div>
-          <div className="card">
-            <div className="card-icon">⚙️</div>
-            <h3>Settings</h3>
-            <p>Manage your account</p>
-            <button className="btn-card">View Settings</button>
+
+          <div className="feature-card">
+            <div className="feature-icon">⚙️</div>
+            <h3 className="feature-title">Settings</h3>
+            <p className="feature-description">Manage your account</p>
+            <button className="btn-feature">View Settings</button>
           </div>
-          <div className="card">
-            <div className="card-icon">📈</div>
-            <h3>Analytics</h3>
-            <p>View performance metrics</p>
-            <button className="btn-card" onClick={goToAnalytics}>View Analytics</button>
+
+          <div className="feature-card">
+            <div className="feature-icon">📊</div>
+            <h3 className="feature-title">Analytics</h3>
+            <p className="feature-description">View performance metrics</p>
+            <button className="btn-feature" onClick={goToAnalytics}>View Analytics</button>
           </div>
-          <div className="card">
-            <div className="card-icon">🧺</div>
-            <h3>Listings</h3>
-            <p>Create and manage rescue listings</p>
-            <button className="btn-card" onClick={goToListings}>View Listing</button>
+
+          <div className="feature-card">
+            <div className="feature-icon">🛒</div>
+            <h3 className="feature-title">Listings</h3>
+            <p className="feature-description">Create and manage rescue listings</p>
+            <button className="btn-feature" onClick={goToListings}>View Listing</button>
           </div>
-          <div className="card">
-            <div className="card-icon">📱</div>
-            <h3>QR Code Detector</h3>
-            <p>Scan and decode pickup tokens</p>
-            <button className="btn-card" onClick={goToQRDecoder}>Scan QR Code</button>
+
+          <div className="feature-card">
+            <div className="feature-icon">📱</div>
+            <h3 className="feature-title">QR Code Detector</h3>
+            <p className="feature-description">Scan and decode pickup tokens</p>
+            <button className="btn-feature" onClick={goToQRDecoder}>Scan QR Code</button>
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="quick-stats">
-          <div className="stat-card">
-            <h4>Total Listings</h4>
-            <p className="stat-value">{statsLoading ? '...' : totalProducts}</p>
+        {/* Statistics Bar */}
+        <div className="stats-bar">
+          <div className="stat-item">
+            <div className="stat-label">TOTAL LISTINGS</div>
+            <div className="stat-value">{statsLoading ? '...' : totalProducts}</div>
           </div>
-          <div className="stat-card">
-            <h4>Pending Orders</h4>
-            <p className="stat-value">{statsLoading ? '...' : pendingOrders}</p>
+
+          <div className="stat-item">
+            <div className="stat-label">PENDING ORDERS</div>
+            <div className="stat-value">{statsLoading ? '...' : pendingOrders}</div>
           </div>
-          <div className="stat-card">
-            <h4>Total Revenue</h4>
-            <p className="stat-value">
-              {statsLoading ? '...' : `$${totalRevenue.toFixed(2)}`}
-            </p>
+
+          <div className="stat-item">
+            <div className="stat-label">TOTAL REVENUE</div>
+            <div className="stat-value">{statsLoading ? '...' : `$${totalRevenue.toFixed(2)}`}</div>
           </div>
-          <div className="stat-card">
-            <h4>CO2 Saved (30d)</h4>
-            <p className="stat-value">
-              {statsLoading ? '...' : `${co2SavedKg.toFixed(2)} kg`}
-            </p>
+
+          <div className="stat-item">
+            <div className="stat-label">CO2 SAVED (KG)</div>
+            <div className="stat-value">{statsLoading ? '...' : `${co2SavedKg.toFixed(2)} kg`}</div>
           </div>
-          <div className="stat-card">
-            <h4>Active Customers</h4>
-            <p className="stat-value">{statsLoading ? '...' : activeCustomers}</p>
+
+          <div className="stat-item">
+            <div className="stat-label">ACTIVE CUSTOMERS</div>
+            <div className="stat-value">{statsLoading ? '...' : activeCustomers}</div>
           </div>
         </div>
       </div>
@@ -264,11 +279,8 @@ const Dashboard = () => {
         isOpen={confirmDialog}
         onClose={() => setConfirmDialog(false)}
         onConfirm={handleLogout}
-        title="Confirm Logout"
-        message="Are you sure you want to logout?"
-        confirmText="Logout"
-        cancelText="Cancel"
-        type="warning"
+        title="确认登出"
+        message="您确定要登出吗？"
       />
     </div>
   );
