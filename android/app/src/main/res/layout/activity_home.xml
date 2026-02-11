@@ -118,173 +118,6 @@
                     app:queryHint="Search stores or mystery boxes" />
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Category chips -->
-            <HorizontalScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:scrollbars="none"
-                android:overScrollMode="never">
-
-                <LinearLayout
-                    android:id="@+id/chipGroupCategories"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <!-- Bakery Category -->
-                    <LinearLayout
-                        android:id="@+id/chipBakery"
-                        android:layout_width="70dp"
-                        android:layout_height="70dp"
-                        android:layout_marginEnd="12dp"
-                        android:background="@drawable/category_chip_background"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:padding="8dp"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="🍞"
-                            android:textSize="28sp"
-                            android:layout_marginBottom="4dp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Bakery"
-                            android:textSize="11sp"
-                            android:textColor="#424242"
-                            android:textAlignment="center"
-                            android:gravity="center"
-                            />
-                    </LinearLayout>
-
-                    <!-- Dessert Category -->
-                    <LinearLayout
-                        android:id="@+id/chipDessert"
-                        android:layout_width="70dp"
-                        android:layout_height="70dp"
-                        android:layout_marginEnd="12dp"
-                        android:background="@drawable/category_chip_background"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:padding="8dp"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="🧁"
-                            android:textSize="28sp"
-                            android:layout_marginBottom="4dp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Dessert"
-                            android:textSize="11sp"
-                            android:textColor="#424242"
-                            android:textAlignment="center"
-                            android:gravity="center" />
-                    </LinearLayout>
-
-                    <!-- Cafe Category -->
-                    <LinearLayout
-                        android:id="@+id/chipCafe"
-                        android:layout_width="70dp"
-                        android:layout_height="70dp"
-                        android:layout_marginEnd="12dp"
-                        android:background="@drawable/category_chip_background"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:padding="8dp"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="☕"
-                            android:textSize="28sp"
-                            android:layout_marginBottom="4dp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Cafe"
-                            android:textSize="11sp"
-                            android:textColor="#424242"
-                            android:textAlignment="center"
-                            android:gravity="center" />
-                    </LinearLayout>
-
-                    <!-- Light Meal Category -->
-                    <LinearLayout
-                        android:id="@+id/chipLightMeal"
-                        android:layout_width="70dp"
-                        android:layout_height="70dp"
-                        android:layout_marginEnd="12dp"
-                        android:background="@drawable/category_chip_background"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:padding="8dp"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="🥗"
-                            android:textSize="28sp"
-                            android:layout_marginBottom="4dp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Light Meal"
-                            android:textSize="10sp"
-                            android:textColor="#424242"
-                            android:textAlignment="center"
-                            android:gravity="center"
-                            android:maxLines="2" />
-                    </LinearLayout>
-
-                    <!-- All Category -->
-                    <LinearLayout
-                        android:id="@+id/chipAll"
-                        android:layout_width="70dp"
-                        android:layout_height="70dp"
-                        android:background="@drawable/category_chip_background"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:padding="8dp"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="🍱"
-                            android:textSize="28sp"
-                            android:layout_marginBottom="4dp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="All"
-                            android:textSize="11sp"
-                            android:textColor="#424242"
-                            android:textAlignment="center"
-                            android:gravity="center" />
-                    </LinearLayout>
-
-                </LinearLayout>
-            </HorizontalScrollView>
-
         </LinearLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -424,6 +257,173 @@
                         android:textSize="14sp" />
                 </LinearLayout>
             </RelativeLayout>
+
+            <!-- Category chips -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:scrollbars="none"
+                android:overScrollMode="never">
+
+                <LinearLayout
+                    android:id="@+id/chipGroupCategories"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <!-- Bakery Category -->
+                    <LinearLayout
+                        android:id="@+id/chipBakery"
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
+                        android:layout_marginEnd="12dp"
+                        android:background="@drawable/category_chip_background"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🍞"
+                            android:textSize="28sp"
+                            android:layout_marginBottom="4dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Bakery"
+                            android:textSize="11sp"
+                            android:textColor="#424242"
+                            android:textAlignment="center"
+                            android:gravity="center" />
+                    </LinearLayout>
+
+                    <!-- Dessert Category -->
+                    <LinearLayout
+                        android:id="@+id/chipDessert"
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
+                        android:layout_marginEnd="12dp"
+                        android:background="@drawable/category_chip_background"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🧁"
+                            android:textSize="28sp"
+                            android:layout_marginBottom="4dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Dessert"
+                            android:textSize="11sp"
+                            android:textColor="#424242"
+                            android:textAlignment="center"
+                            android:gravity="center" />
+                    </LinearLayout>
+
+                    <!-- Cafe Category -->
+                    <LinearLayout
+                        android:id="@+id/chipCafe"
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
+                        android:layout_marginEnd="12dp"
+                        android:background="@drawable/category_chip_background"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="☕"
+                            android:textSize="28sp"
+                            android:layout_marginBottom="4dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Cafe"
+                            android:textSize="11sp"
+                            android:textColor="#424242"
+                            android:textAlignment="center"
+                            android:gravity="center" />
+                    </LinearLayout>
+
+                    <!-- Light Meal Category -->
+                    <LinearLayout
+                        android:id="@+id/chipLightMeal"
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
+                        android:layout_marginEnd="12dp"
+                        android:background="@drawable/category_chip_background"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🥗"
+                            android:textSize="28sp"
+                            android:layout_marginBottom="4dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Light Meal"
+                            android:textSize="10sp"
+                            android:textColor="#424242"
+                            android:textAlignment="center"
+                            android:gravity="center"
+                            android:maxLines="2" />
+                    </LinearLayout>
+
+                    <!-- All Category -->
+                    <LinearLayout
+                        android:id="@+id/chipAll"
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
+                        android:background="@drawable/category_chip_background"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🍱"
+                            android:textSize="28sp"
+                            android:layout_marginBottom="4dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="All"
+                            android:textSize="11sp"
+                            android:textColor="#424242"
+                            android:textAlignment="center"
+                            android:gravity="center" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </HorizontalScrollView>
 
             <!-- Progress bar -->
             <ProgressBar
