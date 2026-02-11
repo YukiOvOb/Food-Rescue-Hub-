@@ -297,9 +297,10 @@ class HomeActivity : AppCompatActivity() {
         val hour = calendar.get(Calendar.HOUR_OF_DAY)
 
         val greeting = when (hour) {
-            in 0..11 -> "Good morning"
-            in 12..16 -> "Good afternoon"
-            else -> "Good evening"
+            in 6..11 -> "Good morning"
+            in 12..17 -> "Good afternoon"
+            in 18..22 -> "Good evening"
+            else -> "Good night"
         }
 
         binding.tvGreeting.text = greeting
