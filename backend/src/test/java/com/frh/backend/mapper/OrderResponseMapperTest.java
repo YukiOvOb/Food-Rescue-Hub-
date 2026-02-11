@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.when;
 
 import com.frh.backend.model.ConsumerProfile;
 import com.frh.backend.model.Listing;
@@ -12,15 +14,36 @@ import com.frh.backend.model.OrderItem;
 import com.frh.backend.model.PickupToken;
 import com.frh.backend.model.Store;
 import com.frh.backend.dto.OrderResponseDto;
+import com.frh.backend.repository.ListingReviewRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class OrderResponseMapperTest {
 
-  private final OrderResponseMapper mapper = new OrderResponseMapper();
+  @Mock
+  private ListingReviewRepository listingReviewRepository;
+
+  private OrderResponseMapper mapper;
+
+  @BeforeEach
+  void setUp() {
+    mapper = new OrderResponseMapper(listingReviewRepository);
+    // Mock the repository to return false by default (no reviews)
+    when(listingReviewRepository.existsByOrder_OrderIdAndListing_ListingIdAndConsumer_ConsumerId(
+            anyLong(), anyLong(), anyLong()))
+        .thenReturn(false);
+  }
 
   @Test
   void toOrderResponseList_nullInput_returnsEmptyList() {

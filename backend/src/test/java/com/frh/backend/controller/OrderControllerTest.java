@@ -9,6 +9,7 @@ import com.frh.backend.model.Order;
 import com.frh.backend.model.PickupToken;
 import com.frh.backend.exception.InsufficientStockException;
 import com.frh.backend.mapper.OrderResponseMapper;
+import com.frh.backend.repository.ListingReviewRepository;
 import com.frh.backend.service.OrderService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -36,6 +37,8 @@ class OrderControllerTest {
   @Autowired private MockMvc mockMvc;
 
   @MockitoBean private OrderService orderService;
+
+  @MockitoBean private ListingReviewRepository listingReviewRepository;
 
   @Autowired private ObjectMapper objectMapper;
 

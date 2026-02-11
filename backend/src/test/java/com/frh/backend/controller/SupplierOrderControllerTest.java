@@ -9,6 +9,7 @@ import com.frh.backend.dto.CreateOrderRequest;
 import com.frh.backend.dto.OrderSummaryDTO;
 import com.frh.backend.dto.RejectOrderRequest;
 import com.frh.backend.mapper.OrderResponseMapper;
+import com.frh.backend.repository.ListingReviewRepository;
 import com.frh.backend.service.OrderService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,8 @@ class SupplierOrderControllerTest {
   @Autowired private MockMvc mockMvc;
 
   @MockitoBean private OrderService orderService;
+
+  @MockitoBean private ListingReviewRepository listingReviewRepository;
 
   @Autowired private ObjectMapper objectMapper;
 

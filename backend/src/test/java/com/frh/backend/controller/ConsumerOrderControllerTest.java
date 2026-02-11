@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.frh.backend.model.ConsumerProfile;
 import com.frh.backend.model.Order;
 import com.frh.backend.mapper.OrderResponseMapper;
+import com.frh.backend.repository.ListingReviewRepository;
 import com.frh.backend.service.ConsumerOrderService;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +29,8 @@ class ConsumerOrderControllerTest {
   @Autowired private MockMvc mockMvc;
 
   @MockitoBean private ConsumerOrderService consumerOrderService;
+
+  @MockitoBean private ListingReviewRepository listingReviewRepository;
 
   /* --------------------------------
   GET ALL ORDERS BY CONSUMER
