@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Disabled state - Gray -->
+    <item android:state_enabled="false">
+        <shape android:shape="rectangle">
+            <solid android:color="#CCCCCC" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+
+    <!-- Enabled state - Green gradient -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="135"
+                android:startColor="#2d6a5a"
+                android:endColor="#5a9e8a"
+                android:type="linear" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+</selector>

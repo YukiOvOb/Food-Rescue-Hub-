@@ -297,7 +297,7 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="@color/white"
-                android:background="@drawable/gradient_green_button"
+                android:background="@drawable/button_green_selector"
                 android:elevation="0dp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
