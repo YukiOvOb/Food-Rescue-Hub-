@@ -63,6 +63,11 @@ class ModelBehaviorTest {
         stats.setCompletedOrders(0);
         stats.calculateAvgOrderValue();
         assertEquals(BigDecimal.ZERO, stats.getAvgOrderValue());
+
+        stats.setCompletedOrders(null);
+        stats.setTotalSpend(new BigDecimal("12.00"));
+        stats.calculateAvgOrderValue();
+        assertEquals(BigDecimal.ZERO, stats.getAvgOrderValue());
     }
 
     @Test
@@ -128,10 +133,13 @@ class ModelBehaviorTest {
             new UserStoreInteraction.UserStoreInteractionId(1L, 2L);
         UserStoreInteraction.UserStoreInteractionId id3 =
             new UserStoreInteraction.UserStoreInteractionId(2L, 3L);
+        UserStoreInteraction.UserStoreInteractionId id4 =
+            new UserStoreInteraction.UserStoreInteractionId(1L, 3L);
 
         assertEquals(id1, id2);
         assertEquals(id1.hashCode(), id2.hashCode());
         assertNotEquals(id1, id3);
+        assertNotEquals(id1, id4);
         assertEquals(id1, id1);
         assertNotEquals(id1, null);
         assertNotEquals(id1, "not-an-id");
@@ -206,6 +214,11 @@ class ModelBehaviorTest {
 
         item.setLineTotal(BigDecimal.ZERO);
         item.setUnitPrice(null);
+        item.calculateTotal();
+        assertEquals(BigDecimal.ZERO, item.getLineTotal());
+
+        item.setUnitPrice(new BigDecimal("3.50"));
+        item.setQuantity(null);
         item.calculateTotal();
         assertEquals(BigDecimal.ZERO, item.getLineTotal());
     }

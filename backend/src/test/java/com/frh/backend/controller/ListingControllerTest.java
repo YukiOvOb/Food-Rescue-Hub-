@@ -279,8 +279,8 @@ class ListingControllerTest {
     @Test
     void updateListing_notFound() throws Exception {
 
-        Mockito.when(listingRepository.findById(1L))
-                .thenReturn(Optional.empty());
+        Mockito.when(listingRepository.existsById(1L))
+                .thenReturn(false);
 
         mockMvc.perform(put("/api/supplier/listings/{id}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -293,20 +293,18 @@ class ListingControllerTest {
        ----------------------------- */
     @Test
     void updateListing_success() throws Exception {
+        Mockito.when(listingRepository.existsById(1L))
+                .thenReturn(true);
 
-        Listing existing = validListing();
-        existing.setListingId(1L);
-
-        Mockito.when(listingRepository.findById(1L))
-                .thenReturn(Optional.of(existing));
-
-        Mockito.when(listingRepository.save(Mockito.any()))
-                .thenReturn(existing);
+        Mockito.when(listingService.updateListing(Mockito.eq(1L), Mockito.any(ListingDTO.class)))
+                .thenReturn(validListingDto());
 
         mockMvc.perform(put("/api/supplier/listings/{id}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validListing())))
                 .andExpect(status().isOk());
+
+        Mockito.verify(listingService).updateListing(Mockito.eq(1L), Mockito.any(ListingDTO.class));
     }
 
     /* -----------------------------
@@ -314,21 +312,20 @@ class ListingControllerTest {
        ----------------------------- */
     @Test
     void updateListing_validationError() throws Exception {
-
-        Listing existing = validListing();
-        existing.setListingId(1L);
-
         Listing invalid = validListing();
         invalid.setRescuePrice(BigDecimal.valueOf(20));
 
-        Mockito.when(listingRepository.findById(1L))
-                .thenReturn(Optional.of(existing));
+        Mockito.when(listingRepository.existsById(1L))
+                .thenReturn(true);
 
         mockMvc.perform(put("/api/supplier/listings/{id}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalid)))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string(containsString("Rescue price must be lower than original price")));
+
+        Mockito.verify(listingService, Mockito.never())
+                .updateListing(Mockito.anyLong(), Mockito.any(ListingDTO.class));
     }
 
     /* -----------------------------

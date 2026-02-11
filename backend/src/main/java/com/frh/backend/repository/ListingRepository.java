@@ -1,6 +1,7 @@
 package com.frh.backend.repository;
 
 import com.frh.backend.Model.Listing;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,6 +15,13 @@ import java.util.List;
 public interface ListingRepository extends JpaRepository<Listing, Long> {
 
     // Find all active listings
+    @EntityGraph(attributePaths = {
+            "store",
+            "store.supplierProfile",
+            "store.supplierProfile.storeType",
+            "inventory",
+            "photos"
+    })
     List<Listing> findByStatus(String status);
 
     // Find listings by supplier (through store relationship)
@@ -24,12 +32,10 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
     List<Listing> findByStore_SupplierProfile_SupplierId(@Param("supplierId") Long supplierId);
 
     // Find active listings with available inventory
-    @Query("SELECT l FROM Listing l " +
+    @Query("SELECT DISTINCT l FROM Listing l " +
             "JOIN FETCH l.store s " +
             "JOIN FETCH l.inventory i " +
             "LEFT JOIN FETCH l.photos " +
-            "LEFT JOIN FETCH l.listingFoodCategories lfc " +
-            "LEFT JOIN FETCH lfc.category " +
             "LEFT JOIN FETCH s.supplierProfile sp " +
             "LEFT JOIN FETCH sp.storeType " +
             "WHERE l.status = 'ACTIVE' AND i.qtyAvailable > 0 " +
@@ -37,12 +43,10 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
     List<Listing> findAllActiveListingsWithDetails();
 
     // Find nearby listings based on coordinates and radius (in km)
-    @Query("SELECT l FROM Listing l " +
+    @Query("SELECT DISTINCT l FROM Listing l " +
             "JOIN FETCH l.store s " +
             "JOIN FETCH l.inventory i " +
             "LEFT JOIN FETCH l.photos " +
-            "LEFT JOIN FETCH l.listingFoodCategories lfc " +
-            "LEFT JOIN FETCH lfc.category " +
             "LEFT JOIN FETCH s.supplierProfile sp " +
             "LEFT JOIN FETCH sp.storeType " +
             "WHERE l.status = 'ACTIVE' AND i.qtyAvailable > 0 " +

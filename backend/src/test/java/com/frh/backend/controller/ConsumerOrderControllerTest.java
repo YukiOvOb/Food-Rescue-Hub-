@@ -2,6 +2,7 @@ package com.frh.backend.controller;
 
 import com.frh.backend.Model.Order;
 import com.frh.backend.Model.ConsumerProfile;
+import com.frh.backend.mapper.OrderResponseMapper;
 import com.frh.backend.service.ConsumerOrderService;
 
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser(roles = {"CONSUMER", "SUPPLIER", "ADMIN"})
 @AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest(ConsumerOrderController.class)
+@Import(OrderResponseMapper.class)
 class ConsumerOrderControllerTest {
 
     @Autowired

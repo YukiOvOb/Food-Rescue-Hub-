@@ -1,6 +1,8 @@
 package com.frh.backend.controller;
 
 import com.frh.backend.Model.Order;
+import com.frh.backend.dto.OrderResponseDto;
+import com.frh.backend.mapper.OrderResponseMapper;
 import com.frh.backend.service.ConsumerOrderService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,19 +20,22 @@ public class ConsumerOrderController {
     @Autowired
     private ConsumerOrderService consumerOrderService;
 
+    @Autowired
+    private OrderResponseMapper orderResponseMapper;
+
     /**
      * Get all orders for a specific consumer
      * @return list of orders for the consumer
      */
     @GetMapping
-    public ResponseEntity<List<Order>> getOrdersByConsumerId(HttpSession session) {
+    public ResponseEntity<List<OrderResponseDto>> getOrdersByConsumerId(HttpSession session) {
         Long consumerId = getSessionConsumerId(session);
         if (consumerId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         List<Order> orders = consumerOrderService.getOrdersByConsumerId(consumerId);
-        return ResponseEntity.ok(orders);
+        return ResponseEntity.ok(orderResponseMapper.toOrderResponseList(orders));
     }
 
     /**
@@ -39,7 +44,7 @@ public class ConsumerOrderController {
      * @return the order
      */
     @GetMapping("/order/{orderId}")
-    public ResponseEntity<Order> getOrderById(
+    public ResponseEntity<OrderResponseDto> getOrderById(
             HttpSession session,
             @PathVariable Long orderId) {
         Long consumerId = getSessionConsumerId(session);
@@ -55,7 +60,7 @@ public class ConsumerOrderController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        return ResponseEntity.ok(order);
+        return ResponseEntity.ok(orderResponseMapper.toOrderResponse(order));
     }
 
     /**
@@ -64,7 +69,7 @@ public class ConsumerOrderController {
      * @return list of orders
      */
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<Order>> getOrdersByConsumerIdAndStatus(
+    public ResponseEntity<List<OrderResponseDto>> getOrdersByConsumerIdAndStatus(
             HttpSession session,
             @PathVariable String status) {
         Long consumerId = getSessionConsumerId(session);
@@ -73,7 +78,7 @@ public class ConsumerOrderController {
         }
 
         List<Order> orders = consumerOrderService.getOrdersByConsumerIdAndStatus(consumerId, status);
-        return ResponseEntity.ok(orders);
+        return ResponseEntity.ok(orderResponseMapper.toOrderResponseList(orders));
     }
 
     /**
@@ -83,7 +88,7 @@ public class ConsumerOrderController {
      * @return the updated order
      */
     @PatchMapping("/order/{orderId}/status")
-    public ResponseEntity<Order> updateOrderStatus(
+    public ResponseEntity<OrderResponseDto> updateOrderStatus(
             HttpSession session,
             @PathVariable Long orderId,
             @RequestParam String status) {
@@ -104,7 +109,7 @@ public class ConsumerOrderController {
             }
 
             Order updatedOrder = consumerOrderService.updateOrderStatus(orderId, status);
-            return ResponseEntity.ok(updatedOrder);
+            return ResponseEntity.ok(orderResponseMapper.toOrderResponse(updatedOrder));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }

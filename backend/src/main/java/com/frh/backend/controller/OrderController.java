@@ -5,6 +5,7 @@ import com.frh.backend.service.OrderService;
 import com.frh.backend.dto.CreateOrderResponseDto;
 import com.frh.backend.dto.ErrorResponse;
 import com.frh.backend.exception.InsufficientStockException;
+import com.frh.backend.mapper.OrderResponseMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,6 +27,7 @@ public class OrderController {
 
     @Autowired
     private final OrderService orderService;
+    private final OrderResponseMapper orderResponseMapper;
 
     /**
      * Create a new order
@@ -77,7 +79,7 @@ public class OrderController {
             Order order = orderService.getOrderById(orderId)
                 .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
                     HttpStatus.NOT_FOUND, "Order not found with id: " + orderId));
-            return ResponseEntity.ok(order);
+            return ResponseEntity.ok(orderResponseMapper.toOrderResponse(order));
         } catch (org.springframework.web.server.ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
@@ -96,7 +98,7 @@ public class OrderController {
     public ResponseEntity<?> getAllOrders() {
         try {
             List<Order> orders = orderService.getAllOrders();
-            return ResponseEntity.ok(orders);
+            return ResponseEntity.ok(orderResponseMapper.toOrderResponseList(orders));
         } catch (org.springframework.web.server.ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
@@ -127,7 +129,7 @@ public class OrderController {
 
         try {
             List<Order> orders = orderService.getOrdersByConsumer(consumerId);
-            return ResponseEntity.ok(orders);
+            return ResponseEntity.ok(orderResponseMapper.toOrderResponseList(orders));
         } catch (org.springframework.web.server.ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
@@ -146,7 +148,7 @@ public class OrderController {
     public ResponseEntity<?> getOrdersByStore(@PathVariable Long storeId) {
         try {
             List<Order> orders = orderService.getOrdersByStore(storeId);
-            return ResponseEntity.ok(orders);
+            return ResponseEntity.ok(orderResponseMapper.toOrderResponseList(orders));
         } catch (org.springframework.web.server.ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
@@ -165,7 +167,7 @@ public class OrderController {
     public ResponseEntity<?> getOrdersByStatus(@PathVariable String status) {
         try {
             List<Order> orders = orderService.getOrdersByStatus(status);
-            return ResponseEntity.ok(orders);
+            return ResponseEntity.ok(orderResponseMapper.toOrderResponseList(orders));
         } catch (org.springframework.web.server.ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
@@ -186,7 +188,7 @@ public class OrderController {
             @PathVariable String status) {
         try {
             List<Order> orders = orderService.getOrdersByStoreAndStatus(storeId, status);
-            return ResponseEntity.ok(orders);
+            return ResponseEntity.ok(orderResponseMapper.toOrderResponseList(orders));
         } catch (org.springframework.web.server.ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
@@ -209,7 +211,7 @@ public class OrderController {
         try {
             Order updatedOrder = orderService.updateOrder(orderId, orderDetails);
             log.info("Order updated successfully with ID: {}", orderId);
-            return ResponseEntity.ok(updatedOrder);
+            return ResponseEntity.ok(orderResponseMapper.toOrderResponse(updatedOrder));
         } catch (org.springframework.web.server.ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
@@ -232,7 +234,7 @@ public class OrderController {
         try {
             Order updatedOrder = orderService.updateOrderStatus(orderId, status);
             log.info("Order status updated to {} for order ID: {}", status, orderId);
-            return ResponseEntity.ok(updatedOrder);
+            return ResponseEntity.ok(orderResponseMapper.toOrderResponse(updatedOrder));
         } catch (org.springframework.web.server.ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
@@ -255,7 +257,7 @@ public class OrderController {
         try {
             Order cancelledOrder = orderService.cancelOrder(orderId, cancelReason);
             log.info("Order cancelled with ID: {}", orderId);
-            return ResponseEntity.ok(cancelledOrder);
+            return ResponseEntity.ok(orderResponseMapper.toOrderResponse(cancelledOrder));
         } catch (org.springframework.web.server.ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                 .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
@@ -286,5 +288,4 @@ public class OrderController {
         }
     }
 
-    
 }

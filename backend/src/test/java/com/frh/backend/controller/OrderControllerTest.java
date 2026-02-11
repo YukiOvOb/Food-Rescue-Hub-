@@ -3,6 +3,7 @@ package com.frh.backend.controller;
 import com.frh.backend.Model.Order;
 import com.frh.backend.Model.PickupToken;
 import com.frh.backend.exception.InsufficientStockException;
+import com.frh.backend.mapper.OrderResponseMapper;
 import com.frh.backend.service.OrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -11,6 +12,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -30,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser(roles = {"CONSUMER", "SUPPLIER", "ADMIN"})
 @AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest(OrderController.class)
+@Import(OrderResponseMapper.class)
 class OrderControllerTest {
 
     @Autowired

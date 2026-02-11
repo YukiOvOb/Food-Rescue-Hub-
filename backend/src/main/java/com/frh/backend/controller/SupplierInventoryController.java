@@ -2,6 +2,7 @@ package com.frh.backend.controller;
 
 import com.frh.backend.Model.Inventory;
 import com.frh.backend.dto.InventoryAdjustRequest;
+import com.frh.backend.dto.InventoryResponseDto;
 import com.frh.backend.service.InventoryService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +21,17 @@ public class SupplierInventoryController {
 
   // Read current stock
   @GetMapping("/{listingId}")
-  public ResponseEntity<Inventory> getStock(@PathVariable Long listingId) {
-    Inventory inv = inventoryService.getInventory(listingId);
-    return ResponseEntity.ok(inv);
+  public ResponseEntity<?> getStock(@PathVariable Long listingId) {
+    try {
+      Inventory inv = inventoryService.getInventory(listingId);
+      return ResponseEntity.ok(toInventoryResponse(inv));
+    } catch (RuntimeException ex) {
+      String message = ex.getMessage() == null ? "" : ex.getMessage().toLowerCase();
+      if (message.contains("not found")) {
+        return ResponseEntity.notFound().build();
+      }
+      return ResponseEntity.status(500).body(java.util.Map.of("error", ex.getMessage()));
+    }
   }
 
   /**
@@ -39,13 +48,30 @@ public class SupplierInventoryController {
 
     try {
       Inventory updated = inventoryService.adjustInventory(listingId, body.getDelta());
-      return ResponseEntity.ok(updated);
+      return ResponseEntity.ok(toInventoryResponse(updated));
     } catch (IllegalArgumentException ex) {
       // "Cannot adjust below zero" - 400
       return ResponseEntity.badRequest().body(java.util.Map.of("error", ex.getMessage()));
     } catch (Exception ex) {
       return ResponseEntity.status(500).body(java.util.Map.of("error", ex.getMessage()));
     }
+  }
+
+  private InventoryResponseDto toInventoryResponse(Inventory inventory) {
+    InventoryResponseDto dto = new InventoryResponseDto();
+    if (inventory == null) {
+      return dto;
+    }
+
+    dto.setInventoryId(inventory.getInventoryId());
+    dto.setQtyAvailable(inventory.getQtyAvailable());
+    dto.setQtyReserved(inventory.getQtyReserved());
+    dto.setLastUpdated(inventory.getLastUpdated());
+    if (inventory.getListing() != null) {
+      dto.setListingId(inventory.getListing().getListingId());
+    }
+
+    return dto;
   }
 }
 

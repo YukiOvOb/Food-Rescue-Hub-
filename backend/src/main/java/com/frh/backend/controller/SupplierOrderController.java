@@ -2,6 +2,7 @@ package com.frh.backend.controller;
 
 import com.frh.backend.Model.Order;
 import com.frh.backend.dto.*;
+import com.frh.backend.mapper.OrderResponseMapper;
 import com.frh.backend.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,9 @@ public class SupplierOrderController {
   @Autowired
   private OrderService orderService;
 
+  @Autowired
+  private OrderResponseMapper orderResponseMapper;
+
   // CONSUMER – place an order
 
   /**
@@ -30,9 +34,9 @@ public class SupplierOrderController {
    * Body: { listingId, consumerId, quantity, pickupSlotStart?, pickupSlotEnd? }
    */
   @PostMapping("/api/consumer/orders")
-  public ResponseEntity<Order> createOrder(@Valid @RequestBody CreateOrderRequest request) {
+  public ResponseEntity<OrderResponseDto> createOrder(@Valid @RequestBody CreateOrderRequest request) {
     Order order = orderService.createOrder(request);
-    return ResponseEntity.status(HttpStatus.CREATED).body(order);
+    return ResponseEntity.status(HttpStatus.CREATED).body(orderResponseMapper.toOrderResponse(order));
   }
 
   // SUPPLIER – view order queue
@@ -58,9 +62,9 @@ public class SupplierOrderController {
    * No body required.
    */
   @PutMapping("/api/supplier/orders/{orderId}/accept")
-  public ResponseEntity<Order> acceptOrder(@PathVariable Long orderId) {
+  public ResponseEntity<OrderResponseDto> acceptOrder(@PathVariable Long orderId) {
     Order updated = orderService.acceptOrder(orderId);
-    return ResponseEntity.ok(updated);
+    return ResponseEntity.ok(orderResponseMapper.toOrderResponse(updated));
   }
 
   // SUPPLIER – reject
@@ -70,12 +74,12 @@ public class SupplierOrderController {
    * Body: { "reason": "Out of stock for this item" }
    */
   @PutMapping("/api/supplier/orders/{orderId}/reject")
-  public ResponseEntity<Order> rejectOrder(
+  public ResponseEntity<OrderResponseDto> rejectOrder(
       @PathVariable Long orderId,
       @Valid @RequestBody RejectOrderRequest body) {
 
     Order updated = orderService.rejectOrder(orderId, body.getReason());
-    return ResponseEntity.ok(updated);
+    return ResponseEntity.ok(orderResponseMapper.toOrderResponse(updated));
   }
 
   // SUPPLIER – cancel an already-accepted order (restores stock)
@@ -85,12 +89,12 @@ public class SupplierOrderController {
    * Body: { "reason": "..." }
    */
   @PutMapping("/api/supplier/orders/{orderId}/cancel")
-  public ResponseEntity<Order> cancelAcceptedOrder(
+  public ResponseEntity<OrderResponseDto> cancelAcceptedOrder(
       @PathVariable Long orderId,
       @Valid @RequestBody RejectOrderRequest body) {
 
     Order updated = orderService.cancelAcceptedOrder(orderId, body.getReason());
-    return ResponseEntity.ok(updated);
+    return ResponseEntity.ok(orderResponseMapper.toOrderResponse(updated));
   }
 }
 

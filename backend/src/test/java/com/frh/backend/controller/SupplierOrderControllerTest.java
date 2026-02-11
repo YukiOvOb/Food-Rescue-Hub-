@@ -4,6 +4,7 @@ import com.frh.backend.Model.Order;
 import com.frh.backend.dto.CreateOrderRequest;
 import com.frh.backend.dto.OrderSummaryDTO;
 import com.frh.backend.dto.RejectOrderRequest;
+import com.frh.backend.mapper.OrderResponseMapper;
 import com.frh.backend.service.OrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -12,6 +13,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -25,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser(roles = {"CONSUMER", "SUPPLIER", "ADMIN"}) //for all the user
 @AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest(SupplierOrderController.class)
+@Import(OrderResponseMapper.class)
 class SupplierOrderControllerTest {
 
     @Autowired

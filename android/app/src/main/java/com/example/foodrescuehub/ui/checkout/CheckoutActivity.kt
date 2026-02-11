@@ -5,12 +5,16 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.example.foodrescuehub.databinding.ActivityCheckoutBinding
 import com.example.foodrescuehub.ui.auth.LoginActivity
 import com.example.foodrescuehub.data.repository.AuthManager
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.util.*
 
 /**
@@ -46,25 +50,24 @@ class CheckoutActivity : AppCompatActivity() {
     private fun parsePickupConstraints() {
         val startStr = intent.getStringExtra(EXTRA_PICKUP_START)
         val endStr = intent.getStringExtra(EXTRA_PICKUP_END)
-        
-        val formats = listOf(
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()),
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.getDefault())
-        )
 
-        fun parse(str: String?): Calendar? {
-            if (str == null) return null
-            for (fmt in formats) {
-                try {
-                    val date = fmt.parse(str) ?: continue
-                    return Calendar.getInstance().apply { time = date }
-                } catch (e: Exception) { continue }
-            }
-            return null
+        fun parseIsoDateTime(str: String?): Calendar? {
+            if (str.isNullOrBlank()) return null
+
+            // Support both offset timestamps and plain LocalDateTime strings.
+            val millis = runCatching {
+                OffsetDateTime.parse(str).toInstant().toEpochMilli()
+            }.getOrElse {
+                runCatching {
+                    LocalDateTime.parse(str).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                }.getOrNull()
+            } ?: return null
+
+            return Calendar.getInstance().apply { timeInMillis = millis }
         }
 
-        allowedStartTime = parse(startStr)
-        allowedEndTime = parse(endStr)
+        allowedStartTime = parseIsoDateTime(startStr)
+        allowedEndTime = parseIsoDateTime(endStr)
     }
 
     private fun setupToolbar() {
@@ -89,6 +92,13 @@ class CheckoutActivity : AppCompatActivity() {
     private fun setupClickListeners() {
         binding.btnSelectTime.setOnClickListener { showTimePickerDialog() }
         binding.btnPlaceOrder.setOnClickListener { 
+            val start = viewModel.pickupSlotStart.value
+            val end = viewModel.pickupSlotEnd.value
+            val validationMessage = validatePickupWindow(start, end)
+            if (validationMessage != null) {
+                showValidationDialog(validationMessage)
+                return@setOnClickListener
+            }
             binding.btnPlaceOrder.isEnabled = false
             viewModel.startCheckout() 
         }
@@ -99,14 +109,23 @@ class CheckoutActivity : AppCompatActivity() {
         val initial = allowedStartTime?.let { if (it.after(now)) it else now } ?: now
         
         TimePickerDialog(this, { _, hour, minute ->
-            val selected = Calendar.getInstance().apply {
+            val selected = ((allowedStartTime ?: now).clone() as Calendar).apply {
                 set(Calendar.HOUR_OF_DAY, hour)
                 set(Calendar.MINUTE, minute)
                 set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
             }
             
-            val end = (selected.clone() as Calendar).apply { add(Calendar.HOUR_OF_DAY, 1) }
-            allowedEndTime?.let { if (end.after(it)) end.time = it.time }
+            val end = (selected.clone() as Calendar).apply {
+                add(Calendar.HOUR_OF_DAY, 1)
+            }
+
+            val validationMessage = validatePickupWindow(selected, end)
+            if (validationMessage != null) {
+                showValidationDialog(validationMessage)
+                binding.btnPlaceOrder.isEnabled = true
+                return@TimePickerDialog
+            }
 
             viewModel.setPickupSlot(selected, end)
             
@@ -115,6 +134,34 @@ class CheckoutActivity : AppCompatActivity() {
             binding.tvSelectedTime.visibility = View.VISIBLE
             binding.btnPlaceOrder.isEnabled = true
         }, initial.get(Calendar.HOUR_OF_DAY), initial.get(Calendar.MINUTE), false).show()
+    }
+
+    private fun validatePickupWindow(start: Calendar?, end: Calendar?): String? {
+        if (start == null || end == null) {
+            return null
+        }
+        if (!end.after(start)) {
+            return "Pickup end time must be later than start time."
+        }
+        allowedStartTime?.let { allowedStart ->
+            if (start.before(allowedStart)) {
+                return "Selected time is earlier than the supplier pickup window."
+            }
+        }
+        allowedEndTime?.let { allowedEnd ->
+            if (end.after(allowedEnd)) {
+                return "Selected time is later than the supplier pickup window."
+            }
+        }
+        return null
+    }
+
+    private fun showValidationDialog(message: String) {
+        AlertDialog.Builder(this)
+            .setTitle("Invalid pickup time")
+            .setMessage(message)
+            .setPositiveButton("OK", null)
+            .show()
     }
 
     private fun observeViewModel() {

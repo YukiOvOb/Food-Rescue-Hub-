@@ -2,6 +2,7 @@ package com.frh.backend.controller;
 
 import com.frh.backend.Model.Order;
 import com.frh.backend.Model.PickupToken;
+import com.frh.backend.dto.PickupTokenResponseDto;
 import com.frh.backend.repository.OrderRepository;
 import com.frh.backend.repository.PickupTokenRepository;
 import com.frh.backend.util.QRCodeGenerator;
@@ -34,10 +35,16 @@ public class PickupTokenController {
     }
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<PickupToken> getPickupToken(@PathVariable Long orderId) {
-        return pickupTokenRepository.findByOrderId(orderId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<?> getPickupToken(@PathVariable Long orderId) {
+        try {
+            return pickupTokenRepository.findByOrderId(orderId)
+                    .map(token -> ResponseEntity.ok(toResponse(token)))
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Failed to fetch pickup token: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
     }
     
 // http://172.26.235.205:8081/api/pickup-tokens/1/generate-qrcode
@@ -109,5 +116,19 @@ public class PickupTokenController {
             error.put("error", "Failed to decode QR code: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
+    }
+
+    private PickupTokenResponseDto toResponse(PickupToken token) {
+        PickupTokenResponseDto dto = new PickupTokenResponseDto();
+        if (token == null) {
+            return dto;
+        }
+
+        dto.setOrderId(token.getOrderId());
+        dto.setQrTokenHash(token.getQrTokenHash());
+        dto.setIssuedAt(token.getIssuedAt());
+        dto.setExpiresAt(token.getExpiresAt());
+        dto.setUsedAt(token.getUsedAt());
+        return dto;
     }
 }

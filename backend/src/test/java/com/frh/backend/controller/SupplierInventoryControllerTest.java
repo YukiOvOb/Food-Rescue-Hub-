@@ -1,6 +1,7 @@
 package com.frh.backend.controller;
 
 import com.frh.backend.Model.Inventory;
+import com.frh.backend.Model.Listing;
 import com.frh.backend.dto.InventoryAdjustRequest;
 import com.frh.backend.service.InventoryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,6 +48,35 @@ class SupplierInventoryControllerTest {
         mockMvc.perform(get("/api/supplier/inventory/{listingId}", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.qtyAvailable").value(10));
+    }
+
+    @Test
+    void getStock_success_withListingId() throws Exception {
+
+        Listing listing = new Listing();
+        listing.setListingId(42L);
+
+        Inventory inventory = new Inventory();
+        inventory.setQtyAvailable(8);
+        inventory.setListing(listing);
+
+        Mockito.when(inventoryService.getInventory(42L))
+                .thenReturn(inventory);
+
+        mockMvc.perform(get("/api/supplier/inventory/{listingId}", 42L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.qtyAvailable").value(8))
+                .andExpect(jsonPath("$.listingId").value(42));
+    }
+
+    @Test
+    void getStock_nullInventory_returnsDefaultResponse() throws Exception {
+
+        Mockito.when(inventoryService.getInventory(1L))
+                .thenReturn(null);
+
+        mockMvc.perform(get("/api/supplier/inventory/{listingId}", 1L))
+                .andExpect(status().isOk());
     }
 
     /* --------------------------------
