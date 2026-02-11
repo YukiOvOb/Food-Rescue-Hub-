@@ -228,34 +228,17 @@
                     android:textSize="20sp"
                     android:textStyle="bold" />
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                <ImageButton
+                    android:id="@+id/btnSortFilter"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <ImageButton
-                        android:id="@+id/btnSortFilter"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:layout_marginEnd="12dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Sort and Filter"
-                        android:padding="6dp"
-                        android:src="@android:drawable/ic_menu_sort_by_size"
-                        app:tint="#9E9E9E" />
-
-                    <TextView
-                        android:id="@+id/tvSeeAll"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="See All"
-                        android:textStyle="bold"
-                        android:textColor="#8BC34A"
-                        android:textSize="14sp" />
-                </LinearLayout>
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Sort and Filter"
+                    android:padding="6dp"
+                    android:src="@android:drawable/ic_menu_sort_by_size"
+                    app:tint="#9E9E9E" />
             </RelativeLayout>
 
             <!-- Category chips -->
