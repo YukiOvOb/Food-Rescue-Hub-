@@ -6,6 +6,7 @@ import com.frh.backend.dto.ListingDTO;
 import com.frh.backend.repository.ListingRepository;
 import com.frh.backend.repository.StoreRepository;
 import com.frh.backend.service.ListingService;
+import com.frh.backend.service.PhotoStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,17 +18,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 
 @RestController
 // changed to this route to avoid conflict with ConsumerListingController 
 @RequestMapping("/api/supplier/listings")
 public class ListingController {
-
-    private static final Path LISTING_UPLOAD_DIR = Paths.get("uploads", "listings").toAbsolutePath();
 
     @Autowired
     private ListingRepository listingRepository;
@@ -37,6 +32,7 @@ public class ListingController {
 
     @Autowired
     private ListingService listingService;
+    private PhotoStorageService photoStorageService;
 
     // ==========================================
     // CREATE
@@ -101,19 +97,7 @@ public class ListingController {
         }
 
         try {
-            Files.createDirectories(LISTING_UPLOAD_DIR);
-
-            String originalName = file.getOriginalFilename();
-            String ext = "";
-            if (originalName != null && originalName.contains(".")) {
-                ext = originalName.substring(originalName.lastIndexOf('.'));
-            }
-
-            String filename = "listing_" + id + "_" + System.currentTimeMillis() + ext;
-            Path target = LISTING_UPLOAD_DIR.resolve(filename);
-            Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
-
-            String relativeUrl = "/uploads/listings/" + filename;
+            String photoUrl = photoStorageService.store(id, file);
 
             Listing listing = listingOpt.get();
 
@@ -122,13 +106,13 @@ public class ListingController {
 
             ListingPhoto photo = new ListingPhoto();
             photo.setListing(listing);
-            photo.setPhotoUrl(relativeUrl);
+            photo.setPhotoUrl(photoUrl);
             photo.setSortOrder(1);
 
             listing.getPhotos().add(photo);
             listingRepository.save(listing);
 
-            return ResponseEntity.ok(relativeUrl);
+            return ResponseEntity.ok(photoUrl);
         } catch (IOException ex) {
             ex.printStackTrace();
             return ResponseEntity.status(500).body("Failed to store photo");
