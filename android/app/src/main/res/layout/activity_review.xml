@@ -10,11 +10,12 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        android:elevation="4dp"
+        android:background="@color/white"
+        android:elevation="0dp"
         app:navigationIcon="@drawable/ic_arrow_back"
+        app:navigationIconTint="#1A1A1A"
         app:title="@string/review_title"
-        app:titleTextColor="@android:color/white" />
+        app:titleTextColor="#1A1A1A" />
 
     <ScrollView
         android:layout_width="match_parent"
@@ -30,55 +31,84 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
+                app:cardCornerRadius="24dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="@color/white">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="20dp">
+                    android:padding="24dp">
 
-                    <TextView
-                        android:id="@+id/tvListingName"
+                    <!-- Header with emoji -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/review_listing_fallback"
-                        android:textColor="?android:attr/textColorPrimary"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="8dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⭐"
+                            android:textSize="28sp"
+                            android:layout_marginEnd="12dp" />
+
+                        <TextView
+                            android:id="@+id/tvListingName"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/review_listing_fallback"
+                            android:textColor="#1A1A1A"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="24dp"
                         android:text="@string/review_subtitle"
-                        android:textColor="?android:attr/textColorSecondary"
+                        android:textColor="#999999"
                         android:textSize="14sp" />
 
+                    <!-- Rating Section -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp"
                         android:text="@string/review_rating_label"
-                        android:textColor="?android:attr/textColorPrimary"
+                        android:textColor="#1A1A1A"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
 
                     <RatingBar
                         android:id="@+id/ratingBar"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="12dp"
                         android:numStars="5"
                         android:rating="5"
-                        android:stepSize="1.0" />
+                        android:stepSize="1.0"
+                        android:progressTint="#FFB300"
+                        android:secondaryProgressTint="#FFB300" />
 
+                    <!-- Comment Input -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/tilComment"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp"
-                        android:hint="@string/review_comment_hint">
+                        android:layout_marginTop="24dp"
+                        android:hint="@string/review_comment_hint"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxStrokeColor="#66BB6A"
+                        app:hintTextColor="#66BB6A">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etComment"
@@ -87,16 +117,24 @@
                             android:gravity="top|start"
                             android:inputType="textMultiLine"
                             android:lines="5"
-                            android:maxLines="8" />
+                            android:maxLines="8"
+                            android:padding="16dp"
+                            android:textSize="15sp" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <!-- Submit Button -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnSubmitReview"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
-                        android:layout_marginTop="20dp"
+                        android:layout_marginTop="24dp"
                         android:text="@string/review_submit_button"
-                        app:cornerRadius="12dp" />
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:backgroundTint="#66BB6A"
+                        app:cornerRadius="28dp"
+                        android:elevation="0dp" />
 
                 </LinearLayout>
 
