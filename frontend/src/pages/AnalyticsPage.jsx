@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import axiosInstance from '../services/axiosConfig';
-import PageHeader from '../components/PageHeader';
 import './AnalyticsPage.css';
 
 const AnalyticsPage = () => {
@@ -80,17 +79,33 @@ const AnalyticsPage = () => {
 
   return (
     <div className="analytics-page">
-      <PageHeader
-        title="Analytics"
-        subtitle="Supplier"
-      />
+      {/* Header Banner */}
+      <div className="analytics-header-banner">
+        <div className="banner-content">
+          <div className="banner-left">
+            <span className="banner-tag">SUPPLIER</span>
+            <h1 className="banner-title">Analytics</h1>
+          </div>
+          <div className="banner-right">
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard')}
+              className="btn-back-dashboard"
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
 
-      {loading ? (
-        <div className="analytics-empty">Loading...</div>
-      ) : error ? (
-        <div className="analytics-empty">{error}</div>
-      ) : (
-        <>
+      {/* Main Content */}
+      <div className="analytics-content">
+        {loading ? (
+          <div className="analytics-empty">Loading...</div>
+        ) : error ? (
+          <div className="analytics-empty">{error}</div>
+        ) : (
+          <>
           {co2Summary && (
             <>
               {/* CO2 Savings Section */}
@@ -174,6 +189,7 @@ const AnalyticsPage = () => {
           </div>
         </>
       )}
+      </div>
     </div>
   );
 };
