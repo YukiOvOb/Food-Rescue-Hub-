@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import authService from '../services/authService';
 import { useNavigate } from 'react-router-dom';
-import PageHeader from '../components/PageHeader';
 import ConfirmDialog from '../components/ConfirmDialog';
 import './ListingsPage.css';
 
@@ -444,18 +443,32 @@ export default function ListingsPage() {
 
   return (
     <div className="listings-page">
-      <div className="listings-content">
-        <PageHeader
-          title="Listings"
-          subtitle="Supplier"
-          actions={
-            !showCreateForm && (
-              <button className="listings-btn-primary" onClick={() => setShowCreateForm(true)}>
+      {/* Header Banner */}
+      <div className="listings-header-banner">
+        <div className="banner-content">
+          <div className="banner-left">
+            <span className="banner-tag">SUPPLIER</span>
+            <h1 className="banner-title">Listings</h1>
+          </div>
+          <div className="banner-right">
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard')}
+              className="btn-back-dashboard"
+            >
+              ← Back to Dashboard
+            </button>
+            {!showCreateForm && (
+              <button className="btn-create-listing" onClick={() => setShowCreateForm(true)}>
                 + Create Listing
               </button>
-            )
-          }
-        />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="listings-content">
 
         {successMessage && (
           <div className="listings-success">
