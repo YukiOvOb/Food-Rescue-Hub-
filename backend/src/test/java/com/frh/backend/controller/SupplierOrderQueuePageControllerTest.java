@@ -3,7 +3,7 @@ package com.frh.backend.controller;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.frh.backend.Model.Order;
+import com.frh.backend.model.Order;
 import com.frh.backend.dto.OrderSummaryDTO;
 import com.frh.backend.service.OrderService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -165,3 +165,4 @@ class SupplierOrderQueuePageControllerTest {
     }
   }
 }
+

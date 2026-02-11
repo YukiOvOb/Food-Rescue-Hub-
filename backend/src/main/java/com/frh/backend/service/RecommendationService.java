@@ -1,11 +1,18 @@
 package com.frh.backend.service;
 
-import com.frh.backend.dto.StoreRecommendationDto;
+import com.frh.backend.dto.StoreRecommendationDTO;
+import com.frh.backend.model.ConsumerStats;
 import com.frh.backend.model.Listing;
+import com.frh.backend.model.ListingStats;
 import com.frh.backend.model.Store;
-import com.frh.backend.model.User;
+import com.frh.backend.model.StoreStats;
+import com.frh.backend.model.UserStoreInteraction;
+import com.frh.backend.repository.ConsumerStatsRepository;
 import com.frh.backend.repository.ListingRepository;
+import com.frh.backend.repository.ListingStatsRepository;
 import com.frh.backend.repository.StoreRepository;
+import com.frh.backend.repository.StoreStatsRepository;
+import com.frh.backend.repository.UserStoreInteractionRepository;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -20,6 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -52,7 +60,7 @@ public class RecommendationService {
    * @param userLng 用户经度(可选,用于计算距离)
    * @return 推荐的商家列表
    */
-  public List<StoreRecommendationDto> recommendStoresForHomepage(
+  public List<StoreRecommendationDTO> recommendStoresForHomepage(
       Long consumerId, Integer topK, Double userLat, Double userLng) {
     if (topK == null) {
       topK = 5;
@@ -77,10 +85,10 @@ public class RecommendationService {
     List<Map<String, Object>> recommendations = callRecommendationService(requestBody);
 
     // 5. 转换为DTO
-    List<StoreRecommendationDto> result = new ArrayList<>();
+    List<StoreRecommendationDTO> result = new ArrayList<>();
     int rank = 1;
     for (Map<String, Object> rec : recommendations) {
-      StoreRecommendationDto dto = convertToDto(rec, rank++, userLat, userLng);
+      StoreRecommendationDTO dto = convertToDto(rec, rank++, userLat, userLng);
       if (dto != null) {
         result.add(dto);
       }
@@ -299,9 +307,9 @@ public class RecommendationService {
   }
 
   /** 转换为DTO */
-  private StoreRecommendationDto convertToDto(
+  private StoreRecommendationDTO convertToDto(
       Map<String, Object> rec, int rank, Double userLat, Double userLng) {
-    StoreRecommendationDto dto = new StoreRecommendationDto();
+    StoreRecommendationDTO dto = new StoreRecommendationDTO();
 
     // 基本信息
     Long storeId = ((Number) rec.get("store_id")).longValue();
@@ -386,7 +394,7 @@ public class RecommendationService {
    * @param userLng User longitude (optional)
    * @return ML-sorted search results
    */
-  public List<StoreRecommendationDto> searchWithRecommendations(
+  public List<StoreRecommendationDTO> searchWithRecommendations(
       Long consumerId, String query, Integer topK, Double userLat, Double userLng) {
     if (query == null || query.trim().isEmpty()) {
       return Collections.emptyList();
@@ -433,10 +441,10 @@ public class RecommendationService {
     List<Map<String, Object>> recommendations = callRecommendationService(requestBody);
 
     // 6. Convert to DTO
-    List<StoreRecommendationDto> result = new ArrayList<>();
+    List<StoreRecommendationDTO> result = new ArrayList<>();
     int rank = 1;
     for (Map<String, Object> rec : recommendations) {
-      StoreRecommendationDto dto = convertToDto(rec, rank++, userLat, userLng);
+      StoreRecommendationDTO dto = convertToDto(rec, rank++, userLat, userLng);
       if (dto != null) {
         result.add(dto);
       }
@@ -452,7 +460,7 @@ public class RecommendationService {
 
   /** 生成推荐原因 */
   private String generateRecommendationReason(
-      StoreRecommendationDto dto, Double avgRating, int savingsPercentage) {
+      StoreRecommendationDTO dto, Double avgRating, int savingsPercentage) {
     if (avgRating != null && avgRating >= 4.5) {
       return "High rating store";
     } else if (dto.getDistance() != null && dto.getDistance() <= 2.0) {

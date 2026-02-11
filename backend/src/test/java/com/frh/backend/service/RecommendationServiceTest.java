@@ -13,16 +13,16 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-import com.frh.backend.Model.ConsumerStats;
-import com.frh.backend.Model.Inventory;
-import com.frh.backend.Model.Listing;
-import com.frh.backend.Model.ListingPhoto;
-import com.frh.backend.Model.ListingStats;
-import com.frh.backend.Model.Store;
-import com.frh.backend.Model.StoreStats;
-import com.frh.backend.Model.StoreType;
-import com.frh.backend.Model.SupplierProfile;
-import com.frh.backend.Model.UserStoreInteraction;
+import com.frh.backend.model.ConsumerStats;
+import com.frh.backend.model.Inventory;
+import com.frh.backend.model.Listing;
+import com.frh.backend.model.ListingPhoto;
+import com.frh.backend.model.ListingStats;
+import com.frh.backend.model.Store;
+import com.frh.backend.model.StoreStats;
+import com.frh.backend.model.StoreType;
+import com.frh.backend.model.SupplierProfile;
+import com.frh.backend.model.UserStoreInteraction;
 import com.frh.backend.dto.StoreRecommendationDTO;
 import com.frh.backend.repository.ConsumerStatsRepository;
 import com.frh.backend.repository.ListingRepository;
@@ -649,3 +649,4 @@ class RecommendationServiceTest {
     return listing;
   }
 }
+

@@ -1,6 +1,6 @@
 package com.frh.backend.controller;
 
-import com.frh.backend.dto.ConsumerDto;
+import com.frh.backend.dto.ConsumerDTO;
 import com.frh.backend.service.ConsumerService;
 import java.util.Map;
 import java.util.Optional;
@@ -26,7 +26,7 @@ public class ConsumerController {
   public ResponseEntity<?> getConsumerById(@PathVariable Long consumerId) {
     log.info("GET /api/consumer/{}", consumerId);
 
-    Optional<ConsumerDto> consumerOpt = consumerService.getConsumerById(consumerId);
+    Optional<ConsumerDTO> consumerOpt = consumerService.getConsumerById(consumerId);
 
     if (consumerOpt.isPresent()) {
       return ResponseEntity.ok(consumerOpt.get());
@@ -40,7 +40,7 @@ public class ConsumerController {
   public ResponseEntity<?> getConsumerByEmail(@RequestParam String email) {
     log.info("GET /api/consumer/by-email?email={}", email);
 
-    Optional<ConsumerDto> consumerOpt = consumerService.getConsumerByEmail(email);
+    Optional<ConsumerDTO> consumerOpt = consumerService.getConsumerByEmail(email);
 
     if (consumerOpt.isPresent()) {
       return ResponseEntity.ok(consumerOpt.get());

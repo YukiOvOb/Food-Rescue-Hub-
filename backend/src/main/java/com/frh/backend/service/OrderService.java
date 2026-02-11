@@ -1,6 +1,6 @@
 package com.frh.backend.service;
 
-import com.frh.backend.Model.*;
+import com.frh.backend.model.*;
 import com.frh.backend.dto.CreateOrderRequest;
 import com.frh.backend.dto.OrderSummaryDTO;
 import com.frh.backend.exception.InsufficientStockException;

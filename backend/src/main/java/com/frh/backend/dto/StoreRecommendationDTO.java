@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class StoreRecommendationDto {
+public class StoreRecommendationDTO {
 
   /** 商品信息 */
   private Long listingId;

@@ -4,7 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.frh.backend.Model.ConsumerProfile;
+import com.frh.backend.model.ConsumerProfile;
 import com.frh.backend.dto.UpdateLocationRequest;
 import com.frh.backend.repository.ConsumerProfileRepository;
 import java.math.BigDecimal;
@@ -112,3 +112,4 @@ class ConsumerProfileControllerTest {
         .andExpect(status().isNotFound());
   }
 }
+

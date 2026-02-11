@@ -4,7 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.frh.backend.Model.UserInteraction;
+import com.frh.backend.model.UserInteraction;
 import com.frh.backend.dto.UserInteractionRequest;
 import com.frh.backend.service.InteractionService;
 import java.util.List;
@@ -147,3 +147,4 @@ class InteractionControllerTest {
         .andExpect(jsonPath("$.service").value("Interaction Tracking API"));
   }
 }
+

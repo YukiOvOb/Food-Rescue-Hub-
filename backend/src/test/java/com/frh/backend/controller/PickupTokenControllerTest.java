@@ -1,11 +1,11 @@
 package com.frh.backend.controller;
 
-import static com.frh.backend.util.QRCodeGenerator.generateQRCode;
+import static com.frh.backend.util.QrCodeGenerator.generateQrCode;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.frh.backend.Model.Order;
-import com.frh.backend.Model.PickupToken;
+import com.frh.backend.model.Order;
+import com.frh.backend.model.PickupToken;
 import com.frh.backend.repository.OrderRepository;
 import com.frh.backend.repository.PickupTokenRepository;
 import java.time.LocalDateTime;
@@ -74,10 +74,10 @@ class PickupTokenControllerTest {
 
     Mockito.when(pickupTokenRepository.findByOrderId(1L)).thenReturn(Optional.of(token));
 
-    try (MockedStatic<com.frh.backend.util.QRCodeGenerator> mocked =
-        Mockito.mockStatic(com.frh.backend.util.QRCodeGenerator.class)) {
+    try (MockedStatic<com.frh.backend.util.QrCodeGenerator> mocked =
+        Mockito.mockStatic(com.frh.backend.util.QrCodeGenerator.class)) {
 
-      mocked.when(() -> generateQRCode(Mockito.any(), Mockito.any())).thenReturn("/tmp/qrcode.png");
+      mocked.when(() -> generateQrCode(Mockito.any(), Mockito.any())).thenReturn("/tmp/qrcode.png");
 
       mockMvc
           .perform(post("/api/pickup-tokens/{orderId}/generate-qrcode", 1L))
@@ -104,10 +104,10 @@ class PickupTokenControllerTest {
 
     Mockito.when(pickupTokenRepository.save(Mockito.any())).thenReturn(token);
 
-    try (MockedStatic<com.frh.backend.util.QRCodeGenerator> mocked =
-        Mockito.mockStatic(com.frh.backend.util.QRCodeGenerator.class)) {
+    try (MockedStatic<com.frh.backend.util.QrCodeGenerator> mocked =
+        Mockito.mockStatic(com.frh.backend.util.QrCodeGenerator.class)) {
 
-      mocked.when(() -> generateQRCode(Mockito.any(), Mockito.any())).thenReturn("/tmp/qrcode.png");
+      mocked.when(() -> generateQrCode(Mockito.any(), Mockito.any())).thenReturn("/tmp/qrcode.png");
 
       mockMvc
           .perform(post("/api/pickup-tokens/{orderId}/generate-qrcode", 2L))
@@ -126,11 +126,11 @@ class PickupTokenControllerTest {
 
     Mockito.when(pickupTokenRepository.findByOrderId(1L)).thenReturn(Optional.of(token));
 
-    try (MockedStatic<com.frh.backend.util.QRCodeGenerator> mocked =
-        Mockito.mockStatic(com.frh.backend.util.QRCodeGenerator.class)) {
+    try (MockedStatic<com.frh.backend.util.QrCodeGenerator> mocked =
+        Mockito.mockStatic(com.frh.backend.util.QrCodeGenerator.class)) {
 
       mocked
-          .when(() -> generateQRCode(Mockito.any(), Mockito.any()))
+          .when(() -> generateQrCode(Mockito.any(), Mockito.any()))
           .thenThrow(new RuntimeException("QR error"));
 
       mockMvc
@@ -230,11 +230,11 @@ class PickupTokenControllerTest {
     Mockito.when(pickupTokenRepository.save(Mockito.any()))
         .thenThrow(new RuntimeException("Save failed"));
 
-    try (MockedStatic<com.frh.backend.util.QRCodeGenerator> mocked =
-        Mockito.mockStatic(com.frh.backend.util.QRCodeGenerator.class)) {
+    try (MockedStatic<com.frh.backend.util.QrCodeGenerator> mocked =
+        Mockito.mockStatic(com.frh.backend.util.QrCodeGenerator.class)) {
 
       mocked
-          .when(() -> generateQRCode(Mockito.any(), Mockito.any()))
+          .when(() -> generateQrCode(Mockito.any(), Mockito.any()))
           .thenThrow(new RuntimeException("QR generation failed"));
 
       mockMvc
@@ -267,11 +267,11 @@ class PickupTokenControllerTest {
 
     Mockito.when(pickupTokenRepository.findByOrderId(4L)).thenReturn(Optional.of(token));
 
-    try (MockedStatic<com.frh.backend.util.QRCodeGenerator> mocked =
-        Mockito.mockStatic(com.frh.backend.util.QRCodeGenerator.class)) {
+    try (MockedStatic<com.frh.backend.util.QrCodeGenerator> mocked =
+        Mockito.mockStatic(com.frh.backend.util.QrCodeGenerator.class)) {
 
       mocked
-          .when(() -> generateQRCode(Mockito.eq("QR-EXISTING"), Mockito.any()))
+          .when(() -> generateQrCode(Mockito.eq("QR-EXISTING"), Mockito.any()))
           .thenReturn("/qrcode/order_4_QR-EXISTING.png");
 
       mockMvc
@@ -292,11 +292,11 @@ class PickupTokenControllerTest {
 
     Mockito.when(pickupTokenRepository.findByOrderId(5L)).thenReturn(Optional.of(token));
 
-    try (MockedStatic<com.frh.backend.util.QRCodeGenerator> mocked =
-        Mockito.mockStatic(com.frh.backend.util.QRCodeGenerator.class)) {
+    try (MockedStatic<com.frh.backend.util.QrCodeGenerator> mocked =
+        Mockito.mockStatic(com.frh.backend.util.QrCodeGenerator.class)) {
 
       mocked
-          .when(() -> generateQRCode(Mockito.any(), Mockito.any()))
+          .when(() -> generateQrCode(Mockito.any(), Mockito.any()))
           .thenReturn("/tmp/qrcode_special.png");
 
       mockMvc
@@ -322,3 +322,4 @@ class PickupTokenControllerTest {
         .andExpect(status().isBadRequest());
   }
 }
+

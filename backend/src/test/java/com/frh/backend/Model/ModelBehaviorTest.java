@@ -1,4 +1,4 @@
-package com.frh.backend.Model;
+package com.frh.backend.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -222,3 +222,4 @@ class ModelBehaviorTest {
     assertEquals(BigDecimal.ZERO, item.getLineTotal());
   }
 }
+

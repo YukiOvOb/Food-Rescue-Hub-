@@ -13,11 +13,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.frh.backend.Model.ConsumerProfile;
-import com.frh.backend.Model.Inventory;
-import com.frh.backend.Model.Listing;
-import com.frh.backend.Model.Order;
-import com.frh.backend.Model.Store;
+import com.frh.backend.model.ConsumerProfile;
+import com.frh.backend.model.Inventory;
+import com.frh.backend.model.Listing;
+import com.frh.backend.model.Order;
+import com.frh.backend.model.Store;
 import com.frh.backend.repository.ConsumerProfileRepository;
 import com.frh.backend.repository.ListingRepository;
 import com.frh.backend.repository.OrderRepository;
@@ -361,3 +361,4 @@ class MobileCheckoutControllerTest {
     return store;
   }
 }
+

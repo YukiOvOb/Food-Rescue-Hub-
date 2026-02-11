@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderSummaryDto {
+public class OrderSummaryDTO {
 
   // Order identity
   private Long orderId;

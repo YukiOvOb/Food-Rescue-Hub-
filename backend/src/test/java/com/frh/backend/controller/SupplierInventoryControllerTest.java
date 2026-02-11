@@ -4,8 +4,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.frh.backend.Model.Inventory;
-import com.frh.backend.Model.Listing;
+import com.frh.backend.model.Inventory;
+import com.frh.backend.model.Listing;
 import com.frh.backend.dto.InventoryAdjustRequest;
 import com.frh.backend.service.InventoryService;
 import org.junit.jupiter.api.Test;
@@ -337,3 +337,4 @@ class SupplierInventoryControllerTest {
         .andExpect(jsonPath("$.qtyAvailable").value(30));
   }
 }
+

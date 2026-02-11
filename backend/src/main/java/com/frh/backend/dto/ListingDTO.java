@@ -10,7 +10,7 @@ import lombok.Data;
  * necessary details
  */
 @Data
-public class ListingDto {
+public class ListingDTO {
 
   private Long listingId;
   private String title;
@@ -39,7 +39,7 @@ public class ListingDto {
   // CO2 TRACKING
   private List<Long> categoryIds;
   private List<String> categoryNames;
-  private List<ListingCategoryWeightDto> categoryWeights;
+  private List<ListingCategoryWeightDTO> categoryWeights;
   private BigDecimal estimatedWeightKg;
 
   // Inventory
