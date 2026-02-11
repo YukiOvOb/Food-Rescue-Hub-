@@ -171,30 +171,29 @@ public class ListingController {
     // ==========================================
     @PutMapping("/{id}")
     public ResponseEntity<?> updateListing(@PathVariable Long id,
-                                           @RequestBody Listing listingDetails) {
+                                           @RequestBody ListingDTO listingDetails) {
 
-        Optional<Listing> existingListingOpt = listingRepository.findById(id);
-        if (existingListingOpt.isEmpty()) {
+        if (!listingRepository.existsById(id)) {
             return ResponseEntity.status(404).body("Listing not found with id: " + id);
         }
 
-        Listing existingListing = existingListingOpt.get();
-
-        List<String> errors = validateListing(listingDetails);
+        List<String> errors = validateListingDto(listingDetails);
         if (!errors.isEmpty()) {
             return ResponseEntity.badRequest().body(errors);
         }
 
-        existingListing.setTitle(listingDetails.getTitle());
-        existingListing.setDescription(listingDetails.getDescription());
-        existingListing.setOriginalPrice(listingDetails.getOriginalPrice());
-        existingListing.setRescuePrice(listingDetails.getRescuePrice());
-        existingListing.setPickupStart(listingDetails.getPickupStart());
-        existingListing.setPickupEnd(listingDetails.getPickupEnd());
-        existingListing.setExpiryAt(listingDetails.getExpiryAt());  // include expiry
-
-        Listing updatedListing = listingRepository.save(existingListing);
-        return ResponseEntity.ok(updatedListing);
+        try {
+            ListingDTO updatedListing = listingService.updateListing(id, listingDetails);
+            return ResponseEntity.ok(updatedListing);
+        } catch (DataIntegrityViolationException ex) {
+            ex.printStackTrace();
+            String msg = "Database error: " + ex.getMostSpecificCause().getMessage();
+            return ResponseEntity.badRequest().body(msg);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            String msg = "Unexpected server error: " + ex.getMessage();
+            return ResponseEntity.status(500).body(msg);
+        }
     }
 
     // ==========================================

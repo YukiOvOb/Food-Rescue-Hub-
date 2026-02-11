@@ -214,59 +214,10 @@ public class ListingService {
         Listing listing = new Listing();
 
         // 1. Map fields from DTO
-        listing.setTitle(dto.getTitle());
-        listing.setDescription(dto.getDescription());
-        listing.setOriginalPrice(dto.getOriginalPrice());
-        listing.setRescuePrice(dto.getRescuePrice());
-        listing.setPickupStart(dto.getPickupStart());
-        listing.setPickupEnd(dto.getPickupEnd());
-        listing.setExpiryAt(dto.getExpiryAt());
-        listing.setEstimatedWeightKg(dto.getEstimatedWeightKg());
+        applyListingFields(listing, dto);
 
         // 2. Map the Food Categories for CO2 tracking (per-category weights)
-        if (dto.getCategoryWeights() != null && !dto.getCategoryWeights().isEmpty()) {
-            List<Long> ids = dto.getCategoryWeights().stream()
-                    .map(ListingCategoryWeightDTO::getCategoryId)
-                    .distinct()
-                    .collect(Collectors.toList());
-            Map<Long, com.frh.backend.Model.FoodCategory> categoryMap = foodCategoryRepository.findAllById(ids).stream()
-                    .collect(Collectors.toMap(com.frh.backend.Model.FoodCategory::getId, c -> c));
-
-            List<ListingFoodCategory> links = new ArrayList<>();
-            BigDecimal totalWeight = BigDecimal.ZERO;
-
-            for (ListingCategoryWeightDTO item : dto.getCategoryWeights()) {
-                if (item.getCategoryId() == null) continue;
-                com.frh.backend.Model.FoodCategory category = categoryMap.get(item.getCategoryId());
-                if (category == null) continue;
-
-                ListingFoodCategory link = new ListingFoodCategory();
-                link.setListing(listing);
-                link.setCategory(category);
-                link.setWeightKg(item.getWeightKg());
-                links.add(link);
-
-                if (item.getWeightKg() != null) {
-                    totalWeight = totalWeight.add(item.getWeightKg());
-                }
-            }
-
-            listing.setListingFoodCategories(links);
-            if (totalWeight.compareTo(BigDecimal.ZERO) > 0) {
-                listing.setEstimatedWeightKg(totalWeight);
-            }
-        } else if (dto.getCategoryIds() != null && !dto.getCategoryIds().isEmpty()) {
-            List<com.frh.backend.Model.FoodCategory> categories = foodCategoryRepository.findAllById(dto.getCategoryIds());
-            List<ListingFoodCategory> links = new ArrayList<>();
-            for (com.frh.backend.Model.FoodCategory category : categories) {
-                ListingFoodCategory link = new ListingFoodCategory();
-                link.setListing(listing);
-                link.setCategory(category);
-                link.setWeightKg(null);
-                links.add(link);
-            }
-            listing.setListingFoodCategories(links);
-        }
+        applyFoodCategories(listing, dto, true);
 
         // 3. Initialize Inventory via your existing helper
         listing.setAvailableQty(dto.getQtyAvailable() != null ? dto.getQtyAvailable() : 1);
@@ -279,5 +230,86 @@ public class ListingService {
 
         Listing savedListing = listingRepository.save(listing);
         return convertToDTO(savedListing);
+    }
+
+    @Transactional
+    public ListingDTO updateListing(Long listingId, ListingDTO dto) {
+        Listing listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new IllegalArgumentException("Listing not found with id: " + listingId));
+
+        applyListingFields(listing, dto);
+        applyFoodCategories(listing, dto, false);
+
+        Listing savedListing = listingRepository.save(listing);
+        return convertToDTO(savedListing);
+    }
+
+    private void applyListingFields(Listing listing, ListingDTO dto) {
+        listing.setTitle(dto.getTitle());
+        listing.setDescription(dto.getDescription());
+        listing.setOriginalPrice(dto.getOriginalPrice());
+        listing.setRescuePrice(dto.getRescuePrice());
+        listing.setPickupStart(dto.getPickupStart());
+        listing.setPickupEnd(dto.getPickupEnd());
+        listing.setExpiryAt(dto.getExpiryAt());
+        listing.setEstimatedWeightKg(dto.getEstimatedWeightKg());
+    }
+
+    private void applyFoodCategories(Listing listing, ListingDTO dto, boolean clearWhenMissing) {
+        boolean hasCategoryWeights = dto.getCategoryWeights() != null;
+        boolean hasCategoryIds = dto.getCategoryIds() != null;
+
+        if (!hasCategoryWeights && !hasCategoryIds) {
+            if (clearWhenMissing) {
+                listing.getListingFoodCategories().clear();
+            }
+            return;
+        }
+
+        listing.getListingFoodCategories().clear();
+
+        if (dto.getCategoryWeights() != null && !dto.getCategoryWeights().isEmpty()) {
+            List<Long> ids = dto.getCategoryWeights().stream()
+                    .map(ListingCategoryWeightDTO::getCategoryId)
+                    .filter(id -> id != null)
+                    .distinct()
+                    .collect(Collectors.toList());
+            Map<Long, com.frh.backend.Model.FoodCategory> categoryMap = foodCategoryRepository.findAllById(ids).stream()
+                    .collect(Collectors.toMap(com.frh.backend.Model.FoodCategory::getId, c -> c));
+
+            BigDecimal totalWeight = BigDecimal.ZERO;
+
+            for (ListingCategoryWeightDTO item : dto.getCategoryWeights()) {
+                if (item.getCategoryId() == null) continue;
+                com.frh.backend.Model.FoodCategory category = categoryMap.get(item.getCategoryId());
+                if (category == null) continue;
+
+                ListingFoodCategory link = new ListingFoodCategory();
+                link.setListing(listing);
+                link.setCategory(category);
+                link.setWeightKg(item.getWeightKg());
+                listing.getListingFoodCategories().add(link);
+
+                if (item.getWeightKg() != null) {
+                    totalWeight = totalWeight.add(item.getWeightKg());
+                }
+            }
+
+            if (totalWeight.compareTo(BigDecimal.ZERO) > 0) {
+                listing.setEstimatedWeightKg(totalWeight);
+            }
+            return;
+        }
+
+        if (dto.getCategoryIds() != null && !dto.getCategoryIds().isEmpty()) {
+            List<com.frh.backend.Model.FoodCategory> categories = foodCategoryRepository.findAllById(dto.getCategoryIds());
+            for (com.frh.backend.Model.FoodCategory category : categories) {
+                ListingFoodCategory link = new ListingFoodCategory();
+                link.setListing(listing);
+                link.setCategory(category);
+                link.setWeightKg(null);
+                listing.getListingFoodCategories().add(link);
+            }
+        }
     }
 }

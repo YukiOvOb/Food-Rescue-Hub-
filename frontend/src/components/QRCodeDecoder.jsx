@@ -282,19 +282,19 @@ const QRCodeDecoder = () => {
       }
 
       const orderResponses = await Promise.all(
-        stores.map((store) => axios.get(`/orders/store/${store.storeId}`))
+        stores.map((store) => axios.get(`/supplier/orders/${store.storeId}`))
       );
 
       const allOrders = orderResponses.flatMap((response) => normalizeOrders(response?.data));
       const scannedToken = result.trim();
 
       const pendingOrderMatch = allOrders.find(
-        (order) => order?.status === 'PENDING' && order?.pickupToken?.qrTokenHash === scannedToken
+        (order) => order?.status === 'PENDING' && (order?.pickupToken?.qrTokenHash || order?.pickupTokenHash) === scannedToken
       );
 
       if (!pendingOrderMatch) {
         const completedOrderMatch = allOrders.find(
-          (order) => order?.status === 'COMPLETED' && order?.pickupToken?.qrTokenHash === scannedToken
+          (order) => order?.status === 'COMPLETED' && (order?.pickupToken?.qrTokenHash || order?.pickupTokenHash) === scannedToken
         );
 
         if (completedOrderMatch) {

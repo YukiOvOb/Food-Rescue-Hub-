@@ -45,7 +45,7 @@ const OrdersPage = () => {
         setOrders([]);
         return;
       }
-      const response = await axios.get(`/orders/store/${storeId}`);
+      const response = await axios.get(`/supplier/orders/${storeId}`);
       const normalizedOrders = normalizeOrders(response?.data);
       setOrders(sortOrders(normalizedOrders));
     } catch (err) {
@@ -167,13 +167,13 @@ const OrdersPage = () => {
               </span>
             </div>
             <div>{order.totalAmount}</div>
-            <div>{order.currency}</div>
-            <div>{order.store?.storeId ?? '-'}</div>
-            <div>{order.consumer?.consumerId ?? '-'}</div>
+            <div>{order.currency || 'SGD'}</div>
+            <div>{order.store?.storeId ?? selectedStoreId ?? '-'}</div>
+            <div>{order.consumer?.consumerId ?? order.consumerId ?? '-'}</div>
             <div className="pickup-token">
-              {order.pickupToken?.qrTokenHash ? (
-                <span title={`Expires: ${order.pickupToken.expiresAt}`}>
-                  {order.pickupToken.qrTokenHash}
+              {(order.pickupToken?.qrTokenHash || order.pickupTokenHash) ? (
+                <span title={`Expires: ${order.pickupToken?.expiresAt || order.pickupTokenExpiresAt || '-'}`}>
+                  {order.pickupToken?.qrTokenHash || order.pickupTokenHash}
                 </span>
               ) : (
                 <span className="token-none">No token</span>

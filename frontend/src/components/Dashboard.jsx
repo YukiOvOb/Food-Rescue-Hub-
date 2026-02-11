@@ -12,6 +12,7 @@ const Dashboard = () => {
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalProducts, setTotalProducts] = useState(0);
   const [co2SavedKg, setCo2SavedKg] = useState(0);
+  const [activeCustomers, setActiveCustomers] = useState(0);
   const [statsLoading, setStatsLoading] = useState(false);
 
   useEffect(() => {
@@ -49,21 +50,55 @@ const Dashboard = () => {
     const loadStats = async () => {
       setStatsLoading(true);
       try {
-        const [pendingResult, completedResult, listingsResult, co2Result] = await Promise.all([
-          axiosInstance.get(`/orders/supplier/${supplierId}/status/PENDING`),
-          axiosInstance.get(`/orders/supplier/${supplierId}/status/COMPLETED`),
+        const [storesResult, listingsResult, co2Result] = await Promise.allSettled([
+          axiosInstance.get(`/stores/supplier/${supplierId}`),
           axiosInstance.get(`/supplier/listings/supplier/${supplierId}`),
           axiosInstance.get(`/analytics/supplier/${supplierId}/co2?days=30`)
         ]);
 
-        const pendingOrdersList = pendingResult?.data || [];
-        const completedOrdersList = completedResult?.data || [];
-        const allListings = listingsResult?.data || [];
-        const co2Summary = co2Result?.data || {};
-        const co2Total = (Array.isArray(co2Summary) ? 0 : Number(co2Summary?.totalCo2Kg ?? 0));
+        const stores = storesResult.status === 'fulfilled' && Array.isArray(storesResult.value?.data)
+          ? storesResult.value.data
+          : [];
+        const allListings = listingsResult.status === 'fulfilled' && Array.isArray(listingsResult.value?.data)
+          ? listingsResult.value.data
+          : [];
+        const co2Summary = co2Result.status === 'fulfilled' && !Array.isArray(co2Result.value?.data)
+          ? (co2Result.value?.data || {})
+          : {};
+        const co2Total = Number(co2Summary?.totalCo2Kg ?? 0);
 
-        console.log('Dashboard Stats - Listings data:', allListings);
-        console.log('Dashboard Stats - Listings count:', allListings.length);
+        const storeIds = stores
+          .map((store) => store?.storeId)
+          .filter((storeId) => Number.isFinite(Number(storeId)));
+
+        const [pendingResults, completedResults] = await Promise.all([
+          Promise.allSettled(
+            storeIds.map((storeId) => axiosInstance.get(`/supplier/orders/${storeId}?status=PENDING`))
+          ),
+          Promise.allSettled(
+            storeIds.map((storeId) => axiosInstance.get(`/supplier/orders/${storeId}?status=COMPLETED`))
+          )
+        ]);
+
+        const pendingOrdersList = pendingResults.flatMap((result, index) => {
+          if (result.status === 'fulfilled' && Array.isArray(result.value?.data)) {
+            return result.value.data;
+          }
+          if (result.status === 'rejected') {
+            console.error(`Failed loading pending orders for store ${storeIds[index]}:`, result.reason);
+          }
+          return [];
+        });
+
+        const completedOrdersList = completedResults.flatMap((result, index) => {
+          if (result.status === 'fulfilled' && Array.isArray(result.value?.data)) {
+            return result.value.data;
+          }
+          if (result.status === 'rejected') {
+            console.error(`Failed loading completed orders for store ${storeIds[index]}:`, result.reason);
+          }
+          return [];
+        });
 
         const pendingCount = pendingOrdersList.length;
 
@@ -73,12 +108,18 @@ const Dashboard = () => {
         }, 0);
 
         const listingCount = allListings.length;
+        const activeCustomerCount = new Set(
+          [...pendingOrdersList, ...completedOrdersList]
+            .map((order) => order?.consumerId ?? order?.consumer?.consumerId)
+            .filter((id) => id !== undefined && id !== null)
+        ).size;
 
         if (!cancelled) {
           setPendingOrders(pendingCount);
           setTotalRevenue(revenue);
           setTotalProducts(listingCount);
           setCo2SavedKg(Number.isFinite(co2Total) ? co2Total : 0);
+          setActiveCustomers(activeCustomerCount);
         }
       } catch (error) {
         if (!cancelled) {
@@ -86,6 +127,7 @@ const Dashboard = () => {
           setTotalRevenue(0);
           setTotalProducts(0);
           setCo2SavedKg(0);
+          setActiveCustomers(0);
         }
         console.error('Failed to load dashboard stats:', error);
         console.error('Error details:', error.response?.data, error.response?.status);
@@ -223,7 +265,7 @@ const Dashboard = () => {
           </div>
           <div className="stat-card">
             <h4>Active Customers</h4>
-            <p className="stat-value">0</p>
+            <p className="stat-value">{statsLoading ? '...' : activeCustomers}</p>
           </div>
         </div>
       </div>

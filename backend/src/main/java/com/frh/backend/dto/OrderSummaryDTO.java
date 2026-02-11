@@ -28,11 +28,14 @@ public class OrderSummaryDTO {
   private int quantity;
   private BigDecimal unitPrice;
   private BigDecimal totalAmount;
+  private String currency;
 
   // Consumer info (so supplier knows who placed it)
   private Long consumerId;
   private String consumerName;
   private String consumerPhone;
+  private String pickupTokenHash;
+  private LocalDateTime pickupTokenExpiresAt;
 
   // Timing
   private LocalDateTime pickupSlotStart;

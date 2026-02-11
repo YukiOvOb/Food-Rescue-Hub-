@@ -239,6 +239,8 @@ public class OrderService {
         Long listingId = null;
         int qty = 0;
         BigDecimal unitPrice = BigDecimal.ZERO;
+        String pickupTokenHash = null;
+        LocalDateTime pickupTokenExpiresAt = null;
 
         if (o.getOrderItems() != null && !o.getOrderItems().isEmpty()) {
             OrderItem first = o.getOrderItems().get(0);
@@ -246,6 +248,10 @@ public class OrderService {
             title = first.getListing().getTitle();
             qty = first.getQuantity();
             unitPrice = first.getUnitPrice();
+        }
+        if (o.getPickupToken() != null) {
+            pickupTokenHash = o.getPickupToken().getQrTokenHash();
+            pickupTokenExpiresAt = o.getPickupToken().getExpiresAt();
         }
 
         return OrderSummaryDTO.builder()
@@ -256,9 +262,12 @@ public class OrderService {
             .quantity(qty)
             .unitPrice(unitPrice)
             .totalAmount(o.getTotalAmount())
+            .currency(o.getCurrency())
             .consumerId(o.getConsumer().getConsumerId())
             .consumerName(o.getConsumer().getDisplayName())
             .consumerPhone(o.getConsumer().getPhone())
+            .pickupTokenHash(pickupTokenHash)
+            .pickupTokenExpiresAt(pickupTokenExpiresAt)
             .pickupSlotStart(o.getPickupSlotStart())
             .pickupSlotEnd(o.getPickupSlotEnd())
             .createdAt(o.getCreatedAt())

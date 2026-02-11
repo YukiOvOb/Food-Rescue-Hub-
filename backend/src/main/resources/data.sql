@@ -49,7 +49,7 @@ INSERT INTO dietary_tags (tag_name) VALUES
 -- ============================================
 -- 2. FOOD_CATEGORIES (CO2 reference data)
 -- ============================================
-INSERT INTO food_categories (id, name, kg_co2_per_kg) VALUES
+INSERT INTO food_categories (id, name, kg_co2per_kg) VALUES
 (1, 'Beef (beef herd)', 99.48),
 (2, 'Lamb & Mutton', 39.72),
 (3, 'Cheese', 23.88),
@@ -62,7 +62,7 @@ INSERT INTO food_categories (id, name, kg_co2_per_kg) VALUES
 (10, 'Vegetables', 0.53)
 ON DUPLICATE KEY UPDATE
 name = VALUES(name),
-kg_co2_per_kg = VALUES(kg_co2_per_kg);
+kg_co2per_kg = VALUES(kg_co2per_kg);
 
 -- ============================================
 -- 3. CONSUMER_PROFILES
@@ -217,6 +217,33 @@ INSERT INTO listing_dietary_tags (listing_id, tag_id) VALUES
 (8, 6), -- Nut-free groceries
 (9, 5), (9, 6), -- Dairy- and nut-free coffee set
 (10, 7); -- Low-sugar snacks
+
+-- ============================================
+-- 11B. LISTING_FOOD_CATEGORIES (CO2 category + weight mapping)
+-- ============================================
+INSERT INTO listing_food_categories (listing_id, category_id, weight_kg) VALUES
+(1, 9, 1.000),   -- Assorted Bread Bundle
+(2, 9, 1.000),   -- Pastry Surprise Box
+(3, 10, 1.000),  -- Breakfast Combo
+(4, 10, 1.000),  -- Local Delight Set
+(5, 8, 1.000),   -- Dim Sum Platter
+(6, 5, 1.000),   -- Dumpling Feast
+(7, 10, 1.000),  -- Fresh Produce Box
+(8, 10, 1.000),  -- Grocery Essentials
+(9, 9, 1.000),   -- Coffee & Pastry Set
+(10, 10, 1.000)  -- Airport Snack Box
+ON DUPLICATE KEY UPDATE
+weight_kg = VALUES(weight_kg);
+
+-- Keep listing estimated weight aligned with category-weight mapping.
+UPDATE listings l
+JOIN (
+    SELECT listing_id, SUM(weight_kg) AS total_weight
+    FROM listing_food_categories
+    GROUP BY listing_id
+) x ON x.listing_id = l.listing_id
+SET l.estimated_weight_kg = x.total_weight
+WHERE l.estimated_weight_kg IS NULL OR l.estimated_weight_kg <= 0;
 
 -- ============================================
 -- 12. ORDERS (Demo consumer/store orders)
