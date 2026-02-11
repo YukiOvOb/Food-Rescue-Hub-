@@ -227,6 +227,13 @@
   box-shadow: 0 0 0 3px rgba(45, 106, 90, 0.1);
 }
 
+.form-group input.input-disabled {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
+  border-color: #dee2e6;
+}
+
 .form-hint {
   font-size: 12px;
   color: #666;

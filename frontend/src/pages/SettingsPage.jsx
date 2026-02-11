@@ -61,14 +61,13 @@ const SettingsPage = () => {
 
       await axiosInstance.put(`/suppliers/${supplierId}`, {
         displayName,
-        email,
         phoneNumber
       });
 
       setSuccessMessage('Profile updated successfully!');
 
-      // Update local user state
-      const updatedUser = { ...user, displayName, email, phoneNumber };
+      // Update local user state (email remains unchanged)
+      const updatedUser = { ...user, displayName, phoneNumber };
       setUser(updatedUser);
       authService.setUser(updatedUser);
 
@@ -193,23 +192,24 @@ const SettingsPage = () => {
 
             <form onSubmit={handleProfileUpdate} className="settings-form">
               <div className="form-group">
+                <label htmlFor="email">Email Address</label>
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  disabled
+                  className="input-disabled"
+                />
+                <small className="form-hint">Email cannot be changed (primary key)</small>
+              </div>
+
+              <div className="form-group">
                 <label htmlFor="displayName">Display Name</label>
                 <input
                   type="text"
                   id="displayName"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="email">Email Address</label>
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
