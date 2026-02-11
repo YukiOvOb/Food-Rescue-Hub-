@@ -24,6 +24,80 @@ const OrdersPage = () => {
     return [...items].sort((a, b) => (b?.orderId || 0) - (a?.orderId || 0));
   };
 
+  const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+
+  const timeFormatter = new Intl.DateTimeFormat(undefined, {
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+
+  const toDate = (value) => {
+    if (!value) return null;
+    if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+    if (typeof value !== 'string') return null;
+
+    let normalized = value.trim();
+    if (!normalized) return null;
+
+    normalized = normalized.replace(' ', 'T');
+    normalized = normalized.replace(/(\.\d{3})\d+/, '$1');
+
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(normalized)) {
+      normalized = `${normalized}:00`;
+    }
+
+    let parsed = new Date(normalized);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+
+    const match = normalized.match(
+      /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?$/
+    );
+    if (!match) return null;
+
+    const [, y, m, d, hh, mm, ss = '0', ms = '0'] = match;
+    parsed = new Date(
+      Number(y),
+      Number(m) - 1,
+      Number(d),
+      Number(hh),
+      Number(mm),
+      Number(ss),
+      Number(ms.padEnd(3, '0'))
+    );
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+
+  const formatDateTime = (value) => {
+    const date = toDate(value);
+    return date ? dateTimeFormatter.format(date) : '-';
+  };
+
+  const formatPickupSlot = (start, end) => {
+    const startDate = toDate(start);
+    const endDate = toDate(end);
+
+    if (!startDate && !endDate) return '-';
+    if (startDate && !endDate) return formatDateTime(startDate);
+    if (!startDate && endDate) return formatDateTime(endDate);
+
+    const sameDay =
+      startDate.getFullYear() === endDate.getFullYear() &&
+      startDate.getMonth() === endDate.getMonth() &&
+      startDate.getDate() === endDate.getDate();
+
+    if (sameDay) {
+      return `${formatDateTime(startDate)} - ${timeFormatter.format(endDate)}`;
+    }
+
+    return `${formatDateTime(startDate)} - ${formatDateTime(endDate)}`;
+  };
+
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       const response = await axios.patch(`/orders/${orderId}/status`, null, {
@@ -180,9 +254,9 @@ const OrdersPage = () => {
               )}
             </div>
             <div>
-              {order.pickupSlotStart ? `${order.pickupSlotStart} - ${order.pickupSlotEnd || ''}` : '-'}
+              {formatPickupSlot(order.pickupSlotStart, order.pickupSlotEnd)}
             </div>
-            <div>{order.createdAt || '-'}</div>
+            <div>{formatDateTime(order.createdAt)}</div>
             <div className="actions-col">
               {order.status === 'PENDING' && (
                 <button
