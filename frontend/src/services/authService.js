@@ -42,7 +42,8 @@ const authService = {
       try {
         return normalizeUser(JSON.parse(user));
       } catch (e) {
-        console.error('Failed to parse user from localStorage:', e);
+        localStorage.removeItem('user');
+        localStorage.removeItem('isLoggedIn');
       }
     }
     

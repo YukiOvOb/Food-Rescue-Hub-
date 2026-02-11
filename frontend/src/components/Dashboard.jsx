@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
 import axiosInstance from '../services/axiosConfig';
@@ -21,15 +21,12 @@ const Dashboard = () => {
         const currentUser = await authService.getCurrentUser();
 
         if (!currentUser) {
-          console.log('No user found, redirecting to login');
           navigate('/login');
           return;
         }
 
-        console.log('User loaded:', currentUser);
         setUser(currentUser);
       } catch (error) {
-        console.error('Error fetching user:', error);
         navigate('/login');
       } finally {
         setLoading(false);
@@ -80,22 +77,16 @@ const Dashboard = () => {
           )
         ]);
 
-        const pendingOrdersList = pendingResults.flatMap((result, index) => {
+        const pendingOrdersList = pendingResults.flatMap((result) => {
           if (result.status === 'fulfilled' && Array.isArray(result.value?.data)) {
             return result.value.data;
-          }
-          if (result.status === 'rejected') {
-            console.error(`Failed loading pending orders for store ${storeIds[index]}:`, result.reason);
           }
           return [];
         });
 
-        const completedOrdersList = completedResults.flatMap((result, index) => {
+        const completedOrdersList = completedResults.flatMap((result) => {
           if (result.status === 'fulfilled' && Array.isArray(result.value?.data)) {
             return result.value.data;
-          }
-          if (result.status === 'rejected') {
-            console.error(`Failed loading completed orders for store ${storeIds[index]}:`, result.reason);
           }
           return [];
         });
@@ -129,8 +120,6 @@ const Dashboard = () => {
           setCo2SavedKg(0);
           setActiveCustomers(0);
         }
-        console.error('Failed to load dashboard stats:', error);
-        console.error('Error details:', error.response?.data, error.response?.status);
       } finally {
         if (!cancelled) {
           setStatsLoading(false);

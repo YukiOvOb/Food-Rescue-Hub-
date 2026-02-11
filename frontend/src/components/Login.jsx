@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
 import './styles/Auth.css';
@@ -53,22 +53,13 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await authService.login(formData);
-      console.log('Login successful:', response);
-      
-      // Verify user data is saved
-      const savedUser = localStorage.getItem('user');
-      const isLoggedIn = localStorage.getItem('isLoggedIn');
-      console.log('Saved user:', savedUser);
-      console.log('Is logged in:', isLoggedIn);
+      await authService.login(formData);
       
       // Small delay to ensure localStorage is persisted before navigation
       setTimeout(() => {
         navigate('/dashboard');
       }, 100);
     } catch (error) {
-      console.error('Login failed:', error);
-      
       if (error.message) {
         setErrors({ submit: error.message });
       } else {

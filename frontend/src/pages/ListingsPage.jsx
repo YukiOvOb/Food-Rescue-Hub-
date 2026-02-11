@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import authService from '../services/authService';
 import { useNavigate } from 'react-router-dom';
 
@@ -147,7 +147,7 @@ export default function ListingsPage() {
           setUser(currentUser);
         }
       } catch (error) {
-        console.error('Error loading user:', error);
+        // ignore
       }
     };
     loadUser();
@@ -160,8 +160,7 @@ export default function ListingsPage() {
         return r.json();
       })
       .then((data) => setFoodCategories(Array.isArray(data) ? data : []))
-      .catch((err) => {
-        console.error('Error fetching food categories:', err);
+      .catch(() => {
         setFoodCategories([]);
       });
   }, []);
@@ -182,11 +181,9 @@ export default function ListingsPage() {
         return r.json();
       })
       .then((data) => {
-        console.log('Listings fetched:', data);
         setListings(data);
       })
-      .catch((err) => {
-        console.error('Error fetching listings:', err);
+      .catch(() => {
         setListings([]);
       });
   };
@@ -223,8 +220,7 @@ export default function ListingsPage() {
         setSuccessMessage(message || 'Listing deleted successfully.');
         fetchListings();
       })
-      .catch((err) => {
-        console.error(err);
+      .catch(() => {
         setErrors(['Failed to delete listing']);
       });
   };
@@ -447,7 +443,6 @@ export default function ListingsPage() {
         fetchListings();
       })
       .catch((err) => {
-        console.error('Create listing error:', err);
         if (Array.isArray(err)) {
           setErrors(err);
         } else if (typeof err === 'string') {

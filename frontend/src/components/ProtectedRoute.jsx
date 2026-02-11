@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import authService from '../services/authService';
 
 const ProtectedRoute = ({ children }) => {
@@ -12,16 +13,13 @@ const ProtectedRoute = ({ children }) => {
        
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
         if (isLoggedIn) {
-          console.log('User authenticated via localStorage');
           setIsAuth(true);
         } else {
          
           const auth = await authService.isAuthenticated();
-          console.log('Authentication status from server:', auth);
           setIsAuth(auth);
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
         setIsAuth(false);
       } finally {
         setLoading(false);
@@ -41,11 +39,14 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuth) {
-    console.log('Not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
   return children;
+};
+
+ProtectedRoute.propTypes = {
+  children: PropTypes.node.isRequired
 };
 
 export default ProtectedRoute;

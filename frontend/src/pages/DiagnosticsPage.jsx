@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import authService from '../services/authService';
 
 const DiagnosticsPage = () => {
@@ -15,7 +15,6 @@ const DiagnosticsPage = () => {
       setOutput(prev => prev + '✓ Cleared localStorage\n');
 
       
-      console.log('Sending login request...');
       const response = await authService.login({
         email: 'bakery@breadtalk.sg',
         password: 'password123'
@@ -30,7 +29,6 @@ const DiagnosticsPage = () => {
       setOutput(prev => prev + `✓ localStorage.isLoggedIn: ${isLoggedIn}\n\n`);
 
      
-      console.log('Testing /auth/me endpoint...');
       const meResponse = await authService.getCurrentUser();
       setOutput(prev => prev + `✓ /auth/me response:\n${JSON.stringify(meResponse, null, 2)}\n\n`);
 
@@ -39,7 +37,6 @@ const DiagnosticsPage = () => {
       setOutput(prev => prev + `✓ isAuthenticated: ${isAuth}\n`);
 
     } catch (error) {
-      console.error('Test failed:', error);
       setOutput(prev => prev + `✗ Error: ${error.message}\n`);
       if (error.response) {
         setOutput(prev => prev + `Status: ${error.response.status}\n`);

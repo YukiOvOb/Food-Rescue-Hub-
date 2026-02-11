@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from "../services/axiosConfig";
 
@@ -7,15 +7,12 @@ export default function StoreList() {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    const [supplierId, setSupplierId] = useState(null);
-
     useEffect(() => {
         const getSessionUser = async () => {
             try {
                 // Fetch the logged-in user's details
                 const response = await axiosInstance.get('/auth/me');
                 const id = response.data.userId ?? response.data.supplierId;
-                setSupplierId(id);
                 fetchStores(id); // Fetch stores for THIS specific supplier
             } catch (error) {
                 navigate('/login');
@@ -30,7 +27,7 @@ export default function StoreList() {
             const response = await axiosInstance.get(`/stores/supplier/${id}`);
             setStores(response.data);
         } catch (error) {
-            console.error("Error fetching stores:", error);
+            setStores([]);
         } finally {
             setLoading(false);
         }
@@ -45,13 +42,12 @@ export default function StoreList() {
             try {
                 // axiosInstance already has the baseURL (http://localhost:8080/api)
                 // and includes withCredentials: true
-                const response = await axiosInstance.delete(`/stores/delete/${storeId}`);
+                await axiosInstance.delete(`/stores/delete/${storeId}`);
 
                 // Axios treats non-2xx status codes as errors, so if we reach here, it's a 200 OK
                 alert("Store deleted successfully.");
                 setStores(stores.filter(store => store.storeId !== storeId));
             } catch (error) {
-                console.error("Error deleting store:", error);
                 const message = error.response?.data?.message || "Failed to delete the store.";
                 alert(message);
             }

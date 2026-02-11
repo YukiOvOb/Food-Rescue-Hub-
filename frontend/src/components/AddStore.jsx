@@ -1,4 +1,4 @@
-import React, { useState , useEffect} from 'react';
+import { useState, useEffect } from 'react';
 import { GoogleMap, useLoadScript, Autocomplete, Marker } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from "../services/axiosConfig";
@@ -12,7 +12,6 @@ export default function AddStore() {
         googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
         libraries,
     });
-    console.log("Key Loaded:", import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? "Yes" : "No");
     const navigate = useNavigate();
     const [supplierId, setSupplierId] = useState(null);
 
@@ -70,7 +69,6 @@ export default function AddStore() {
                 // coordinates would center the map since it uses useState(center) which is replaced with selected coordinates
                 setCoordinates({ lat, lng });
                 setAddress(formattedAddress);
-                console.log("Selected:", lat, lng, formattedAddress);
             }
         }
     };
@@ -116,7 +114,6 @@ export default function AddStore() {
                 navigate('/stores');
             }
         } catch (error) {
-            console.error("Error creating store:", error);
             const errorMessage = error.response?.data?.message || "Failed to create store.";
             alert("Error:\n" + errorMessage);
         }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { GoogleMap, useLoadScript, Autocomplete, Marker } from '@react-google-maps/api';
 import axiosInstance from "../services/axiosConfig";
@@ -51,7 +51,6 @@ export default function EditStore() {
                 setPickupInstructions(data.pickupInstructions);
                 setCoordinates({ lat: data.lat, lng: data.lng });
             } catch (error) {
-                console.error("Initialization error:", error);
                 // Redirect if unauthorized or store not found
                 navigate('/login');
             }
@@ -108,7 +107,6 @@ export default function EditStore() {
                 navigate('/stores');
             }
         } catch (error) {
-            console.error("Error updating store:", error);
             alert("Update failed.");
         }
     };

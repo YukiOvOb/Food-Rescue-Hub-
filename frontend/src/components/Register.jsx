@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
 import './styles/Auth.css';
@@ -72,14 +72,11 @@ const Register = () => {
     
     try {
       const payload = { ...formData, role: 'SUPPLIER' };
-      const response = await authService.register(payload);
-      console.log('Registration successful:', response);
+      await authService.register(payload);
       
       // Redirect to dashboard after successful registration
       navigate('/dashboard');
     } catch (error) {
-      console.error('Registration failed:', error);
-      
       // Handle different error formats
       if (error.errors) {
         setErrors(error.errors);
