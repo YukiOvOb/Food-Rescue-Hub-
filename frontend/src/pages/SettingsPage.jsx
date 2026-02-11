@@ -64,15 +64,19 @@ const SettingsPage = () => {
         phoneNumber
       });
 
+      // Clear any previous errors and show success
+      setError('');
       setSuccessMessage('Profile updated successfully!');
 
       // Update local user state (email remains unchanged)
       const updatedUser = { ...user, displayName, phoneNumber };
       setUser(updatedUser);
-      authService.setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
 
+      // Clear success message after 3 seconds
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
+      setSuccessMessage(''); // Clear success message when error occurs
       setError(err.response?.data?.message || 'Failed to update profile');
     } finally {
       setSaving(false);
