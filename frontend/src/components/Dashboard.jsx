@@ -146,6 +146,7 @@ const Dashboard = () => {
   const goToOrders = () => navigate('/orders');
   const goToAnalytics = () => navigate('/analytics');
   const goToQRDecoder = () => navigate('/qr-decoder');
+  const goToSettings = () => navigate('/settings');
 
   if (loading) {
     return (
@@ -221,7 +222,7 @@ const Dashboard = () => {
             <div className="feature-icon">⚙️</div>
             <h3 className="feature-title">Settings</h3>
             <p className="feature-description">Manage your account</p>
-            <button className="btn-feature">View Settings</button>
+            <button className="btn-feature" onClick={goToSettings}>View Settings</button>
           </div>
 
           <div className="feature-card">
