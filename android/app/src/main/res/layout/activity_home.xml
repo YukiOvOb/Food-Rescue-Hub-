@@ -48,6 +48,7 @@
                         android:textSize="16sp" />
 
                     <TextView
+                        android:id="@+id/tvUserName"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Team08"
@@ -78,7 +79,7 @@
                             android:contentDescription="Shopping Cart"
                             android:gravity="center"
                             android:padding="8dp"
-                            android:text="🔔"
+                            android:text="🛒"
                             android:textSize="25sp"
                             app:tint="#000000" />
 

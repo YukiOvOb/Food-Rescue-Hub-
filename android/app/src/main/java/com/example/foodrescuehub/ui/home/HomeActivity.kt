@@ -46,6 +46,7 @@ class HomeActivity : AppCompatActivity() {
 
     // UI components
     private lateinit var tvGreeting: TextView
+    private lateinit var tvUserName: TextView
     private lateinit var searchView: SearchView
     private lateinit var bannerViewPager: ViewPager2
     private lateinit var recommendationsSection: LinearLayout
@@ -135,6 +136,7 @@ class HomeActivity : AppCompatActivity() {
      */
     private fun initViews() {
         tvGreeting = findViewById(R.id.tvGreeting)
+        tvUserName = findViewById(R.id.tvUserName)
         searchView = findViewById(R.id.searchView)
         bannerViewPager = findViewById(R.id.bannerViewPager)
         recommendationsSection = findViewById(R.id.recommendationsSection)
@@ -223,9 +225,13 @@ class HomeActivity : AppCompatActivity() {
                     userLat = profile.defaultLat
                     userLng = profile.defaultLng
 
+                    // Update user name display
+                    tvUserName.text = profile.displayName
+
                     android.util.Log.d("HomeActivity", "✅ User profile loaded:")
                     android.util.Log.d("HomeActivity", "   consumerId: $currentUserId")
                     android.util.Log.d("HomeActivity", "   email: ${profile.email}")
+                    android.util.Log.d("HomeActivity", "   displayName: ${profile.displayName}")
                     android.util.Log.d("HomeActivity", "   location: lat=$userLat, lng=$userLng")
                     android.util.Log.d("HomeActivity", "📍 Loading recommendations...")
 
