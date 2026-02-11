@@ -3,6 +3,7 @@ import jsQR from 'jsqr';
 import { useNavigate } from 'react-router-dom';
 import axios from '../services/axiosConfig';
 import authService from '../services/authService';
+import PageHeader from './PageHeader';
 import './styles/QRCodeDecoder.css';
 
 const CAMERA_CONSTRAINTS = [
@@ -332,92 +333,91 @@ const QRCodeDecoder = () => {
 
   return (
     <div className="qr-decoder-container">
-      <div className="qr-decoder-header">
-        <h2>QR Code Decoder</h2>
-        <button className="dashboard-back-btn" onClick={() => navigate('/dashboard')}>
-          Back to Dashboard
-        </button>
-      </div>
-
-      <div className="camera-section">
-        <h3>Real-time Camera Detection</h3>
-        {!cameraActive && (
-          <button onClick={startCamera} className="camera-btn">
-            Open Camera & Start Scanning
-          </button>
-        )}
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          className={`camera-video ${cameraActive ? '' : 'camera-video-hidden'}`}
+      <div className="qr-decoder-content">
+        <PageHeader
+          title="QR Code Decoder"
+          subtitle="Supplier"
         />
-        {cameraActive && (
-          <>
-            <p className="scan-status">Scanning live camera feed...</p>
-            <div className="camera-controls">
-              <button onClick={stopCamera} className="stop-camera-btn">
-                Stop Camera
+
+        <div className="camera-section">
+          <h3>Real-time Camera Detection</h3>
+          {!cameraActive && (
+            <button onClick={startCamera} className="camera-btn">
+              Open Camera & Start Scanning
+            </button>
+          )}
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            className={`camera-video ${cameraActive ? '' : 'camera-video-hidden'}`}
+          />
+          {cameraActive && (
+            <>
+              <p className="scan-status">Scanning live camera feed...</p>
+              <div className="camera-controls">
+                <button onClick={stopCamera} className="stop-camera-btn">
+                  Stop Camera
+                </button>
+              </div>
+            </>
+          )}
+          <canvas ref={canvasRef} style={{ display: 'none' }} />
+        </div>
+
+        <div className="divider">Or</div>
+
+        <div className="upload-section">
+          <h3>Upload QR Code Image</h3>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            disabled={loading || confirming}
+            className="file-input-hidden"
+            id="qr-file-input"
+          />
+
+          <label htmlFor="qr-file-input" className="file-input-label">
+            {file ? `📄 ${file.name}` : '📁 Choose Image File'}
+          </label>
+
+          <button
+            onClick={handleUpload}
+            disabled={!file || loading || confirming}
+            className="upload-btn"
+          >
+            {loading ? 'Decoding...' : 'Decode QR Code'}
+          </button>
+        </div>
+
+        {error && <div className="error-message">❌ {error}</div>}
+        {successMessage && <div className="success-message">✅ {successMessage}</div>}
+
+        {result && (
+          <div className="result-message">
+            <h3>Decoded Content</h3>
+            <div className="result-content">
+              <code>{result}</code>
+            </div>
+            <div className="result-actions">
+              <button
+                onClick={confirmOrderByScannedToken}
+                disabled={confirming}
+                className="confirm-btn"
+              >
+                {confirming ? 'Confirming...' : 'Confirm Order Pickup'}
+              </button>
+              <button
+                onClick={() => navigator.clipboard.writeText(result)}
+                className="copy-btn"
+              >
+                Copy Token
               </button>
             </div>
-          </>
-        )}
-        <canvas ref={canvasRef} style={{ display: 'none' }} />
-      </div>
-
-      <div className="divider">Or</div>
-
-      <div className="upload-section">
-        <h3>Upload QR Code Image</h3>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          disabled={loading || confirming}
-          className="file-input"
-        />
-
-        {file && (
-          <p className="file-name">
-            Selected: <strong>{file.name}</strong>
-          </p>
-        )}
-
-        <button
-          onClick={handleUpload}
-          disabled={!file || loading || confirming}
-          className="upload-btn"
-        >
-          {loading ? 'Decoding...' : 'Decode QR Code'}
-        </button>
-      </div>
-
-      {error && <div className="error-message">❌ {error}</div>}
-      {successMessage && <div className="success-message">✅ {successMessage}</div>}
-
-      {result && (
-        <div className="result-message">
-          <h3>Decoded Content</h3>
-          <div className="result-content">
-            <code>{result}</code>
           </div>
-          <div className="result-actions">
-            <button
-              onClick={confirmOrderByScannedToken}
-              disabled={confirming}
-              className="confirm-btn"
-            >
-              {confirming ? 'Confirming...' : 'Confirm Order Pickup'}
-            </button>
-            <button
-              onClick={() => navigator.clipboard.writeText(result)}
-              className="copy-btn"
-            >
-              Copy Token
-            </button>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

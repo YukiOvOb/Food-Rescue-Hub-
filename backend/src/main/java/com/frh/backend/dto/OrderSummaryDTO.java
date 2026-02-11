@@ -33,8 +33,12 @@ public class OrderSummaryDto {
   private Long consumerId;
   private String consumerName;
   private String consumerPhone;
+  private ConsumerInfo consumer;
   private String pickupTokenHash;
   private LocalDateTime pickupTokenExpiresAt;
+
+  // Store info
+  private StoreInfo store;
 
   // Timing
   private LocalDateTime pickupSlotStart;
@@ -43,4 +47,23 @@ public class OrderSummaryDto {
 
   // Cancellation (populated only when status == REJECTED)
   private String cancelReason;
+
+  @Data
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class StoreInfo {
+    private Long storeId;
+    private String storeName;
+  }
+
+  @Data
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class ConsumerInfo {
+    private Long consumerId;
+    private String displayName;
+    private String username;
+  }
 }

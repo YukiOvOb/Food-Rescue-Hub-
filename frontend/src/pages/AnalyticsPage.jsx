@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import axiosInstance from '../services/axiosConfig';
+import PageHeader from '../components/PageHeader';
 import './AnalyticsPage.css';
 
 const AnalyticsPage = () => {
@@ -79,15 +80,10 @@ const AnalyticsPage = () => {
 
   return (
     <div className="analytics-page">
-      <div className="analytics-header">
-        <div>
-          <span className="analytics-tag">Supplier</span>
-          <h1>Analytics</h1>
-        </div>
-        <button className="analytics-btn" onClick={() => navigate('/dashboard')}>
-          Back to Dashboard
-        </button>
-      </div>
+      <PageHeader
+        title="Analytics"
+        subtitle="Supplier"
+      />
 
       {loading ? (
         <div className="analytics-empty">Loading...</div>
@@ -97,46 +93,54 @@ const AnalyticsPage = () => {
         <>
           {co2Summary && (
             <>
-              <div className="analytics-grid">
-                <div className="analytics-card">
+              {/* CO2 Savings Section */}
+              <div className="analytics-section">
+                <div className="analytics-section-header">
+                  <h2 className="analytics-section-title">CO2 Impact Summary</h2>
                   <div className="analytics-rank">Last 30 Days</div>
-                  <h3>CO2 Savings</h3>
-                  <div className="analytics-metric">
-                    <span>Total CO2 Saved (kg)</span>
-                    <strong>{Number(co2Summary.totalCo2Kg ?? 0).toFixed(2)}</strong>
+                </div>
+                <div className="analytics-grid">
+                  <div className="analytics-card analytics-highlight">
+                    <div className="analytics-icon">🌱</div>
+                    <h3>CO2 Savings</h3>
+                    <div className="analytics-metric">
+                      <span>Total CO2 Saved</span>
+                      <strong>{Number(co2Summary.totalCo2Kg ?? 0).toFixed(2)} kg</strong>
+                    </div>
+                    <div className="analytics-metric">
+                      <span>Total Weight Rescued</span>
+                      <strong>{Number(co2Summary.totalWeightKg ?? 0).toFixed(2)} kg</strong>
+                    </div>
+                    <button className="analytics-btn" onClick={handleDownloadPdf}>
+                      📄 Download CO2 Report
+                    </button>
                   </div>
-                  <div className="analytics-metric">
-                    <span>Total Weight (kg)</span>
-                    <strong>{Number(co2Summary.totalWeightKg ?? 0).toFixed(2)}</strong>
-                  </div>
-                  <button className="analytics-btn" onClick={handleDownloadPdf}>
-                    Download CO2 PDF
-                  </button>
                 </div>
               </div>
 
-              <div className="analytics-card analytics-table-card">
-                <h3>CO2 Breakdown by Category</h3>
+              {/* CO2 Breakdown Section */}
+              <div className="analytics-section">
+                <div className="analytics-section-header">
+                  <h2 className="analytics-section-title">CO2 Breakdown by Category</h2>
+                </div>
                 {Array.isArray(co2Summary.categories) && co2Summary.categories.length > 0 ? (
-                  <div className="analytics-table-wrap">
-                    <table className="analytics-table">
-                      <thead>
-                        <tr>
-                          <th>Category</th>
-                          <th>Total Weight (kg)</th>
-                          <th>Total CO2 (kg)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {co2Summary.categories.map((row) => (
-                          <tr key={row.categoryId}>
-                            <td>{row.categoryName}</td>
-                            <td>{Number(row.totalWeightKg ?? 0).toFixed(3)}</td>
-                            <td>{Number(row.totalCo2Kg ?? 0).toFixed(3)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="analytics-category-grid">
+                    {co2Summary.categories.map((row) => (
+                      <div className="analytics-category-card" key={row.categoryId}>
+                        <div className="category-name">{row.categoryName}</div>
+                        <div className="category-stats">
+                          <div className="category-stat">
+                            <span className="stat-label">Weight</span>
+                            <span className="stat-value">{Number(row.totalWeightKg ?? 0).toFixed(2)} kg</span>
+                          </div>
+                          <div className="category-stat-divider"></div>
+                          <div className="category-stat">
+                            <span className="stat-label">CO2 Saved</span>
+                            <span className="stat-value stat-highlight">{Number(row.totalCo2Kg ?? 0).toFixed(2)} kg</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className="analytics-empty">No CO2 data available</div>
@@ -145,23 +149,29 @@ const AnalyticsPage = () => {
             </>
           )}
 
-          <h2>Top Selling Products</h2>
-          {items.length === 0 ? (
-            <div className="analytics-empty">No sales data available</div>
-          ) : (
-            <div className="analytics-grid">
-              {items.map((item, index) => (
-                <div className="analytics-card" key={item.listingId || index}>
-                  <div className="analytics-rank">Top {index + 1}</div>
-                  <h3>{item.title}</h3>
-                  <div className="analytics-metric">
-                    <span>Quantity Sold</span>
-                    <strong>{item.totalQuantity}</strong>
-                  </div>
-                </div>
-              ))}
+          {/* Top Selling Products Section */}
+          <div className="analytics-section">
+            <div className="analytics-section-header">
+              <h2 className="analytics-section-title">Top Selling Products</h2>
+              <div className="analytics-tag">Best Performers</div>
             </div>
-          )}
+            {items.length === 0 ? (
+              <div className="analytics-empty">No sales data available</div>
+            ) : (
+              <div className="analytics-grid">
+                {items.map((item, index) => (
+                  <div className="analytics-card" key={item.listingId || index}>
+                    <div className="analytics-rank">Top {index + 1}</div>
+                    <h3>{item.title}</h3>
+                    <div className="analytics-metric">
+                      <span>Quantity Sold</span>
+                      <strong>{item.totalQuantity}</strong>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>

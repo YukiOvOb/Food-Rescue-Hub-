@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../services/axiosConfig';
 import authService from '../services/authService';
+import PageHeader from '../components/PageHeader';
 import './OrdersPage.css';
 
 const OrdersPage = () => {
@@ -24,17 +25,19 @@ const OrdersPage = () => {
     return [...items].sort((a, b) => (b?.orderId || 0) - (a?.orderId || 0));
   };
 
-  const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
     hour: 'numeric',
-    minute: '2-digit'
+    minute: '2-digit',
+    hour12: true
   });
 
-  const timeFormatter = new Intl.DateTimeFormat(undefined, {
+  const timeFormatter = new Intl.DateTimeFormat('en-US', {
     hour: 'numeric',
-    minute: '2-digit'
+    minute: '2-digit',
+    hour12: true
   });
 
   const toDate = (value) => {
@@ -100,9 +103,10 @@ const OrdersPage = () => {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      await axios.patch(`/orders/${orderId}/status`, null, {
+      const response = await axios.patch(`/orders/${orderId}/status`, null, {
         params: { status: newStatus }
       });
+      console.log(`Order ${orderId} updated to ${newStatus}`);
       fetchOrders(selectedStoreId);
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to update order status');
@@ -168,12 +172,10 @@ const OrdersPage = () => {
 
   return (
     <div className="orders-page">
-      <div className="orders-header">
-        <h2>Orders</h2>
-        <div className="orders-header-actions">
-          <button className="orders-back" onClick={() => navigate('/dashboard')}>
-            Back to Dashboard
-          </button>
+      <PageHeader
+        title="Orders"
+        subtitle="Supplier"
+        actions={
           <button
             className="orders-refresh"
             onClick={() => fetchOrders(selectedStoreId)}
@@ -181,8 +183,8 @@ const OrdersPage = () => {
           >
             {loading ? 'Loading...' : 'Refresh'}
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {!storeLoading && stores.length > 1 && (
         <div className="orders-store-selector">
@@ -203,7 +205,7 @@ const OrdersPage = () => {
 
       {!storeLoading && stores.length === 1 && (
         <div className="orders-store-single">
-          店铺：{stores[0].storeName}
+          Store: {stores[0].storeName}
         </div>
       )}
 
@@ -219,12 +221,11 @@ const OrdersPage = () => {
           <div>Status</div>
           <div>Total</div>
           <div>Currency</div>
-          <div>Store</div>
-          <div>Consumer</div>
+          <div>Store Name</div>
+          <div>Consumer Name</div>
           <div>Pickup Token</div>
           <div>Pickup Slot</div>
           <div>Created</div>
-          <div>Actions</div>
         </div>
 
         {!loading && selectedStoreId && (!Array.isArray(orders) || orders.length === 0) && (
@@ -233,17 +234,27 @@ const OrdersPage = () => {
 
         {Array.isArray(orders) && orders.map((order) => (
           <div className="orders-row" key={order.orderId}>
-            <div>{order.orderId}</div>
-            <div>
-              <span className={`status-badge status-${order.status?.toLowerCase()}`}>
-                {order.status}
-              </span>
+            <div data-label="Order ID">{order.orderId}</div>
+            <div data-label="Status">
+              {order.status === 'PENDING' ? (
+                <button
+                  className="btn-complete"
+                  onClick={() => updateOrderStatus(order.orderId, 'COMPLETED')}
+                  title="Click to mark as completed"
+                >
+                  ✓ Complete Order
+                </button>
+              ) : (
+                <span className={`status-badge status-${order.status?.toLowerCase()}`}>
+                  {order.status}
+                </span>
+              )}
             </div>
-            <div>{order.totalAmount}</div>
-            <div>{order.currency || 'SGD'}</div>
-            <div>{order.store?.storeId ?? selectedStoreId ?? '-'}</div>
-            <div>{order.consumer?.consumerId ?? order.consumerId ?? '-'}</div>
-            <div className="pickup-token">
+            <div data-label="Total">${order.totalAmount}</div>
+            <div data-label="Currency">{order.currency || 'SGD'}</div>
+            <div data-label="Store Name">{order.store?.storeName || '-'}</div>
+            <div data-label="Consumer Name">{order.consumer?.displayName || order.consumer?.username || '-'}</div>
+            <div data-label="Pickup Token" className="pickup-token">
               {(order.pickupToken?.qrTokenHash || order.pickupTokenHash) ? (
                 <span title={`Expires: ${order.pickupToken?.expiresAt || order.pickupTokenExpiresAt || '-'}`}>
                   {order.pickupToken?.qrTokenHash || order.pickupTokenHash}
@@ -252,42 +263,10 @@ const OrdersPage = () => {
                 <span className="token-none">No token</span>
               )}
             </div>
-            <div>
+            <div data-label="Pickup Slot">
               {formatPickupSlot(order.pickupSlotStart, order.pickupSlotEnd)}
             </div>
-            <div>{formatDateTime(order.createdAt)}</div>
-            <div className="actions-col">
-              {order.status === 'PAID' && (
-                <button
-                  className="btn-ready"
-                  onClick={() => updateOrderStatus(order.orderId, 'READY')}
-                  title="Mark order as ready for pickup"
-                >
-                  Mark Ready
-                </button>
-              )}
-              {order.status === 'READY' && (
-                <span className="status-text">Waiting for pickup scan</span>
-              )}
-              {order.status === 'PENDING' && (
-                <button
-                  className="btn-complete"
-                  onClick={() => updateOrderStatus(order.orderId, 'COMPLETED')}
-                  title="Mark as completed"
-                >
-                  ✓ Complete
-                </button>
-              )}
-              {order.status === 'COMPLETED' && (
-                <span className="status-text">Done</span>
-              )}
-              {order.status !== 'PAID' &&
-                order.status !== 'READY' &&
-                order.status !== 'PENDING' &&
-                order.status !== 'COMPLETED' && (
-                <span className="status-text">{order.status}</span>
-              )}
-            </div>
+            <div data-label="Created">{formatDateTime(order.createdAt)}</div>
           </div>
         ))}
       </div>
