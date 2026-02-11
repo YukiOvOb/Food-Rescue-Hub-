@@ -1,22 +1,21 @@
 package com.frh.backend.dto;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
 /**
- * Read-only the DTO returned to the supplier's order-queue UI.
- * Contains every piece of information the supplier needs at a glance.
+ * Read-only the DTO returned to the supplier's order-queue UI. Contains every piece of information
+ * the supplier needs at a glance.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderSummaryDTO {
+public class OrderSummaryDto {
 
   // Order identity
   private Long orderId;

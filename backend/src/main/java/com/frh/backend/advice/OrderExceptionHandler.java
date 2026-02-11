@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @ControllerAdvice
 public class OrderExceptionHandler {
-    @ExceptionHandler(InsufficientStockException.class)
-    public ResponseEntity<String> handleInsufficientStock(InsufficientStockException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
-    }
+  @ExceptionHandler(InsufficientStockException.class)
+  public ResponseEntity<String> handleInsufficientStock(InsufficientStockException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+  }
 }

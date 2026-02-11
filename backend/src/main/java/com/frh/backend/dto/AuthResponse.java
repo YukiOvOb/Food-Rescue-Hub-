@@ -18,7 +18,8 @@ public class AuthResponse {
   // for the JWT token for authentication
   private String token;
 
-  public AuthResponse(String token, Long userId, String email, String displayName, String role, String message) {
+  public AuthResponse(
+      String token, Long userId, String email, String displayName, String role, String message) {
     this.token = token;
     this.userId = userId;
     this.email = email;

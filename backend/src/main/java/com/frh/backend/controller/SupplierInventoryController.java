@@ -1,13 +1,20 @@
 package com.frh.backend.controller;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
-import com.frh.backend.Model.Inventory;
+
 import com.frh.backend.dto.InventoryAdjustRequest;
 import com.frh.backend.dto.InventoryResponseDto;
+import com.frh.backend.model.Inventory;
 import com.frh.backend.service.InventoryService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 /* REST endpoints for supplier inventory management*/
 
@@ -16,8 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 public class SupplierInventoryController {
 
-  @Autowired
-  private InventoryService inventoryService;
+  @Autowired private InventoryService inventoryService;
 
   // Read current stock
   @GetMapping("/{listingId}")
@@ -35,16 +41,14 @@ public class SupplierInventoryController {
   }
 
   /**
-   * PUT /api/supplier/inventory/{listingId}/adjust
-   * Body: { "delta": 5 } to adds 5 units
-   * { "delta": -2 } to removes 2 units (e.g. spoiled)
-   * 
-   * Returns 400 when the resulting qty would be negative.
+   * PUT /api/supplier/inventory/{listingId}/adjust Body: { "delta": 5 } to adds 5 units { "delta":
+   * -2 } to removes 2 units (e.g. spoiled)
+   *
+   * <p>Returns 400 when the resulting qty would be negative.
    */
   @PutMapping("/{listingId}/adjust")
   public ResponseEntity<?> adjustInventory(
-      @PathVariable Long listingId,
-      @Valid @RequestBody InventoryAdjustRequest body) {
+      @PathVariable Long listingId, @Valid @RequestBody InventoryAdjustRequest body) {
 
     try {
       Inventory updated = inventoryService.adjustInventory(listingId, body.getDelta());

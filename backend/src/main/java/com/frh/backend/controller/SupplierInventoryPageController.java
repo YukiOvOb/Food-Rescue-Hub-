@@ -1,17 +1,21 @@
 package com.frh.backend.controller;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
 
-import com.frh.backend.Model.Inventory;
-import com.frh.backend.Model.Listing;
+
+import com.frh.backend.model.Inventory;
+import com.frh.backend.model.Listing;
 import com.frh.backend.repository.ListingRepository;
 import com.frh.backend.service.InventoryService;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /* the supplier's inventory page.*/
 
@@ -19,11 +23,9 @@ import java.util.List;
 @RequestMapping("/supplier/inventory")
 public class SupplierInventoryPageController {
 
-  @Autowired
-  private InventoryService inventoryService;
+  @Autowired private InventoryService inventoryService;
 
-  @Autowired
-  private ListingRepository listingRepository;
+  @Autowired private ListingRepository listingRepository;
 
   // Render page
   /*
@@ -31,8 +33,7 @@ public class SupplierInventoryPageController {
    * inventory so the Thymeleaf template can render the table.
    */
   @GetMapping("/{storeId}")
-  public String showInventory(@PathVariable Long storeId,
-      Model model) {
+  public String showInventory(@PathVariable Long storeId, Model model) {
 
     // to Fetch all listings
 
@@ -54,7 +55,8 @@ public class SupplierInventoryPageController {
 
   // Adjust stock
   @PostMapping("/{storeId}/adjust")
-  public String adjustStock(@PathVariable Long storeId,
+  public String adjustStock(
+      @PathVariable Long storeId,
       @RequestParam Long listingId,
       @RequestParam int delta,
       RedirectAttributes ra) {
@@ -69,8 +71,8 @@ public class SupplierInventoryPageController {
 
   // Tiny inner DTO – avoids creating a separate file
   /**
-   * Pairs a Listing with its Inventory for the Thymeleaf table row.
-   * Kept package-private; Thymeleaf accesses fields via getters.
+   * Pairs a Listing with its Inventory for the Thymeleaf table row. Kept package-private; Thymeleaf
+   * accesses fields via getters.
    */
   public static class InventoryRowDTO {
     private final Listing listing;

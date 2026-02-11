@@ -1,12 +1,11 @@
 package com.frh.backend.dto;
 
+import java.math.BigDecimal;
 import lombok.Data;
 
-import java.math.BigDecimal;
-
 @Data
-public class ListingCategoryWeightDTO {
-    private Long categoryId;
-    private String categoryName;
-    private BigDecimal weightKg;
+public class ListingCategoryWeightDto {
+  private Long categoryId;
+  private String categoryName;
+  private BigDecimal weightKg;
 }

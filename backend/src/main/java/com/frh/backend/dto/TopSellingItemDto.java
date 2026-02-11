@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class TopSellingItemDto {
-    private Long listingId;
-    private String title;
-    private Long totalQuantity;
+  private Long listingId;
+  private String title;
+  private Long totalQuantity;
 }

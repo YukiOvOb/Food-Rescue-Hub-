@@ -1,11 +1,11 @@
 package com.frh.backend.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-
-//getters, setters, toString(), equals() can be automatically generated -> by using the lombok.Data
 import lombok.Data;
+
+// getters, setters, toString(), equals() can be automatically generated -> by using the lombok.Data
 
 @Data
 public class RegisterRequest {

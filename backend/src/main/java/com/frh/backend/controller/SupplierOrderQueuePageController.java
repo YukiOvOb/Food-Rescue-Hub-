@@ -1,14 +1,18 @@
 package com.frh.backend.controller;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
 
-import com.frh.backend.dto.OrderSummaryDTO;
+
+import com.frh.backend.dto.OrderSummaryDto;
 import com.frh.backend.service.OrderService;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.util.List;
 
 /*supplier's order-queue page */
 
@@ -16,17 +20,17 @@ import java.util.List;
 @RequestMapping("/supplier/order-queue")
 public class SupplierOrderQueuePageController {
 
-  @Autowired
-  private OrderService orderService;
+  @Autowired private OrderService orderService;
 
   // the Render page
   @GetMapping("/{storeId}")
-  public String showOrderQueue(@PathVariable Long storeId,
+  public String showOrderQueue(
+      @PathVariable Long storeId,
       @RequestParam(required = false, defaultValue = "PENDING") String status,
       Model model,
       RedirectAttributes redirectAttributes) {
 
-    List<OrderSummaryDTO> orders = orderService.getOrderQueue(storeId, status);
+    List<OrderSummaryDto> orders = orderService.getOrderQueue(storeId, status);
 
     model.addAttribute("storeId", storeId);
     model.addAttribute("activeStatus", status);
@@ -41,9 +45,8 @@ public class SupplierOrderQueuePageController {
 
   // Accept
   @PostMapping("/{storeId}/accept")
-  public String acceptOrder(@PathVariable Long storeId,
-      @RequestParam Long orderId,
-      RedirectAttributes ra) {
+  public String acceptOrder(
+      @PathVariable Long storeId, @RequestParam Long orderId, RedirectAttributes ra) {
     try {
       orderService.acceptOrder(orderId);
       ra.addFlashAttribute("successMsg", "Order #" + orderId + " accepted successfully.");
@@ -55,7 +58,8 @@ public class SupplierOrderQueuePageController {
 
   // Reject
   @PostMapping("/{storeId}/reject")
-  public String rejectOrder(@PathVariable Long storeId,
+  public String rejectOrder(
+      @PathVariable Long storeId,
       @RequestParam Long orderId,
       @RequestParam String reason,
       RedirectAttributes ra) {
@@ -70,7 +74,8 @@ public class SupplierOrderQueuePageController {
 
   // Cancel (accepted order)
   @PostMapping("/{storeId}/cancel")
-  public String cancelOrder(@PathVariable Long storeId,
+  public String cancelOrder(
+      @PathVariable Long storeId,
       @RequestParam Long orderId,
       @RequestParam String reason,
       RedirectAttributes ra) {
