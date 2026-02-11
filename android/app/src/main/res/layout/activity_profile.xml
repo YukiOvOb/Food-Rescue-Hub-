@@ -138,30 +138,6 @@
                         android:textColor="#999999"
                         tools:text="john@example.com" />
 
-                    <!-- Member Since Badge -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_marginTop="12dp"
-                        app:cardCornerRadius="12dp"
-                        app:cardElevation="0dp"
-                        app:cardBackgroundColor="#E3F2ED">
-
-                        <TextView
-                            android:id="@+id/tvMemberSince"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textSize="12sp"
-                            android:textColor="#2d6a5a"
-                            android:textStyle="bold"
-                            android:paddingStart="16dp"
-                            android:paddingEnd="16dp"
-                            android:paddingTop="6dp"
-                            android:paddingBottom="6dp"
-                            tools:text="Member since Jan 2024" />
-                    </com.google.android.material.card.MaterialCardView>
-
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>

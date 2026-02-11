@@ -103,11 +103,6 @@ class ProfileActivity : AppCompatActivity() {
                 // Display user information
                 binding.tvDisplayName.text = user.displayName
                 binding.tvEmail.text = user.email
-
-                // Format member since date
-                val dateFormat = SimpleDateFormat("MMM yyyy", Locale.getDefault())
-                val memberSince = dateFormat.format(Date(user.createdAt))
-                binding.tvMemberSince.text = getString(R.string.member_since, memberSince)
             } else {
                 // User is not logged in (guest)
                 binding.cvUserInfo.visibility = View.GONE
