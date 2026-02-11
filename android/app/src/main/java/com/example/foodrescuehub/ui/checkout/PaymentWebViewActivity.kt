@@ -62,7 +62,7 @@ class PaymentWebViewActivity : AppCompatActivity() {
             settings.loadWithOverviewMode = true
             settings.useWideViewPort = true
             settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-            
+
             webViewClient = object : WebViewClient() {
                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                     if (!isFinishing) binding.progressBar.visibility = View.VISIBLE
@@ -70,26 +70,44 @@ class PaymentWebViewActivity : AppCompatActivity() {
 
                 override fun onPageFinished(view: WebView?, url: String?) {
                     if (!isFinishing) binding.progressBar.visibility = View.GONE
+
+                    // Check if payment was successful by examining page content
+                    view?.evaluateJavascript(
+                        "(function() { " +
+                        "  var body = document.body.innerText.toLowerCase(); " +
+                        "  return body.includes('payment successful') || body.includes('payment has already succeeded'); " +
+                        "})();"
+                    ) { result ->
+                        if (result == "true" && !isFinishing) {
+                            Log.d("PaymentWebView", "Payment success detected in page content")
+                            // Wait 2 seconds then navigate
+                            binding.webView.postDelayed({
+                                if (!isFinishing) {
+                                    handlePaymentCompletion("")
+                                }
+                            }, 2000)
+                        }
+                    }
                 }
 
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val newUrl = request?.url.toString()
                     android.util.Log.d("PaymentWebView", "Intercepting URL: $newUrl")
-                    
+
                     if (newUrl.contains("frhapp://payment/success")) {
                         handlePaymentCompletion(newUrl)
                         return true
                     }
-                    
+
                     if (newUrl.contains("frhapp://payment/cancel")) {
                         finish()
                         return true
                     }
-                    
+
                     return false
                 }
             }
-            
+
             loadUrl(url)
         }
     }
@@ -101,7 +119,7 @@ class PaymentWebViewActivity : AppCompatActivity() {
         val orderIds = parseOrderIds(orderIdsStr).ifEmpty {
             intent.getLongArrayExtra(EXTRA_ORDER_IDS)?.toList() ?: emptyList()
         }
-        
+
         Log.d("PaymentWebView", "Success! Updating status for orders: $orderIds")
 
         // 1. Update backend status to PAID for each order
@@ -109,20 +127,15 @@ class PaymentWebViewActivity : AppCompatActivity() {
             updateOrderStatusToPaid(orderId)
         }
 
-        // 2. Clear the cart
+        // 2. Clear the cart and navigate after delay
         CartManager.clearCart {
-            // 3. Navigate directly to the purchased order when available
-            val firstOrderId = orderIds.firstOrNull()
-            val nextIntent = if (firstOrderId != null) {
-                Intent(this, OrderDetailActivity::class.java).apply {
-                    putExtra(OrderDetailActivity.EXTRA_ORDER_ID, firstOrderId)
-                }
-            } else {
-                Intent(this, OrdersActivity::class.java)
-            }
-            nextIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-            startActivity(nextIntent)
-            finish()
+            // Wait 2 seconds before navigating to orders page
+            binding.webView.postDelayed({
+                val nextIntent = Intent(this, OrdersActivity::class.java)
+                nextIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(nextIntent)
+                finish()
+            }, 2000) // 2 second delay
         }
     }
 
