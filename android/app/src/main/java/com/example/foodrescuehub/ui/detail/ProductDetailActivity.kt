@@ -158,12 +158,52 @@ class ProductDetailActivity : AppCompatActivity() {
             startActivity(intent)
             finish()
         }
-        
+
         binding.btnShare.setOnClickListener {
-            Toast.makeText(this, "Share feature coming soon", Toast.LENGTH_SHORT).show()
+            shareToWhatsApp()
         }
-        
+
         binding.btnBuyNow.setOnClickListener { addToCart() }
+    }
+
+    private fun shareToWhatsApp() {
+        // Get listing details
+        val title = intent.getStringExtra(EXTRA_LISTING_TITLE) ?: "Mystery Box"
+        val storeName = intent.getStringExtra(EXTRA_LISTING_STORE_NAME) ?: ""
+        val price = intent.getDoubleExtra(EXTRA_LISTING_PRICE, 0.0)
+        val savingsLabel = intent.getStringExtra(EXTRA_LISTING_SAVINGS_LABEL) ?: ""
+
+        // Create share message
+        val shareText = buildString {
+            append("🍱 Check out this amazing deal!\n\n")
+            append("📦 $title\n")
+            append("$storeName\n")
+            append("💰 Price: $%.2f\n".format(price))
+            if (savingsLabel.isNotBlank()) {
+                append("💚 $savingsLabel\n")
+            }
+            append("\nGet it before it's gone! 🚀\n")
+            append("\nDownload Food Rescue Hub app now!")
+        }
+
+        try {
+            // Try to share specifically to WhatsApp
+            val whatsappIntent = Intent(Intent.ACTION_SEND)
+            whatsappIntent.type = "text/plain"
+            whatsappIntent.setPackage("com.whatsapp")
+            whatsappIntent.putExtra(Intent.EXTRA_TEXT, shareText)
+            startActivity(whatsappIntent)
+        } catch (e: Exception) {
+            // If WhatsApp is not installed, show general share dialog
+            try {
+                val shareIntent = Intent(Intent.ACTION_SEND)
+                shareIntent.type = "text/plain"
+                shareIntent.putExtra(Intent.EXTRA_TEXT, shareText)
+                startActivity(Intent.createChooser(shareIntent, "Share via"))
+            } catch (ex: Exception) {
+                Toast.makeText(this, "Unable to share", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun addToCart() {
