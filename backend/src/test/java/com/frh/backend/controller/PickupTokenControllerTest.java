@@ -8,6 +8,7 @@ import com.frh.backend.model.Order;
 import com.frh.backend.model.PickupToken;
 import com.frh.backend.repository.OrderRepository;
 import com.frh.backend.repository.PickupTokenRepository;
+import com.frh.backend.service.OrderService;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,8 @@ class PickupTokenControllerTest {
   @MockitoBean private PickupTokenRepository pickupTokenRepository;
 
   @MockitoBean private OrderRepository orderRepository;
+
+  @MockitoBean private OrderService orderService;
 
   /* --------------------------------
   GET PICKUP TOKEN – FOUND
