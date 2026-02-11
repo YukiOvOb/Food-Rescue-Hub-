@@ -2,8 +2,16 @@ package com.frh.backend.service;
 
 import com.frh.backend.dto.CartResponseDto;
 import com.frh.backend.exception.CrossStoreException;
-import com.frh.backend.model.*;
-import com.frh.backend.repository.*;
+import com.frh.backend.model.Cart;
+import com.frh.backend.model.CartItem;
+import com.frh.backend.model.Inventory;
+import com.frh.backend.model.Listing;
+import com.frh.backend.model.User;
+import com.frh.backend.repository.CartItemRepository;
+import com.frh.backend.repository.CartRepository;
+import com.frh.backend.repository.InventoryRepository;
+import com.frh.backend.repository.ListingRepository;
+import com.frh.backend.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;

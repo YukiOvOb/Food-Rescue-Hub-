@@ -1,8 +1,11 @@
 package com.frh.backend.service;
 
 import com.frh.backend.dto.StoreRecommendationDto;
-import com.frh.backend.model.*;
-import com.frh.backend.repository.*;
+import com.frh.backend.model.Listing;
+import com.frh.backend.model.Store;
+import com.frh.backend.model.User;
+import com.frh.backend.repository.ListingRepository;
+import com.frh.backend.repository.StoreRepository;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -14,7 +17,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 

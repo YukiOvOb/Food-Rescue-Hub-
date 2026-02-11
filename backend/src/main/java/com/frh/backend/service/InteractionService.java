@@ -1,8 +1,18 @@
 package com.frh.backend.service;
 
 import com.frh.backend.dto.UserInteractionRequest;
-import com.frh.backend.model.*;
-import com.frh.backend.repository.*;
+import com.frh.backend.model.Listing;
+import com.frh.backend.model.SearchLog;
+import com.frh.backend.model.Store;
+import com.frh.backend.model.User;
+import com.frh.backend.model.UserInteraction;
+import com.frh.backend.model.UserStoreInteraction;
+import com.frh.backend.repository.ListingRepository;
+import com.frh.backend.repository.SearchLogRepository;
+import com.frh.backend.repository.StoreRepository;
+import com.frh.backend.repository.UserInteractionRepository;
+import com.frh.backend.repository.UserRepository;
+import com.frh.backend.repository.UserStoreInteractionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
