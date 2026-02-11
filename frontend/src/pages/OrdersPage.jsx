@@ -172,103 +172,124 @@ const OrdersPage = () => {
 
   return (
     <div className="orders-page">
-      <PageHeader
-        title="Orders"
-        subtitle="Supplier"
-        actions={
-          <button
-            className="orders-refresh"
-            onClick={() => fetchOrders(selectedStoreId)}
-            disabled={loading || !selectedStoreId}
-          >
-            {loading ? 'Loading...' : 'Refresh'}
-          </button>
-        }
-      />
-
-      {!storeLoading && stores.length > 1 && (
-        <div className="orders-store-selector">
-          {stores.map((store) => (
+      {/* Header Banner */}
+      <div className="orders-header-banner">
+        <div className="banner-content">
+          <div className="banner-left">
+            <span className="banner-tag">SUPPLIER</span>
+            <h1 className="banner-title">Orders</h1>
+          </div>
+          <div className="banner-right">
             <button
-              key={store.storeId}
-              className={`store-chip ${selectedStoreId === store.storeId ? 'active' : ''}`}
-              onClick={() => {
-                setSelectedStoreId(store.storeId);
-                fetchOrders(store.storeId);
-              }}
+              type="button"
+              onClick={() => navigate('/dashboard')}
+              className="btn-back-dashboard"
             >
-              {store.storeName}
+              ← Back to Dashboard
             </button>
-          ))}
+            <button
+              className="btn-refresh"
+              onClick={() => fetchOrders(selectedStoreId)}
+              disabled={loading || !selectedStoreId}
+            >
+              {loading ? 'Loading...' : 'Refresh'}
+            </button>
+          </div>
         </div>
-      )}
+      </div>
 
-      {!storeLoading && stores.length === 1 && (
-        <div className="orders-store-single">
-          Store: {stores[0].storeName}
-        </div>
-      )}
-
-      {!storeLoading && stores.length === 0 && (
-        <div className="orders-empty">No stores found for this supplier.</div>
-      )}
-
-      {error && <div className="orders-error">❌ {error}</div>}
-
-      <div className="orders-table">
-        <div className="orders-row orders-head">
-          <div>Order ID</div>
-          <div>Status</div>
-          <div>Total</div>
-          <div>Currency</div>
-          <div>Store Name</div>
-          <div>Consumer Name</div>
-          <div>Pickup Token</div>
-          <div>Pickup Slot</div>
-          <div>Created</div>
-        </div>
-
-        {!loading && selectedStoreId && (!Array.isArray(orders) || orders.length === 0) && (
-          <div className="orders-empty">No orders found.</div>
+      {/* Main Content */}
+      <div className="orders-content">
+        {/* Store Selector */}
+        {!storeLoading && stores.length > 1 && (
+          <div className="store-selector">
+            {stores.map((store) => (
+              <button
+                key={store.storeId}
+                className={`store-chip ${selectedStoreId === store.storeId ? 'active' : ''}`}
+                onClick={() => {
+                  setSelectedStoreId(store.storeId);
+                  fetchOrders(store.storeId);
+                }}
+              >
+                {store.storeName}
+              </button>
+            ))}
+          </div>
         )}
 
-        {Array.isArray(orders) && orders.map((order) => (
-          <div className="orders-row" key={order.orderId}>
-            <div data-label="Order ID">{order.orderId}</div>
-            <div data-label="Status">
-              {order.status === 'PENDING' ? (
-                <button
-                  className="btn-complete"
-                  onClick={() => updateOrderStatus(order.orderId, 'COMPLETED')}
-                  title="Click to mark as completed"
-                >
-                  ✓ Complete Order
-                </button>
-              ) : (
-                <span className={`status-badge status-${order.status?.toLowerCase()}`}>
-                  {order.status}
-                </span>
-              )}
-            </div>
-            <div data-label="Total">${order.totalAmount}</div>
-            <div data-label="Currency">{order.currency || 'SGD'}</div>
-            <div data-label="Store Name">{order.store?.storeName || '-'}</div>
-            <div data-label="Consumer Name">{order.consumer?.displayName || order.consumer?.username || '-'}</div>
-            <div data-label="Pickup Token" className="pickup-token">
-              {(order.pickupToken?.qrTokenHash || order.pickupTokenHash) ? (
-                <span title={`Expires: ${order.pickupToken?.expiresAt || order.pickupTokenExpiresAt || '-'}`}>
-                  {order.pickupToken?.qrTokenHash || order.pickupTokenHash}
-                </span>
-              ) : (
-                <span className="token-none">No token</span>
-              )}
-            </div>
-            <div data-label="Pickup Slot">
-              {formatPickupSlot(order.pickupSlotStart, order.pickupSlotEnd)}
-            </div>
-            <div data-label="Created">{formatDateTime(order.createdAt)}</div>
+        {!storeLoading && stores.length === 1 && (
+          <div className="single-store-info">
+            <span className="store-label">Store:</span> {stores[0].storeName}
           </div>
-        ))}
+        )}
+
+        {!storeLoading && stores.length === 0 && (
+          <div className="empty-state">No stores found for this supplier.</div>
+        )}
+
+        {error && <div className="error-message">❌ {error}</div>}
+
+        {/* Orders Table */}
+        {selectedStoreId && (
+          <div className="orders-table-wrapper">
+            <table className="orders-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Status</th>
+                  <th>Total</th>
+                  <th>Currency</th>
+                  <th>Store</th>
+                  <th>Consumer</th>
+                  <th>Pickup Token</th>
+                  <th>Pickup Slot</th>
+                  <th>Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {!loading && (!Array.isArray(orders) || orders.length === 0) && (
+                  <tr>
+                    <td colSpan="9" className="empty-cell">
+                      No orders found.
+                    </td>
+                  </tr>
+                )}
+
+                {Array.isArray(orders) && orders.map((order) => (
+                  <tr key={order.orderId}>
+                    <td><span className="order-id">#{order.orderId}</span></td>
+                    <td>
+                      <span className={`status-badge status-${order.status?.toLowerCase()}`}>
+                        {order.status}
+                      </span>
+                    </td>
+                    <td><strong>${order.totalAmount}</strong></td>
+                    <td>{order.currency || 'SGD'}</td>
+                    <td>{order.store?.storeName || '-'}</td>
+                    <td>{order.consumer?.displayName || order.consumer?.username || '-'}</td>
+                    <td className="pickup-token-cell">
+                      {(order.pickupToken?.qrTokenHash || order.pickupTokenHash) ? (
+                        <span
+                          className="token-hash"
+                          title={`Token: ${order.pickupToken?.qrTokenHash || order.pickupTokenHash}\nExpires: ${order.pickupToken?.expiresAt || order.pickupTokenExpiresAt || 'N/A'}`}
+                        >
+                          {(order.pickupToken?.qrTokenHash || order.pickupTokenHash).substring(0, 8)}...
+                        </span>
+                      ) : (
+                        <span className="token-none">No token</span>
+                      )}
+                    </td>
+                    <td className="pickup-slot-cell">
+                      {formatPickupSlot(order.pickupSlotStart, order.pickupSlotEnd)}
+                    </td>
+                    <td>{formatDateTime(order.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
