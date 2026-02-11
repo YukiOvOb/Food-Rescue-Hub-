@@ -12,6 +12,7 @@ import ListingsPage from './pages/ListingsPage';
 import OrdersPage from './pages/OrdersPage';
 import DiagnosticsPage from './pages/DiagnosticsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import SettingsPage from './pages/SettingsPage';
 import QRCodeDecoder from './components/QRCodeDecoder';
 
 import './App.css';
@@ -62,6 +63,16 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <AnalyticsPage />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* Settings */}
+                    <Route
+                        path="/settings"
+                        element={
+                            <ProtectedRoute>
+                                <SettingsPage />
                             </ProtectedRoute>
                         }
                     />
