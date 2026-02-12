@@ -5,8 +5,6 @@
     <!-- Network permissions for API calls -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- Location permissions for recommendations -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
@@ -23,7 +21,6 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
 
-        <!-- Google Maps API Key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDyRDq6SegBgoxIWUPmbFYqFSmcbCAadbo" />
@@ -32,76 +29,63 @@
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="frhapp"
-                    android:host="payment" />
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".ui.home.HomeActivity"
             android:exported="false" />
 
+        <!-- Payment Result Deep Link Handler -->
+        <activity
+            android:name=".PaymentResultActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                
+                <!-- Match Backend Success Callback -->
+                <data
+                    android:scheme="frhapp"
+                    android:host="payment"
+                    android:pathPrefix="/success" />
+                
+                <!-- Match Backend Cancel Callback -->
+                <data
+                    android:scheme="frhapp"
+                    android:host="payment"
+                    android:pathPrefix="/cancel" />
+            </intent-filter>
+        </activity>
 
+        <activity android:name=".ui.detail.ProductDetailActivity" android:exported="false" />
+        <activity android:name=".ui.cart.CartActivity" android:exported="false" android:label="Shopping Cart" />
+        <activity android:name=".ui.auth.LoginActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ui.profile.ProfileActivity" android:exported="false" android:parentActivityName=".ui.home.HomeActivity" />
+        <activity android:name=".ui.search.SearchResultsActivity" android:exported="false" android:parentActivityName=".ui.home.HomeActivity" />
+        <activity android:name=".ui.orders.OrdersActivity" android:exported="false" android:label="My Orders" android:parentActivityName=".ui.home.HomeActivity" />
+        <activity android:name=".ui.orders.OrderDetailActivity" android:exported="false" android:label="Order Details" android:parentActivityName=".ui.orders.OrdersActivity" />
+        <activity android:name=".ui.location.LocationActivity" android:exported="false" android:label="Nearby Stores" android:parentActivityName=".ui.home.HomeActivity" />
+        <activity android:name=".ui.qrcode.QRCodeActivity" android:exported="false" android:label="Pickup Code" android:parentActivityName=".ui.orders.OrderDetailActivity" />
+        <activity android:name=".ui.checkout.CheckoutActivity" android:exported="false" android:label="Checkout" android:parentActivityName=".ui.cart.CartActivity" />
+        <activity android:name=".ui.chatbot.ChatActivity" android:exported="false" android:label="Chatbot" android:parentActivityName=".ui.profile.ProfileActivity" />
         <activity
-            android:name=".ui.detail.ProductDetailActivity"
+            android:name=".ui.review.ReviewActivity"
             android:exported="false"
-            android:launchMode="singleTop" />/>
-        <activity
-            android:name=".ui.cart.CartActivity"
-            android:exported="false"
-            android:label="Shopping Cart" />
-        <activity
-            android:name=".ui.auth.LoginActivity"
-            android:exported="false"
-            android:theme="@style/Theme.FoodRescueHub"
-            android:windowSoftInputMode="adjustResize" />
-        <activity
-            android:name=".ui.profile.ProfileActivity"
-            android:exported="false"
-            android:theme="@style/Theme.FoodRescueHub"
-            android:parentActivityName=".ui.home.HomeActivity" />
-        <activity
-            android:name=".ui.search.SearchResultsActivity"
-            android:exported="false"
-            android:theme="@style/Theme.FoodRescueHub"
-            android:parentActivityName=".ui.home.HomeActivity" />
-        <activity
-            android:name=".ui.orders.OrdersActivity"
-            android:exported="false"
-            android:label="My Orders"
-            android:parentActivityName=".ui.home.HomeActivity" />
-        <activity
-            android:name=".ui.orders.OrderDetailActivity"
-            android:exported="false"
-            android:label="Order Details"
-            android:parentActivityName=".ui.orders.OrdersActivity" />
-        <activity
-            android:name=".ui.location.LocationActivity"
-            android:exported="false"
-            android:label="Nearby Stores"
-            android:parentActivityName=".ui.home.HomeActivity" />
-        <activity
-            android:name=".ui.qrcode.QRCodeActivity"
-            android:exported="false"
-            android:label="Pickup Code"
+            android:label="Review Listing"
             android:parentActivityName=".ui.orders.OrderDetailActivity" />
         <activity
-            android:name=".ui.checkout.CheckoutActivity"
+            android:name=".ui.review.MyReviewsActivity"
             android:exported="false"
-            android:label="Checkout"
-            android:parentActivityName=".ui.cart.CartActivity" />
+            android:label="My Reviews"
+            android:parentActivityName=".ui.profile.ProfileActivity" />
         <activity
-            android:name=".ui.checkout.OrderConfirmationActivity"
+            android:name=".ui.checkout.PaymentWebViewActivity"
             android:exported="false"
-            android:label="Confirmation"
-            android:parentActivityName=".ui.home.HomeActivity"/>
+            android:label="Secure Payment" />
+        <activity android:name=".ui.auth.RegisterActivity" android:exported="false" />
     </application>
 
 </manifest>

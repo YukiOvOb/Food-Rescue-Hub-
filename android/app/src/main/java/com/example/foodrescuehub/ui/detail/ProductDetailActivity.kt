@@ -6,11 +6,8 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.example.foodrescuehub.R
-import com.example.foodrescuehub.data.api.ApiService
-import com.example.foodrescuehub.data.api.RetrofitClient
 import com.example.foodrescuehub.data.repository.AuthManager
 import com.example.foodrescuehub.data.repository.CartManager
 import com.example.foodrescuehub.databinding.ActivityProductDetailBinding
@@ -19,15 +16,13 @@ import com.example.foodrescuehub.ui.cart.CartActivity
 import com.example.foodrescuehub.ui.dialog.LoginPromptDialog
 import com.example.foodrescuehub.ui.home.HomeActivity
 import com.example.foodrescuehub.util.UrlUtils
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 /**
  * Product Detail Activity
- * Handles displaying listing details, shopping cart logic, and review list rendering.
+ * Displays detailed information about a listing and handles adding to cart
+ * Updated to use ViewBinding
  */
 class ProductDetailActivity : AppCompatActivity() {
 
@@ -51,70 +46,14 @@ class ProductDetailActivity : AppCompatActivity() {
     }
 
     private lateinit var binding: ActivityProductDetailBinding
-    private lateinit var reviewAdapter: ReviewAdapter // Declare the review adapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityProductDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 1. Initialize UI and Review RecyclerView
-        setupReviewList()
         loadListingData()
         setupClickListeners()
-
-        // 2. Fetch initial reviews
-        val listingId = intent.getLongExtra(EXTRA_LISTING_ID, -1L)
-        if (listingId != -1L) {
-            fetchReviews(listingId)
-        }
-    }
-
-    /**
-     * Handle intent when Activity is already in the stack (e.g., jump back from ReviewActivity)
-     */
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        setIntent(intent) // Update intent to the new one
-
-        // Refresh the review list when jumping back from ReviewActivity
-        val listingId = intent?.getLongExtra(EXTRA_LISTING_ID, -1L) ?: -1L
-        if (listingId != -1L) {
-            fetchReviews(listingId)
-            Toast.makeText(this, "Refreshing reviews...", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    /**
-     * Initialize the RecyclerView for reviews
-     */
-    private fun setupReviewList() {
-        reviewAdapter = ReviewAdapter(emptyList())
-        binding.rvReviews.apply {
-            layoutManager = LinearLayoutManager(this@ProductDetailActivity)
-            adapter = reviewAdapter
-            // Disable nested scrolling to prevent conflicts with ScrollView
-            isNestedScrollingEnabled = false
-        }
-    }
-
-    /**
-     * Fetch reviews from the backend API: GET /api/reviews/list/{listingId}
-     */
-    private fun fetchReviews(listingId: Long) {
-        val apiService = RetrofitClient.instance.create(ApiService::class.java)
-        CoroutineScope(Dispatchers.Main).launch {
-            try {
-                val response = apiService.getReviewsByListing(listingId)
-                if (response.isSuccessful) {
-                    response.body()?.let {
-                        reviewAdapter.updateData(it)
-                    }
-                }
-            } catch (e: Exception) {
-                // Log error or silent fail
-            }
-        }
     }
 
     private fun loadListingData() {
@@ -145,7 +84,6 @@ class ProductDetailActivity : AppCompatActivity() {
         val contentsText = if (description.isNotBlank()) description else "3-5 items ($category items)"
         binding.tvContents.text = contentsText
 
-        // Set storage tips based on category
         val storageText = when (category.lowercase()) {
             "bakery", "cafe", "coffee shop" -> "Room temp"
             "restaurant" -> "Keep refrigerated"
@@ -154,7 +92,6 @@ class ProductDetailActivity : AppCompatActivity() {
         }
         binding.tvStorage.text = storageText
 
-        // Set allergen info based on category
         val allergensText = when (category.lowercase()) {
             "bakery" -> "gluten, dairy (may contain nuts)"
             "cafe", "coffee shop" -> "dairy (may contain gluten, nuts)"
@@ -292,7 +229,7 @@ class ProductDetailActivity : AppCompatActivity() {
 
         val listingId = intent.getLongExtra(EXTRA_LISTING_ID, 0L)
         val storeId = intent.getLongExtra(EXTRA_LISTING_STORE_ID, 0L)
-
+        
         if (listingId == 0L) {
             Toast.makeText(this, "Error: Invalid Product", Toast.LENGTH_SHORT).show()
             return

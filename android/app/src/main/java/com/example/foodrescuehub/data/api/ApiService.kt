@@ -1,7 +1,6 @@
 package com.example.foodrescuehub.data.api
 
 import com.example.foodrescuehub.data.model.*
-import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -15,6 +14,9 @@ interface ApiService {
 
     @POST("api/auth/login")
     suspend fun login(@Body loginRequest: LoginRequest): Response<User>
+
+    @POST("api/auth/register")
+    suspend fun register(@Body registerRequest: RegisterRequest): Response<User>
 
     @POST("api/auth/logout")
     suspend fun logout(): Response<Void>
@@ -61,23 +63,11 @@ interface ApiService {
 
     // ==================== ORDERS ====================
 
-    /**
-     * Create order from active cart (session-based)
-     * Updated to return the compact CreateOrderResponseDto as per latest backend contract.
-     */
     @POST("api/orders")
     suspend fun createOrderFromCart(
         @Query("pickupSlotStart") pickupSlotStart: String,
         @Query("pickupSlotEnd") pickupSlotEnd: String,
     ): Response<CreateOrderResponseDto>
-
-    /**
-     * Create order for a single listing (body-based)
-     */
-    @POST("api/consumer/orders")
-    suspend fun createOrderFromListing(
-        @Body request: CreateOrderRequest
-    ): Response<Order>
 
     @GET("api/orders/consumer")
     suspend fun getMyOrders(): Response<List<Order>>
@@ -110,6 +100,8 @@ interface ApiService {
     @POST("api/pickup-tokens/{orderId}/generate-qrcode")
     suspend fun generatePickupQRCode(@Path("orderId") orderId: Long): Response<Map<String, String>>
 
+
+    // =====================ML =====================
     /**
      * Get personalized store recommendations for homepage
      * GET /api/recommendations/homepage?consumerId={consumerId}&topK={topK}&lat={lat}&lng={lng}
@@ -161,14 +153,27 @@ interface ApiService {
     suspend fun recordInteraction(
         @Body request: UserInteractionRequest
     ): Response<InteractionResponse>
-    //
+
+    // ==================== MOBILE CHECKOUT ====================
+
+    /**
+     * Start mobile checkout process with external payment gateway (Stripe)
+     * Auth: session-based
+     */
     @POST("api/mobile/checkout/start")
-    suspend fun startCheckout(@Body request: CheckoutRequest): Response<CheckoutResponse>
+    suspend fun startCheckout(@Body request: CheckoutRequestDto): Response<CheckoutResponseDto>
 
-// review
-@POST("api/reviews/add")
-suspend fun submitReview(@Body request: ReviewRequest): Response<ResponseBody>
+    // ==================== LISTING REVIEWS ====================
 
-@GET("api/reviews/list/{listingId}")
-suspend fun getReviewsByListing(@Path("listingId") listingId: Long): Response<List<ReviewResponse>>
+    @POST("api/reviews")
+    suspend fun submitReview(@Body request: ReviewRequest): Response<ListingReview>
+
+    @GET("api/reviews/listing/{listingId}")
+    suspend fun getListingReviews(@Path("listingId") listingId: Long): Response<List<ListingReview>>
+
+    @GET("api/reviews/my-reviews")
+    suspend fun getMyReviews(): Response<List<ListingReviewResponse>>
+
+    @GET("api/reviews/my-reviews/order/{orderId}")
+    suspend fun getReviewsByOrder(@Path("orderId") orderId: Long): Response<List<ListingReviewResponse>>
 }

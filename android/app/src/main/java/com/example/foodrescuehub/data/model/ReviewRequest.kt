@@ -1,8 +1,10 @@
 package com.example.foodrescuehub.data.model
 
 data class ReviewRequest(
-    val userId: Long,
+    val orderId: Long,
     val listingId: Long,
-    val rating: Int,
+    val storeRating: Int,
+    val listingAccuracy: Int,
+    val onTimePickup: Int,
     val comment: String
 )
