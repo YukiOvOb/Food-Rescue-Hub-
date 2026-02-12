@@ -168,4 +168,7 @@ interface ApiService {
 // review
 @POST("api/reviews/add")
 suspend fun submitReview(@Body request: ReviewRequest): Response<ResponseBody>
+
+@GET("api/reviews/list/{listingId}")
+suspend fun getReviewsByListing(@Path("listingId") listingId: Long): Response<List<ReviewResponse>>
 }
