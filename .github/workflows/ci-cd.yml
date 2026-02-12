@@ -1498,7 +1498,7 @@ jobs:
         run: |
           set -e
           docker pull "${DOCKER_USERNAME}/frh-backend:latest"
-          docker save "${DOCKER_USERNAME}/frh-backend:latest" -o /tmp/frh-backend-image.tar
+          docker save "${DOCKER_USERNAME}/frh-backend:latest" -o "${GITHUB_WORKSPACE}/frh-backend-image.tar"
 
       - name: Pull frontend image (if exists)
         if: needs.detect.outputs.has_frontend == 'true' && env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
@@ -1506,13 +1506,13 @@ jobs:
         run: |
           set -e
           docker pull "${DOCKER_USERNAME}/frh-frontend:latest"
-          docker save "${DOCKER_USERNAME}/frh-frontend:latest" -o /tmp/frh-frontend-image.tar
+          docker save "${DOCKER_USERNAME}/frh-frontend:latest" -o "${GITHUB_WORKSPACE}/frh-frontend-image.tar"
 
       - name: Scan backend image (if exists)
         if: needs.detect.outputs.has_backend == 'true' && env.DOCKER_USERNAME != ''
         uses: aquasecurity/trivy-action@0.24.0
         with:
-          input: /tmp/frh-backend-image.tar
+          input: frh-backend-image.tar
           scan-type: image
           format: table
           exit-code: "0"
@@ -1523,7 +1523,7 @@ jobs:
         if: needs.detect.outputs.has_frontend == 'true' && env.DOCKER_USERNAME != ''
         uses: aquasecurity/trivy-action@0.24.0
         with:
-          input: /tmp/frh-frontend-image.tar
+          input: frh-frontend-image.tar
           scan-type: image
           format: table
           exit-code: "0"
