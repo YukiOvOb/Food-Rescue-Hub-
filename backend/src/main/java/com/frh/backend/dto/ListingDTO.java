@@ -53,4 +53,8 @@ public class ListingDTO {
   private String timeRemaining; // e.g., "2h 15m left"
   private BigDecimal savingsAmount; // originalPrice - rescuePrice
   private String savingsLabel; // e.g., "Worth $12+"
+
+  // Review ratings (percentages)
+  private Double avgListingAccuracy; // Average listing accuracy rating as percentage
+  private Double avgOnTimePickup; // Average on-time pickup rating as percentage
 }

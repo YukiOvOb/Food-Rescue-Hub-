@@ -21,6 +21,16 @@ public class CreateListingReviewRequest {
   @Max(value = 5, message = "rating must be at most 5")
   private Integer rating;
 
+  @NotNull(message = "listingAccuracy is required")
+  @Min(value = 1, message = "listingAccuracy must be at least 1")
+  @Max(value = 5, message = "listingAccuracy must be at most 5")
+  private Integer listingAccuracy;
+
+  @NotNull(message = "onTimePickup is required")
+  @Min(value = 1, message = "onTimePickup must be at least 1")
+  @Max(value = 5, message = "onTimePickup must be at most 5")
+  private Integer onTimePickup;
+
   @NotBlank(message = "comment is required")
   @Size(max = 300, message = "comment must be 300 characters or less")
   private String comment;

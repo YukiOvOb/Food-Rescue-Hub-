@@ -102,12 +102,16 @@ class MyReviewsActivity : AppCompatActivity() {
         val tvListingTitle = reviewView.findViewById<TextView>(R.id.tvListingTitle)
         val tvOrderId = reviewView.findViewById<TextView>(R.id.tvOrderId)
         val tvRating = reviewView.findViewById<TextView>(R.id.tvRating)
+        val tvAccuracy = reviewView.findViewById<TextView>(R.id.tvAccuracy)
+        val tvOnTime = reviewView.findViewById<TextView>(R.id.tvOnTime)
         val tvComment = reviewView.findViewById<TextView>(R.id.tvComment)
         val tvCreatedAt = reviewView.findViewById<TextView>(R.id.tvCreatedAt)
 
         tvListingTitle.text = review.listingTitle ?: "Unknown Item"
         tvOrderId.text = "Order #${review.orderId}"
         tvRating.text = "★".repeat(review.rating) + "☆".repeat(5 - review.rating)
+        tvAccuracy.text = "★".repeat(review.listingAccuracy) + "☆".repeat(5 - review.listingAccuracy)
+        tvOnTime.text = "★".repeat(review.onTimePickup) + "☆".repeat(5 - review.onTimePickup)
         tvComment.text = review.comment
         tvCreatedAt.text = formatDate(review.createdAt)
 

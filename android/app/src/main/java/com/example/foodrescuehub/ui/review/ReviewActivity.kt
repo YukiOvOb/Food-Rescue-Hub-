@@ -62,10 +62,22 @@ class ReviewActivity : AppCompatActivity() {
 
     private fun submitReview() {
         val rating = binding.ratingBar.rating.toInt()
+        val listingAccuracy = binding.ratingBarAccuracy.rating.toInt()
+        val onTimePickup = binding.ratingBarOnTime.rating.toInt()
         val comment = binding.etComment.text?.toString()?.trim().orEmpty()
 
         if (rating < 1) {
-            Toast.makeText(this, getString(R.string.review_rating_required), Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Please provide an overall rating", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (listingAccuracy < 1) {
+            Toast.makeText(this, "Please rate listing accuracy", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (onTimePickup < 1) {
+            Toast.makeText(this, "Please rate on-time pickup", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -81,6 +93,8 @@ class ReviewActivity : AppCompatActivity() {
             orderId = orderId,
             listingId = listingId,
             rating = rating,
+            listingAccuracy = listingAccuracy,
+            onTimePickup = onTimePickup,
             comment = comment
         )
 
@@ -122,6 +136,8 @@ class ReviewActivity : AppCompatActivity() {
     private fun setSubmitting(submitting: Boolean) {
         binding.btnSubmitReview.isEnabled = !submitting
         binding.ratingBar.isEnabled = !submitting
+        binding.ratingBarAccuracy.isEnabled = !submitting
+        binding.ratingBarOnTime.isEnabled = !submitting
         binding.etComment.isEnabled = !submitting
         binding.btnSubmitReview.text = if (submitting) {
             getString(R.string.review_submitting)

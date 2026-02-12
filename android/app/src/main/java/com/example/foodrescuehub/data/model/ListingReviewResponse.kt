@@ -6,6 +6,8 @@ data class ListingReviewResponse(
     val listingId: Long,
     val listingTitle: String?,
     val rating: Int,
+    val listingAccuracy: Int,
+    val onTimePickup: Int,
     val comment: String,
     val createdAt: String,
     val consumerId: Long,
