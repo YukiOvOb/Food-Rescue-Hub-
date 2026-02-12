@@ -73,6 +73,18 @@ public class ListingReviewService {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rating must be between 1 and 5");
     }
 
+    Integer listingAccuracy = request.getListingAccuracy();
+    if (listingAccuracy == null || listingAccuracy < 1 || listingAccuracy > 5) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Listing accuracy must be between 1 and 5");
+    }
+
+    Integer onTimePickup = request.getOnTimePickup();
+    if (onTimePickup == null || onTimePickup < 1 || onTimePickup > 5) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "On-time pickup must be between 1 and 5");
+    }
+
     String comment = request.getComment() == null ? "" : request.getComment().trim();
     if (comment.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Comment is required");
@@ -83,6 +95,8 @@ public class ListingReviewService {
     review.setListing(listing);
     review.setConsumer(order.getConsumer());
     review.setRating(rating);
+    review.setListingAccuracy(listingAccuracy);
+    review.setOnTimePickup(onTimePickup);
     review.setComment(comment);
 
     ListingReview saved = listingReviewRepository.save(review);
@@ -135,6 +149,8 @@ public class ListingReviewService {
     response.setListingId(review.getListing().getListingId());
     response.setListingTitle(review.getListing().getTitle());
     response.setRating(review.getRating());
+    response.setListingAccuracy(review.getListingAccuracy());
+    response.setOnTimePickup(review.getOnTimePickup());
     response.setComment(review.getComment());
     response.setCreatedAt(review.getCreatedAt());
     response.setConsumerId(review.getConsumer().getConsumerId());

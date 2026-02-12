@@ -147,11 +147,10 @@ public class ListingController {
   // ==========================================
   @GetMapping("/{id}")
   public ResponseEntity<?> getListingById(@PathVariable Long id) {
-    Optional<Listing> listingOptional = listingRepository.findById(id);
-
-    if (listingOptional.isPresent()) {
-      return ResponseEntity.ok(listingOptional.get());
-    } else {
+    try {
+      ListingDTO listingDTO = listingService.getListingById(id);
+      return ResponseEntity.ok(listingDTO);
+    } catch (IllegalArgumentException e) {
       return ResponseEntity.status(404).body("Listing not found with id: " + id);
     }
   }

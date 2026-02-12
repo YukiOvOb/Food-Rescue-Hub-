@@ -105,7 +105,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/review_rating_label"
+                        android:text="Your Overall Rating"
                         android:textColor="#1A1A1A"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -114,11 +114,69 @@
                         android:id="@+id/ratingBar"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="8dp"
                         android:numStars="5"
                         android:progressTint="#FFB300"
-                        android:rating="5"
+                        android:rating="0"
                         android:secondaryProgressTint="#FFB300"
+                        android:stepSize="1.0" />
+
+                    <!-- Listing Accuracy Rating -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:text="Listing Accuracy"
+                        android:textColor="#1A1A1A"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="How accurate was the description?"
+                        android:textColor="#999999"
+                        android:textSize="13sp" />
+
+                    <RatingBar
+                        android:id="@+id/ratingBarAccuracy"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:numStars="5"
+                        android:progressTint="#66BB6A"
+                        android:rating="0"
+                        android:secondaryProgressTint="#66BB6A"
+                        android:stepSize="1.0" />
+
+                    <!-- On-Time Pickup Rating -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:text="On-Time Pickup"
+                        android:textColor="#1A1A1A"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Was your order ready on time?"
+                        android:textColor="#999999"
+                        android:textSize="13sp" />
+
+                    <RatingBar
+                        android:id="@+id/ratingBarOnTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:numStars="5"
+                        android:progressTint="#2196F3"
+                        android:rating="0"
+                        android:secondaryProgressTint="#2196F3"
                         android:stepSize="1.0" />
 
                     <!-- Comment Input -->

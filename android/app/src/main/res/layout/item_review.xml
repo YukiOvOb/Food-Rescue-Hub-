@@ -35,14 +35,82 @@
             android:textColor="#999999" />
 
         <!-- Rating -->
-        <TextView
-            android:id="@+id/tvRating"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="★★★★★"
-            android:textSize="20sp"
-            android:textColor="#FFB300" />
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Overall"
+                    android:textSize="11sp"
+                    android:textColor="#999999" />
+
+                <TextView
+                    android:id="@+id/tvRating"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="★★★★★"
+                    android:textSize="16sp"
+                    android:textColor="#FFB300" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Accuracy"
+                    android:textSize="11sp"
+                    android:textColor="#999999" />
+
+                <TextView
+                    android:id="@+id/tvAccuracy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="★★★★★"
+                    android:textSize="16sp"
+                    android:textColor="#66BB6A" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="On-Time"
+                    android:textSize="11sp"
+                    android:textColor="#999999" />
+
+                <TextView
+                    android:id="@+id/tvOnTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="★★★★★"
+                    android:textSize="16sp"
+                    android:textColor="#2196F3" />
+            </LinearLayout>
+
+        </LinearLayout>
 
         <!-- Comment -->
         <TextView

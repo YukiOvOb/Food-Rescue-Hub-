@@ -41,6 +41,8 @@ class ProductDetailActivity : AppCompatActivity() {
         const val EXTRA_LISTING_DESCRIPTION = "extra_listing_description"
         const val EXTRA_LISTING_QTY_AVAILABLE = "extra_listing_qty_available"
         const val EXTRA_LISTING_PHOTO_URL = "extra_listing_photo_url"
+        const val EXTRA_LISTING_AVG_ACCURACY = "extra_listing_avg_accuracy"
+        const val EXTRA_LISTING_AVG_ON_TIME = "extra_listing_avg_on_time"
     }
 
     private lateinit var binding: ActivityProductDetailBinding
@@ -98,8 +100,21 @@ class ProductDetailActivity : AppCompatActivity() {
         }
         binding.tvAllergens.text = allergensText
 
-        binding.tvListingAccuracy.text = "96%"
-        binding.tvOnTimePickup.text = "98%"
+        // Display ratings from backend (or show placeholder if no reviews yet)
+        val avgAccuracy = intent.getDoubleExtra(EXTRA_LISTING_AVG_ACCURACY, -1.0)
+        val avgOnTime = intent.getDoubleExtra(EXTRA_LISTING_AVG_ON_TIME, -1.0)
+
+        if (avgAccuracy >= 0) {
+            binding.tvListingAccuracy.text = "%.0f%%".format(avgAccuracy)
+        } else {
+            binding.tvListingAccuracy.text = "N/A"
+        }
+
+        if (avgOnTime >= 0) {
+            binding.tvOnTimePickup.text = "%.0f%%".format(avgOnTime)
+        } else {
+            binding.tvOnTimePickup.text = "N/A"
+        }
 
         val fullPhotoUrl = UrlUtils.getFullUrl(photoUrl)
         Glide.with(this)

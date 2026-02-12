@@ -1,0 +1,504 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------------< com.frh:backend >---------------------------
+[INFO] Building backend 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.4.5:run (default-cli) > test-compile @ backend >>>
+[INFO] 
+[INFO] --- enforcer:3.6.0:enforce (enforce-java) @ backend ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.13:prepare-agent (default) @ backend ---
+[INFO] argLine set to -javaagent:C:\\Users\\ROG\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.13\\org.jacoco.agent-0.8.13-runtime.jar=destfile=D:\\personalFile\\AD\\Food-Rescue-Hub-\\backend\\target\\jacoco.exec
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ backend ---
+[INFO] Copying 6 resources from src\main\resources to target\classes
+[INFO] Copying 4 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ backend ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ backend ---
+[INFO] Copying 1 resource from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ backend ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 43 source files with javac [debug release 17] to target\test-classes
+[INFO] /D:/personalFile/AD/Food-Rescue-Hub-/backend/src/test/java/com/frh/backend/exception/GlobalExceptionHandlerTest.java: D:\personalFile\AD\Food-Rescue-Hub-\backend\src\test\java\com\frh\backend\exception\GlobalExceptionHandlerTest.java使用或覆盖了已过时的 API。
+[INFO] /D:/personalFile/AD/Food-Rescue-Hub-/backend/src/test/java/com/frh/backend/exception/GlobalExceptionHandlerTest.java: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+[INFO] /D:/personalFile/AD/Food-Rescue-Hub-/backend/src/test/java/com/frh/backend/service/CartServiceTest.java: D:\personalFile\AD\Food-Rescue-Hub-\backend\src\test\java\com\frh\backend\service\CartServiceTest.java使用了未经检查或不安全的操作。
+[INFO] /D:/personalFile/AD/Food-Rescue-Hub-/backend/src/test/java/com/frh/backend/service/CartServiceTest.java: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
+[INFO] 
+[INFO] <<< spring-boot:3.4.5:run (default-cli) < test-compile @ backend <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.4.5:run (default-cli) @ backend ---
+[INFO] Attaching agents: []
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.5)
+
+2026-02-12T03:30:24.841+08:00  INFO 33880 --- [backend] [           main] com.frh.backend.BackendApplication       : Starting BackendApplication using Java 17.0.18 with PID 33880 (D:\personalFile\AD\Food-Rescue-Hub-\backend\target\classes started by ROG in D:\personalFile\AD\Food-Rescue-Hub-\backend)
+2026-02-12T03:30:24.843+08:00 DEBUG 33880 --- [backend] [           main] com.frh.backend.BackendApplication       : Running with Spring Boot v3.4.5, Spring v6.2.11
+2026-02-12T03:30:24.843+08:00  INFO 33880 --- [backend] [           main] com.frh.backend.BackendApplication       : The following 1 profile is active: "dev"
+2026-02-12T03:30:25.436+08:00  INFO 33880 --- [backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-02-12T03:30:25.492+08:00  INFO 33880 --- [backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 50 ms. Found 23 JPA repository interfaces.
+2026-02-12T03:30:25.920+08:00  INFO 33880 --- [backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-02-12T03:30:25.927+08:00  INFO 33880 --- [backend] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-02-12T03:30:25.927+08:00  INFO 33880 --- [backend] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.47]
+2026-02-12T03:30:25.965+08:00  INFO 33880 --- [backend] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-02-12T03:30:25.965+08:00  INFO 33880 --- [backend] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1098 ms
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+2026-02-12T03:30:26.061+08:00 DEBUG 33880 --- [backend] [           main] o.s.w.f.ServerHttpObservationFilter      : Filter 'webMvcObservationFilter' configured for use
+2026-02-12T03:30:26.061+08:00 DEBUG 33880 --- [backend] [           main] o.s.w.s.r.ResourceUrlEncodingFilter      : Filter 'resourceUrlEncodingFilter' configured for use
+2026-02-12T03:30:26.099+08:00  INFO 33880 --- [backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-02-12T03:30:26.635+08:00  INFO 33880 --- [backend] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@429f0ca8
+2026-02-12T03:30:26.636+08:00  INFO 33880 --- [backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-02-12T03:30:26.805+08:00  INFO 33880 --- [backend] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-02-12T03:30:26.832+08:00  INFO 33880 --- [backend] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.13.Final
+2026-02-12T03:30:26.847+08:00  INFO 33880 --- [backend] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-02-12T03:30:26.969+08:00  INFO 33880 --- [backend] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-02-12T03:30:27.034+08:00  WARN 33880 --- [backend] [           main] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-02-12T03:30:27.039+08:00  INFO 33880 --- [backend] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 8.0.45
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-02-12T03:30:27.742+08:00  INFO 33880 --- [backend] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+Hibernate: alter table supplier_profiles modify column verification_status varchar(32) default 'PENDING' not null
+Hibernate: alter table user_interactions modify column interaction_type enum ('ADD_TO_CART','CLICK','SEARCH','VIEW') not null
+2026-02-12T03:30:28.838+08:00  INFO 33880 --- [backend] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-02-12T03:30:29.024+08:00  INFO 33880 --- [backend] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-02-12T03:30:30.039+08:00  WARN 33880 --- [backend] [           main] com.frh.backend.service.StripeService    : Stripe is not configured. Set STRIPE_SECRET_KEY (maps to stripe.secret.key).
+2026-02-12T03:30:30.195+08:00  WARN 33880 --- [backend] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-02-12T03:30:30.211+08:00  WARN 33880 --- [backend] [           main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 803cbe10-d116-464c-a69f-4aae80223d65
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-02-12T03:30:30.215+08:00  INFO 33880 --- [backend] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-02-12T03:30:30.326+08:00 DEBUG 33880 --- [backend] [           main] s.w.s.m.m.a.RequestMappingHandlerMapping : 90 mappings in 'requestMappingHandlerMapping'
+2026-02-12T03:30:30.354+08:00 DEBUG 33880 --- [backend] [           main] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**, /qrcode/**, /uploads/**, /swagger-ui*/*swagger-initializer.js, /swagger-ui*/**] in 'resourceHandlerMapping'
+2026-02-12T03:30:30.412+08:00  INFO 33880 --- [backend] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2026-02-12T03:30:30.459+08:00 DEBUG 33880 --- [backend] [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with filters: DisableEncodeUrlFilter, WebAsyncManagerIntegrationFilter, SecurityContextHolderFilter, HeaderWriterFilter, CorsFilter, CsrfFilter, LogoutFilter, ConcurrentSessionFilter, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, SessionManagementFilter, ExceptionTranslationFilter, AuthorizationFilter
+2026-02-12T03:30:30.513+08:00 DEBUG 33880 --- [backend] [           main] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2026-02-12T03:30:30.558+08:00 DEBUG 33880 --- [backend] [           main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 3 @ExceptionHandler, 1 ResponseBodyAdvice
+2026-02-12T03:30:31.003+08:00  INFO 33880 --- [backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2026-02-12T03:30:31.012+08:00  INFO 33880 --- [backend] [           main] com.frh.backend.BackendApplication       : Started BackendApplication in 6.392 seconds (process running for 6.587)
+2026-02-12T03:34:07.126+08:00  INFO 33880 --- [backend] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-02-12T03:34:07.126+08:00  INFO 33880 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-02-12T03:34:07.126+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2026-02-12T03:34:07.126+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+2026-02-12T03:34:07.126+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected FixedThemeResolver
+2026-02-12T03:34:07.128+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@2dc65f44
+2026-02-12T03:34:07.128+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@5454016a
+2026-02-12T03:34:07.128+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2026-02-12T03:34:07.129+08:00  INFO 33880 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 3 ms
+2026-02-12T03:34:07.143+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Securing GET /actuator/health
+2026-02-12T03:34:07.151+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:34:07.152+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Secured GET /actuator/health
+2026-02-12T03:34:07.152+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET "/actuator/health", parameters={}
+2026-02-12T03:34:07.161+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Read "application/octet-stream" to []
+2026-02-12T03:34:07.188+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/vnd.spring-boot.actuator.v3+json', given [*/*] and supported [application/vnd.spring-boot.actuator.v3+json, application/vnd.spring-boot.actuator.v2+json, application/json]
+2026-02-12T03:34:07.207+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [org.springframework.boot.actuate.health.SystemHealth@19806160]
+2026-02-12T03:34:07.215+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:34:20.763+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Securing GET /api/stores/supplier/1
+2026-02-12T03:34:20.814+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:34:20.816+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Secured GET /api/stores/supplier/1
+2026-02-12T03:34:20.816+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : GET "/api/stores/supplier/1", parameters={}
+2026-02-12T03:34:20.816+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.StoreController#getStoresBySupplier(Long)
+Hibernate: select s1_0.store_id,s1_0.address_line,s1_0.created_at,s1_0.description,s1_0.is_active,s1_0.lat,s1_0.lng,s1_0.opening_hours,s1_0.pickup_instructions,s1_0.postal_code,s1_0.store_name,s1_0.supplier_id from stores s1_0 left join supplier_profiles sp1_0 on sp1_0.supplier_id=s1_0.supplier_id where sp1_0.supplier_id=?
+2026-02-12T03:34:20.973+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:34:20.978+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [[StoreResponse(storeId=1, supplierId=1, storeName=BreadTalk Orchard, addressLine=313 Orchard Road, # (truncated)...]
+2026-02-12T03:34:21.031+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:34:21.036+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-4] o.s.security.web.FilterChainProxy        : Securing GET /api/stores/supplier/1
+2026-02-12T03:34:21.095+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-4] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:34:21.096+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-4] o.s.security.web.FilterChainProxy        : Secured GET /api/stores/supplier/1
+2026-02-12T03:34:21.096+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : GET "/api/stores/supplier/1", parameters={}
+2026-02-12T03:34:21.096+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-4] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.StoreController#getStoresBySupplier(Long)
+Hibernate: select s1_0.store_id,s1_0.address_line,s1_0.created_at,s1_0.description,s1_0.is_active,s1_0.lat,s1_0.lng,s1_0.opening_hours,s1_0.pickup_instructions,s1_0.postal_code,s1_0.store_name,s1_0.supplier_id from stores s1_0 left join supplier_profiles sp1_0 on sp1_0.supplier_id=s1_0.supplier_id where sp1_0.supplier_id=?
+2026-02-12T03:34:21.143+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:34:21.143+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [[StoreResponse(storeId=1, supplierId=1, storeName=BreadTalk Orchard, addressLine=313 Orchard Road, # (truncated)...]
+2026-02-12T03:34:21.189+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:34:22.020+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-5] o.s.security.web.FilterChainProxy        : Securing GET /api/supplier/orders/1
+2026-02-12T03:34:22.066+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-5] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:34:22.068+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-5] o.s.security.web.FilterChainProxy        : Secured GET /api/supplier/orders/1
+2026-02-12T03:34:22.068+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : GET "/api/supplier/orders/1", parameters={}
+2026-02-12T03:34:22.069+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-5] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.SupplierOrderController#getOrderQueue(Long, String)
+Hibernate: select o1_0.order_id,o1_0.cancel_reason,o1_0.consumer_id,c1_0.consumer_id,c1_0.created_at,c1_0.default_lat,c1_0.default_lng,c1_0.display_name,c1_0.email,c1_0.password,c1_0.phone,c1_0.preferences_json,c1_0.role,c1_0.status,o1_0.created_at,o1_0.currency,oi1_0.order_id,oi1_0.order_item_id,oi1_0.line_total,oi1_0.listing_id,l1_0.listing_id,l1_0.created_at,l1_0.description,l1_0.estimated_weight_kg,l1_0.expiry_at,l1_0.original_price,l1_0.pickup_end,l1_0.pickup_start,l1_0.rescue_price,l1_0.status,l1_0.store_id,l1_0.title,oi1_0.quantity,oi1_0.unit_price,o1_0.pickup_slot_end,o1_0.pickup_slot_start,o1_0.status,o1_0.store_id,s1_0.store_id,s1_0.address_line,s1_0.created_at,s1_0.description,s1_0.is_active,s1_0.lat,s1_0.lng,s1_0.opening_hours,s1_0.pickup_instructions,s1_0.postal_code,s1_0.store_name,s1_0.supplier_id,o1_0.total_amount,o1_0.updated_at from orders o1_0 join stores s1_0 on s1_0.store_id=o1_0.store_id join consumer_profiles c1_0 on c1_0.consumer_id=o1_0.consumer_id left join order_items oi1_0 on o1_0.order_id=oi1_0.order_id left join listings l1_0 on l1_0.listing_id=oi1_0.listing_id where s1_0.store_id=? and (? is null or o1_0.status=?) order by o1_0.created_at desc
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select i1_0.inventory_id,i1_0.last_updated,i1_0.listing_id,i1_0.qty_available,i1_0.qty_reserved from inventory i1_0 where i1_0.listing_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select i1_0.inventory_id,i1_0.last_updated,i1_0.listing_id,i1_0.qty_available,i1_0.qty_reserved from inventory i1_0 where i1_0.listing_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+2026-02-12T03:34:22.426+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:34:22.444+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [[OrderSummaryDTO(orderId=27, status=PAID, listingId=1, listingTitle=Assorted Bread Bundle, quantity= (truncated)...]
+2026-02-12T03:34:22.504+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:34:23.846+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-2] o.s.security.web.FilterChainProxy        : Securing PUT /api/supplier/orders/27/accept
+2026-02-12T03:34:23.911+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-2] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:34:23.911+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-2] o.s.security.web.FilterChainProxy        : Secured PUT /api/supplier/orders/27/accept
+2026-02-12T03:34:23.912+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : PUT "/api/supplier/orders/27/accept", parameters={}
+2026-02-12T03:34:23.912+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.SupplierOrderController#acceptOrder(Long)
+Hibernate: select o1_0.order_id,o1_0.cancel_reason,o1_0.consumer_id,o1_0.created_at,o1_0.currency,o1_0.pickup_slot_end,o1_0.pickup_slot_start,o1_0.status,o1_0.store_id,o1_0.total_amount,o1_0.updated_at from orders o1_0 where o1_0.order_id=? for update
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select oi1_0.order_id,oi1_0.order_item_id,oi1_0.line_total,oi1_0.listing_id,oi1_0.quantity,oi1_0.unit_price from order_items oi1_0 where oi1_0.order_id=?
+Hibernate: select i1_0.inventory_id,i1_0.last_updated,i1_0.listing_id,i1_0.qty_available,i1_0.qty_reserved from inventory i1_0 where i1_0.listing_id=? for update
+Hibernate: update orders set cancel_reason=?,consumer_id=?,currency=?,pickup_slot_end=?,pickup_slot_start=?,status=?,store_id=?,total_amount=?,updated_at=? where order_id=?
+Hibernate: update inventory set last_updated=?,listing_id=?,qty_available=?,qty_reserved=? where inventory_id=?
+Hibernate: select s1_0.store_id,s1_0.address_line,s1_0.created_at,s1_0.description,s1_0.is_active,s1_0.lat,s1_0.lng,s1_0.opening_hours,s1_0.pickup_instructions,s1_0.postal_code,s1_0.store_name,s1_0.supplier_id from stores s1_0 where s1_0.store_id=?
+Hibernate: select cp1_0.consumer_id,cp1_0.created_at,cp1_0.default_lat,cp1_0.default_lng,cp1_0.display_name,cp1_0.email,cp1_0.password,cp1_0.phone,cp1_0.preferences_json,cp1_0.role,cp1_0.status from consumer_profiles cp1_0 where cp1_0.consumer_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select l1_0.listing_id,l1_0.created_at,l1_0.description,l1_0.estimated_weight_kg,l1_0.expiry_at,l1_0.original_price,l1_0.pickup_end,l1_0.pickup_start,l1_0.rescue_price,l1_0.status,l1_0.store_id,l1_0.title from listings l1_0 where l1_0.listing_id=?
+2026-02-12T03:34:24.115+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:34:24.126+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [OrderResponseDto(orderId=27, status=ACCEPTED, totalAmount=5.00, currency=SGD, pickupSlotStart=2026-0 (truncated)...]
+2026-02-12T03:34:24.173+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:34:24.255+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-6] o.s.security.web.FilterChainProxy        : Securing GET /api/supplier/orders/1
+2026-02-12T03:34:24.281+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-6] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:34:24.282+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-6] o.s.security.web.FilterChainProxy        : Secured GET /api/supplier/orders/1
+2026-02-12T03:34:24.282+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/api/supplier/orders/1", parameters={}
+2026-02-12T03:34:24.283+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-6] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.SupplierOrderController#getOrderQueue(Long, String)
+Hibernate: select o1_0.order_id,o1_0.cancel_reason,o1_0.consumer_id,c1_0.consumer_id,c1_0.created_at,c1_0.default_lat,c1_0.default_lng,c1_0.display_name,c1_0.email,c1_0.password,c1_0.phone,c1_0.preferences_json,c1_0.role,c1_0.status,o1_0.created_at,o1_0.currency,oi1_0.order_id,oi1_0.order_item_id,oi1_0.line_total,oi1_0.listing_id,l1_0.listing_id,l1_0.created_at,l1_0.description,l1_0.estimated_weight_kg,l1_0.expiry_at,l1_0.original_price,l1_0.pickup_end,l1_0.pickup_start,l1_0.rescue_price,l1_0.status,l1_0.store_id,l1_0.title,oi1_0.quantity,oi1_0.unit_price,o1_0.pickup_slot_end,o1_0.pickup_slot_start,o1_0.status,o1_0.store_id,s1_0.store_id,s1_0.address_line,s1_0.created_at,s1_0.description,s1_0.is_active,s1_0.lat,s1_0.lng,s1_0.opening_hours,s1_0.pickup_instructions,s1_0.postal_code,s1_0.store_name,s1_0.supplier_id,o1_0.total_amount,o1_0.updated_at from orders o1_0 join stores s1_0 on s1_0.store_id=o1_0.store_id join consumer_profiles c1_0 on c1_0.consumer_id=o1_0.consumer_id left join order_items oi1_0 on o1_0.order_id=oi1_0.order_id left join listings l1_0 on l1_0.listing_id=oi1_0.listing_id where s1_0.store_id=? and (? is null or o1_0.status=?) order by o1_0.created_at desc
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select i1_0.inventory_id,i1_0.last_updated,i1_0.listing_id,i1_0.qty_available,i1_0.qty_reserved from inventory i1_0 where i1_0.listing_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select i1_0.inventory_id,i1_0.last_updated,i1_0.listing_id,i1_0.qty_available,i1_0.qty_reserved from inventory i1_0 where i1_0.listing_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+2026-02-12T03:34:24.556+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:34:24.558+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [[OrderSummaryDTO(orderId=27, status=ACCEPTED, listingId=1, listingTitle=Assorted Bread Bundle, quant (truncated)...]
+2026-02-12T03:34:24.586+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:35:08.467+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-7] o.s.security.web.FilterChainProxy        : Securing PUT /api/supplier/orders/27/complete
+2026-02-12T03:35:08.513+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-7] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:35:08.514+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-7] o.s.security.web.FilterChainProxy        : Secured PUT /api/supplier/orders/27/complete
+2026-02-12T03:35:08.514+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : PUT "/api/supplier/orders/27/complete", parameters={}
+2026-02-12T03:35:08.516+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-7] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.SupplierOrderController#completeOrder(Long)
+Hibernate: select o1_0.order_id,o1_0.cancel_reason,o1_0.consumer_id,o1_0.created_at,o1_0.currency,o1_0.pickup_slot_end,o1_0.pickup_slot_start,o1_0.status,o1_0.store_id,o1_0.total_amount,o1_0.updated_at from orders o1_0 where o1_0.order_id=? for update
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: update pickup_tokens set expires_at=?,qr_token_hash=?,used_at=? where order_id=?
+Hibernate: update orders set cancel_reason=?,consumer_id=?,currency=?,pickup_slot_end=?,pickup_slot_start=?,status=?,store_id=?,total_amount=?,updated_at=? where order_id=?
+Hibernate: select s1_0.store_id,s1_0.address_line,s1_0.created_at,s1_0.description,s1_0.is_active,s1_0.lat,s1_0.lng,s1_0.opening_hours,s1_0.pickup_instructions,s1_0.postal_code,s1_0.store_name,s1_0.supplier_id from stores s1_0 where s1_0.store_id=?
+Hibernate: select cp1_0.consumer_id,cp1_0.created_at,cp1_0.default_lat,cp1_0.default_lng,cp1_0.display_name,cp1_0.email,cp1_0.password,cp1_0.phone,cp1_0.preferences_json,cp1_0.role,cp1_0.status from consumer_profiles cp1_0 where cp1_0.consumer_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select oi1_0.order_id,oi1_0.order_item_id,oi1_0.line_total,oi1_0.listing_id,oi1_0.quantity,oi1_0.unit_price from order_items oi1_0 where oi1_0.order_id=?
+Hibernate: select l1_0.listing_id,l1_0.created_at,l1_0.description,l1_0.estimated_weight_kg,l1_0.expiry_at,l1_0.original_price,l1_0.pickup_end,l1_0.pickup_start,l1_0.rescue_price,l1_0.status,l1_0.store_id,l1_0.title from listings l1_0 where l1_0.listing_id=?
+Hibernate: select i1_0.inventory_id,i1_0.last_updated,i1_0.listing_id,i1_0.qty_available,i1_0.qty_reserved from inventory i1_0 where i1_0.listing_id=?
+2026-02-12T03:35:08.724+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:35:08.726+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [OrderResponseDto(orderId=27, status=COMPLETED, totalAmount=5.00, currency=SGD, pickupSlotStart=2026- (truncated)...]
+2026-02-12T03:35:08.769+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:35:09.146+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-8] o.s.security.web.FilterChainProxy        : Securing GET /api/supplier/orders/1
+2026-02-12T03:35:09.181+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-8] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:35:09.182+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-8] o.s.security.web.FilterChainProxy        : Secured GET /api/supplier/orders/1
+2026-02-12T03:35:09.182+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : GET "/api/supplier/orders/1", parameters={}
+2026-02-12T03:35:09.183+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.SupplierOrderController#getOrderQueue(Long, String)
+Hibernate: select o1_0.order_id,o1_0.cancel_reason,o1_0.consumer_id,c1_0.consumer_id,c1_0.created_at,c1_0.default_lat,c1_0.default_lng,c1_0.display_name,c1_0.email,c1_0.password,c1_0.phone,c1_0.preferences_json,c1_0.role,c1_0.status,o1_0.created_at,o1_0.currency,oi1_0.order_id,oi1_0.order_item_id,oi1_0.line_total,oi1_0.listing_id,l1_0.listing_id,l1_0.created_at,l1_0.description,l1_0.estimated_weight_kg,l1_0.expiry_at,l1_0.original_price,l1_0.pickup_end,l1_0.pickup_start,l1_0.rescue_price,l1_0.status,l1_0.store_id,l1_0.title,oi1_0.quantity,oi1_0.unit_price,o1_0.pickup_slot_end,o1_0.pickup_slot_start,o1_0.status,o1_0.store_id,s1_0.store_id,s1_0.address_line,s1_0.created_at,s1_0.description,s1_0.is_active,s1_0.lat,s1_0.lng,s1_0.opening_hours,s1_0.pickup_instructions,s1_0.postal_code,s1_0.store_name,s1_0.supplier_id,o1_0.total_amount,o1_0.updated_at from orders o1_0 join stores s1_0 on s1_0.store_id=o1_0.store_id join consumer_profiles c1_0 on c1_0.consumer_id=o1_0.consumer_id left join order_items oi1_0 on o1_0.order_id=oi1_0.order_id left join listings l1_0 on l1_0.listing_id=oi1_0.listing_id where s1_0.store_id=? and (? is null or o1_0.status=?) order by o1_0.created_at desc
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select i1_0.inventory_id,i1_0.last_updated,i1_0.listing_id,i1_0.qty_available,i1_0.qty_reserved from inventory i1_0 where i1_0.listing_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select i1_0.inventory_id,i1_0.last_updated,i1_0.listing_id,i1_0.qty_available,i1_0.qty_reserved from inventory i1_0 where i1_0.listing_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+2026-02-12T03:35:09.449+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:35:09.449+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [[OrderSummaryDTO(orderId=27, status=COMPLETED, listingId=1, listingTitle=Assorted Bread Bundle, quan (truncated)...]
+2026-02-12T03:35:09.509+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:35:14.820+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-9] o.s.security.web.FilterChainProxy        : Securing GET /actuator/health
+2026-02-12T03:35:14.820+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-9] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:35:14.820+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-9] o.s.security.web.FilterChainProxy        : Secured GET /actuator/health
+2026-02-12T03:35:14.820+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : GET "/actuator/health", parameters={}
+2026-02-12T03:35:14.820+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-9] m.m.a.RequestResponseBodyMethodProcessor : Read "application/octet-stream" to []
+2026-02-12T03:35:14.902+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/vnd.spring-boot.actuator.v3+json', given [*/*] and supported [application/vnd.spring-boot.actuator.v3+json, application/vnd.spring-boot.actuator.v2+json, application/json]
+2026-02-12T03:35:14.903+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [org.springframework.boot.actuate.health.SystemHealth@1a6fbd89]
+2026-02-12T03:35:14.903+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:35:41.821+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Securing GET /api/supplier/orders/2
+2026-02-12T03:35:41.869+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:35:41.870+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Secured GET /api/supplier/orders/2
+2026-02-12T03:35:41.870+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET "/api/supplier/orders/2", parameters={}
+2026-02-12T03:35:41.871+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.SupplierOrderController#getOrderQueue(Long, String)
+Hibernate: select o1_0.order_id,o1_0.cancel_reason,o1_0.consumer_id,c1_0.consumer_id,c1_0.created_at,c1_0.default_lat,c1_0.default_lng,c1_0.display_name,c1_0.email,c1_0.password,c1_0.phone,c1_0.preferences_json,c1_0.role,c1_0.status,o1_0.created_at,o1_0.currency,oi1_0.order_id,oi1_0.order_item_id,oi1_0.line_total,oi1_0.listing_id,l1_0.listing_id,l1_0.created_at,l1_0.description,l1_0.estimated_weight_kg,l1_0.expiry_at,l1_0.original_price,l1_0.pickup_end,l1_0.pickup_start,l1_0.rescue_price,l1_0.status,l1_0.store_id,l1_0.title,oi1_0.quantity,oi1_0.unit_price,o1_0.pickup_slot_end,o1_0.pickup_slot_start,o1_0.status,o1_0.store_id,s1_0.store_id,s1_0.address_line,s1_0.created_at,s1_0.description,s1_0.is_active,s1_0.lat,s1_0.lng,s1_0.opening_hours,s1_0.pickup_instructions,s1_0.postal_code,s1_0.store_name,s1_0.supplier_id,o1_0.total_amount,o1_0.updated_at from orders o1_0 join stores s1_0 on s1_0.store_id=o1_0.store_id join consumer_profiles c1_0 on c1_0.consumer_id=o1_0.consumer_id left join order_items oi1_0 on o1_0.order_id=oi1_0.order_id left join listings l1_0 on l1_0.listing_id=oi1_0.listing_id where s1_0.store_id=? and (? is null or o1_0.status=?) order by o1_0.created_at desc
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select i1_0.inventory_id,i1_0.last_updated,i1_0.listing_id,i1_0.qty_available,i1_0.qty_reserved from inventory i1_0 where i1_0.listing_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+2026-02-12T03:35:42.141+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:35:42.142+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [[OrderSummaryDTO(orderId=47, status=PENDING_PAYMENT, listingId=2, listingTitle=Pastry Surprise Box,  (truncated)...]
+2026-02-12T03:35:42.185+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:35:47.021+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Securing GET /api/supplier/orders/1
+2026-02-12T03:35:47.109+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:35:47.109+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Secured GET /api/supplier/orders/1
+2026-02-12T03:35:47.109+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : GET "/api/supplier/orders/1", parameters={}
+2026-02-12T03:35:47.109+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.SupplierOrderController#getOrderQueue(Long, String)
+Hibernate: select o1_0.order_id,o1_0.cancel_reason,o1_0.consumer_id,c1_0.consumer_id,c1_0.created_at,c1_0.default_lat,c1_0.default_lng,c1_0.display_name,c1_0.email,c1_0.password,c1_0.phone,c1_0.preferences_json,c1_0.role,c1_0.status,o1_0.created_at,o1_0.currency,oi1_0.order_id,oi1_0.order_item_id,oi1_0.line_total,oi1_0.listing_id,l1_0.listing_id,l1_0.created_at,l1_0.description,l1_0.estimated_weight_kg,l1_0.expiry_at,l1_0.original_price,l1_0.pickup_end,l1_0.pickup_start,l1_0.rescue_price,l1_0.status,l1_0.store_id,l1_0.title,oi1_0.quantity,oi1_0.unit_price,o1_0.pickup_slot_end,o1_0.pickup_slot_start,o1_0.status,o1_0.store_id,s1_0.store_id,s1_0.address_line,s1_0.created_at,s1_0.description,s1_0.is_active,s1_0.lat,s1_0.lng,s1_0.opening_hours,s1_0.pickup_instructions,s1_0.postal_code,s1_0.store_name,s1_0.supplier_id,o1_0.total_amount,o1_0.updated_at from orders o1_0 join stores s1_0 on s1_0.store_id=o1_0.store_id join consumer_profiles c1_0 on c1_0.consumer_id=o1_0.consumer_id left join order_items oi1_0 on o1_0.order_id=oi1_0.order_id left join listings l1_0 on l1_0.listing_id=oi1_0.listing_id where s1_0.store_id=? and (? is null or o1_0.status=?) order by o1_0.created_at desc
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select i1_0.inventory_id,i1_0.last_updated,i1_0.listing_id,i1_0.qty_available,i1_0.qty_reserved from inventory i1_0 where i1_0.listing_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select i1_0.inventory_id,i1_0.last_updated,i1_0.listing_id,i1_0.qty_available,i1_0.qty_reserved from inventory i1_0 where i1_0.listing_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+2026-02-12T03:35:47.533+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:35:47.533+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [[OrderSummaryDTO(orderId=27, status=COMPLETED, listingId=1, listingTitle=Assorted Bread Bundle, quan (truncated)...]
+2026-02-12T03:35:47.579+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:39:31.190+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-4] o.s.security.web.FilterChainProxy        : Securing GET /api/stores/supplier/1
+2026-02-12T03:39:31.233+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-4] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:39:31.234+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-4] o.s.security.web.FilterChainProxy        : Secured GET /api/stores/supplier/1
+2026-02-12T03:39:31.234+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : GET "/api/stores/supplier/1", parameters={}
+2026-02-12T03:39:31.236+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-4] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.StoreController#getStoresBySupplier(Long)
+Hibernate: select s1_0.store_id,s1_0.address_line,s1_0.created_at,s1_0.description,s1_0.is_active,s1_0.lat,s1_0.lng,s1_0.opening_hours,s1_0.pickup_instructions,s1_0.postal_code,s1_0.store_name,s1_0.supplier_id from stores s1_0 left join supplier_profiles sp1_0 on sp1_0.supplier_id=s1_0.supplier_id where sp1_0.supplier_id=?
+2026-02-12T03:39:31.282+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:39:31.282+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [[StoreResponse(storeId=1, supplierId=1, storeName=BreadTalk Orchard, addressLine=313 Orchard Road, # (truncated)...]
+2026-02-12T03:39:31.322+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:39:31.328+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-5] o.s.security.web.FilterChainProxy        : Securing GET /api/stores/supplier/1
+2026-02-12T03:39:31.370+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-5] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:39:31.370+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-5] o.s.security.web.FilterChainProxy        : Secured GET /api/stores/supplier/1
+2026-02-12T03:39:31.370+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : GET "/api/stores/supplier/1", parameters={}
+2026-02-12T03:39:31.370+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-5] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.StoreController#getStoresBySupplier(Long)
+Hibernate: select s1_0.store_id,s1_0.address_line,s1_0.created_at,s1_0.description,s1_0.is_active,s1_0.lat,s1_0.lng,s1_0.opening_hours,s1_0.pickup_instructions,s1_0.postal_code,s1_0.store_name,s1_0.supplier_id from stores s1_0 left join supplier_profiles sp1_0 on sp1_0.supplier_id=s1_0.supplier_id where sp1_0.supplier_id=?
+2026-02-12T03:39:31.416+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:39:31.416+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [[StoreResponse(storeId=1, supplierId=1, storeName=BreadTalk Orchard, addressLine=313 Orchard Road, # (truncated)...]
+2026-02-12T03:39:31.450+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:39:34.291+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-2] o.s.security.web.FilterChainProxy        : Securing GET /api/supplier/orders/1
+2026-02-12T03:39:34.332+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-2] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:39:34.334+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-2] o.s.security.web.FilterChainProxy        : Secured GET /api/supplier/orders/1
+2026-02-12T03:39:34.334+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : GET "/api/supplier/orders/1", parameters={}
+2026-02-12T03:39:34.334+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.SupplierOrderController#getOrderQueue(Long, String)
+Hibernate: select o1_0.order_id,o1_0.cancel_reason,o1_0.consumer_id,c1_0.consumer_id,c1_0.created_at,c1_0.default_lat,c1_0.default_lng,c1_0.display_name,c1_0.email,c1_0.password,c1_0.phone,c1_0.preferences_json,c1_0.role,c1_0.status,o1_0.created_at,o1_0.currency,oi1_0.order_id,oi1_0.order_item_id,oi1_0.line_total,oi1_0.listing_id,l1_0.listing_id,l1_0.created_at,l1_0.description,l1_0.estimated_weight_kg,l1_0.expiry_at,l1_0.original_price,l1_0.pickup_end,l1_0.pickup_start,l1_0.rescue_price,l1_0.status,l1_0.store_id,l1_0.title,oi1_0.quantity,oi1_0.unit_price,o1_0.pickup_slot_end,o1_0.pickup_slot_start,o1_0.status,o1_0.store_id,s1_0.store_id,s1_0.address_line,s1_0.created_at,s1_0.description,s1_0.is_active,s1_0.lat,s1_0.lng,s1_0.opening_hours,s1_0.pickup_instructions,s1_0.postal_code,s1_0.store_name,s1_0.supplier_id,o1_0.total_amount,o1_0.updated_at from orders o1_0 join stores s1_0 on s1_0.store_id=o1_0.store_id join consumer_profiles c1_0 on c1_0.consumer_id=o1_0.consumer_id left join order_items oi1_0 on o1_0.order_id=oi1_0.order_id left join listings l1_0 on l1_0.listing_id=oi1_0.listing_id where s1_0.store_id=? and (? is null or o1_0.status=?) order by o1_0.created_at desc
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select i1_0.inventory_id,i1_0.last_updated,i1_0.listing_id,i1_0.qty_available,i1_0.qty_reserved from inventory i1_0 where i1_0.listing_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select i1_0.inventory_id,i1_0.last_updated,i1_0.listing_id,i1_0.qty_available,i1_0.qty_reserved from inventory i1_0 where i1_0.listing_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+2026-02-12T03:39:34.559+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:39:34.559+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [[OrderSummaryDTO(orderId=27, status=COMPLETED, listingId=1, listingTitle=Assorted Bread Bundle, quan (truncated)...]
+2026-02-12T03:39:34.586+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:39:39.294+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-6] o.s.security.web.FilterChainProxy        : Securing GET /api/stores/supplier/1
+2026-02-12T03:39:39.336+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-6] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:39:39.336+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-6] o.s.security.web.FilterChainProxy        : Secured GET /api/stores/supplier/1
+2026-02-12T03:39:39.336+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/api/stores/supplier/1", parameters={}
+2026-02-12T03:39:39.336+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-6] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.StoreController#getStoresBySupplier(Long)
+Hibernate: select s1_0.store_id,s1_0.address_line,s1_0.created_at,s1_0.description,s1_0.is_active,s1_0.lat,s1_0.lng,s1_0.opening_hours,s1_0.pickup_instructions,s1_0.postal_code,s1_0.store_name,s1_0.supplier_id from stores s1_0 left join supplier_profiles sp1_0 on sp1_0.supplier_id=s1_0.supplier_id where sp1_0.supplier_id=?
+2026-02-12T03:39:39.372+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:39:39.372+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [[StoreResponse(storeId=1, supplierId=1, storeName=BreadTalk Orchard, addressLine=313 Orchard Road, # (truncated)...]
+2026-02-12T03:39:39.415+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:39:50.082+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-7] o.s.security.web.FilterChainProxy        : Securing GET /api/stores/supplier/1
+2026-02-12T03:39:50.264+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-7] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:39:50.264+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-7] o.s.security.web.FilterChainProxy        : Secured GET /api/stores/supplier/1
+2026-02-12T03:39:50.264+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : GET "/api/stores/supplier/1", parameters={}
+2026-02-12T03:39:50.265+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-7] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.StoreController#getStoresBySupplier(Long)
+Hibernate: select s1_0.store_id,s1_0.address_line,s1_0.created_at,s1_0.description,s1_0.is_active,s1_0.lat,s1_0.lng,s1_0.opening_hours,s1_0.pickup_instructions,s1_0.postal_code,s1_0.store_name,s1_0.supplier_id from stores s1_0 left join supplier_profiles sp1_0 on sp1_0.supplier_id=s1_0.supplier_id where sp1_0.supplier_id=?
+2026-02-12T03:39:50.353+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:39:50.353+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [[StoreResponse(storeId=1, supplierId=1, storeName=BreadTalk Orchard, addressLine=313 Orchard Road, # (truncated)...]
+2026-02-12T03:39:50.390+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:39:50.394+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-8] o.s.security.web.FilterChainProxy        : Securing GET /api/stores/supplier/1
+2026-02-12T03:39:50.424+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-8] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:39:50.424+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-8] o.s.security.web.FilterChainProxy        : Secured GET /api/stores/supplier/1
+2026-02-12T03:39:50.424+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : GET "/api/stores/supplier/1", parameters={}
+2026-02-12T03:39:50.424+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.StoreController#getStoresBySupplier(Long)
+Hibernate: select s1_0.store_id,s1_0.address_line,s1_0.created_at,s1_0.description,s1_0.is_active,s1_0.lat,s1_0.lng,s1_0.opening_hours,s1_0.pickup_instructions,s1_0.postal_code,s1_0.store_name,s1_0.supplier_id from stores s1_0 left join supplier_profiles sp1_0 on sp1_0.supplier_id=s1_0.supplier_id where sp1_0.supplier_id=?
+2026-02-12T03:39:50.472+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:39:50.472+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [[StoreResponse(storeId=1, supplierId=1, storeName=BreadTalk Orchard, addressLine=313 Orchard Road, # (truncated)...]
+2026-02-12T03:39:50.512+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:39:59.895+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-9] o.s.security.web.FilterChainProxy        : Securing GET /api/stores/supplier/1
+2026-02-12T03:39:59.934+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-9] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:39:59.934+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-9] o.s.security.web.FilterChainProxy        : Secured GET /api/stores/supplier/1
+2026-02-12T03:39:59.934+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : GET "/api/stores/supplier/1", parameters={}
+2026-02-12T03:39:59.934+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-9] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.StoreController#getStoresBySupplier(Long)
+Hibernate: select s1_0.store_id,s1_0.address_line,s1_0.created_at,s1_0.description,s1_0.is_active,s1_0.lat,s1_0.lng,s1_0.opening_hours,s1_0.pickup_instructions,s1_0.postal_code,s1_0.store_name,s1_0.supplier_id from stores s1_0 left join supplier_profiles sp1_0 on sp1_0.supplier_id=s1_0.supplier_id where sp1_0.supplier_id=?
+2026-02-12T03:39:59.981+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:39:59.983+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [[StoreResponse(storeId=1, supplierId=1, storeName=BreadTalk Orchard, addressLine=313 Orchard Road, # (truncated)...]
+2026-02-12T03:40:00.026+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:40:20.084+08:00 DEBUG 33880 --- [backend] [io-8080-exec-10] o.s.security.web.FilterChainProxy        : Securing GET /api/stores/supplier/1
+2026-02-12T03:40:20.131+08:00 DEBUG 33880 --- [backend] [io-8080-exec-10] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:40:20.131+08:00 DEBUG 33880 --- [backend] [io-8080-exec-10] o.s.security.web.FilterChainProxy        : Secured GET /api/stores/supplier/1
+2026-02-12T03:40:20.131+08:00 DEBUG 33880 --- [backend] [io-8080-exec-10] o.s.web.servlet.DispatcherServlet        : GET "/api/stores/supplier/1", parameters={}
+2026-02-12T03:40:20.133+08:00 DEBUG 33880 --- [backend] [io-8080-exec-10] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.StoreController#getStoresBySupplier(Long)
+Hibernate: select s1_0.store_id,s1_0.address_line,s1_0.created_at,s1_0.description,s1_0.is_active,s1_0.lat,s1_0.lng,s1_0.opening_hours,s1_0.pickup_instructions,s1_0.postal_code,s1_0.store_name,s1_0.supplier_id from stores s1_0 left join supplier_profiles sp1_0 on sp1_0.supplier_id=s1_0.supplier_id where sp1_0.supplier_id=?
+2026-02-12T03:40:20.214+08:00 DEBUG 33880 --- [backend] [io-8080-exec-10] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:40:20.214+08:00 DEBUG 33880 --- [backend] [io-8080-exec-10] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [[StoreResponse(storeId=1, supplierId=1, storeName=BreadTalk Orchard, addressLine=313 Orchard Road, # (truncated)...]
+2026-02-12T03:40:20.259+08:00 DEBUG 33880 --- [backend] [io-8080-exec-10] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:41:17.242+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Securing GET /api/supplier/orders/1
+2026-02-12T03:41:17.275+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:41:17.275+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Secured GET /api/supplier/orders/1
+2026-02-12T03:41:17.275+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET "/api/supplier/orders/1", parameters={}
+2026-02-12T03:41:17.276+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.SupplierOrderController#getOrderQueue(Long, String)
+Hibernate: select o1_0.order_id,o1_0.cancel_reason,o1_0.consumer_id,c1_0.consumer_id,c1_0.created_at,c1_0.default_lat,c1_0.default_lng,c1_0.display_name,c1_0.email,c1_0.password,c1_0.phone,c1_0.preferences_json,c1_0.role,c1_0.status,o1_0.created_at,o1_0.currency,oi1_0.order_id,oi1_0.order_item_id,oi1_0.line_total,oi1_0.listing_id,l1_0.listing_id,l1_0.created_at,l1_0.description,l1_0.estimated_weight_kg,l1_0.expiry_at,l1_0.original_price,l1_0.pickup_end,l1_0.pickup_start,l1_0.rescue_price,l1_0.status,l1_0.store_id,l1_0.title,oi1_0.quantity,oi1_0.unit_price,o1_0.pickup_slot_end,o1_0.pickup_slot_start,o1_0.status,o1_0.store_id,s1_0.store_id,s1_0.address_line,s1_0.created_at,s1_0.description,s1_0.is_active,s1_0.lat,s1_0.lng,s1_0.opening_hours,s1_0.pickup_instructions,s1_0.postal_code,s1_0.store_name,s1_0.supplier_id,o1_0.total_amount,o1_0.updated_at from orders o1_0 join stores s1_0 on s1_0.store_id=o1_0.store_id join consumer_profiles c1_0 on c1_0.consumer_id=o1_0.consumer_id left join order_items oi1_0 on o1_0.order_id=oi1_0.order_id left join listings l1_0 on l1_0.listing_id=oi1_0.listing_id where s1_0.store_id=? and (? is null or o1_0.status=?) order by o1_0.created_at desc
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select i1_0.inventory_id,i1_0.last_updated,i1_0.listing_id,i1_0.qty_available,i1_0.qty_reserved from inventory i1_0 where i1_0.listing_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select i1_0.inventory_id,i1_0.last_updated,i1_0.listing_id,i1_0.qty_available,i1_0.qty_reserved from inventory i1_0 where i1_0.listing_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select w1_0.wallet_id,w1_0.balance,w1_0.consumer_id,w1_0.currency,w1_0.updated_at from wallets w1_0 where w1_0.consumer_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+2026-02-12T03:41:17.575+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:41:17.575+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [[OrderSummaryDTO(orderId=27, status=COMPLETED, listingId=1, listingTitle=Assorted Bread Bundle, quan (truncated)...]
+2026-02-12T03:41:17.618+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-02-12T03:41:36.947+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Securing PUT /api/supplier/orders/23/cancel
+2026-02-12T03:41:36.976+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-12T03:41:36.976+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Secured PUT /api/supplier/orders/23/cancel
+2026-02-12T03:41:36.976+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : PUT "/api/supplier/orders/23/cancel", parameters={}
+2026-02-12T03:41:36.978+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.frh.backend.controller.SupplierOrderController#cancelAcceptedOrder(Long, RejectOrderRequest)
+2026-02-12T03:41:37.001+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [RejectOrderRequest(reason=sorry sold out)]
+Hibernate: select o1_0.order_id,o1_0.cancel_reason,o1_0.consumer_id,o1_0.created_at,o1_0.currency,o1_0.pickup_slot_end,o1_0.pickup_slot_start,o1_0.status,o1_0.store_id,o1_0.total_amount,o1_0.updated_at from orders o1_0 where o1_0.order_id=? for update
+Hibernate: select cl1_0.commission_id,cl1_0.commission_amount,cl1_0.created_at,cl1_0.order_id,cl1_0.status,cl1_0.supplier_id from commission_ledger cl1_0 where cl1_0.order_id=?
+Hibernate: select pf1_0.feedback_id,pf1_0.expires_at,pf1_0.feedback_review,pf1_0.on_time,pf1_0.order_id,pf1_0.used_at from pickup_feedback pf1_0 where pf1_0.order_id=?
+Hibernate: select pt1_0.order_id,pt1_0.expires_at,pt1_0.issued_at,pt1_0.qr_token_hash,pt1_0.used_at from pickup_tokens pt1_0 where pt1_0.order_id=?
+2026-02-12T03:41:37.093+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] .m.m.a.ExceptionHandlerExceptionResolver : Using @ExceptionHandler com.frh.backend.exception.GlobalExceptionHandler#handleOrderState(OrderStateException)
+2026-02-12T03:41:37.093+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json] and supported [application/json, application/*+json, application/yaml]
+2026-02-12T03:41:37.095+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{error=ORDER_STATE_CONFLICT, message=Order 23 is in state 'PAID' but must be 'ACCEPTED' for this act (truncated)...]
+2026-02-12T03:41:37.125+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] .m.m.a.ExceptionHandlerExceptionResolver : Resolved [com.frh.backend.exception.OrderStateException: Order 23 is in state 'PAID' but must be 'ACCEPTED' for this action]
+2026-02-12T03:41:37.125+08:00 DEBUG 33880 --- [backend] [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 409 CONFLICT
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  12:52 min
+[INFO] Finished at: 2026-02-12T03:43:10+08:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.4.5:run (default-cli) on project backend: Process terminated with exit code: 1 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

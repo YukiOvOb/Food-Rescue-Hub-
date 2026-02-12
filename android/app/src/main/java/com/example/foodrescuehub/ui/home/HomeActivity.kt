@@ -560,6 +560,14 @@ class HomeActivity : AppCompatActivity() {
             if (!listing.photoUrls.isNullOrEmpty()) {
                 putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_PHOTO_URL, listing.photoUrls[0])
             }
+
+            // Pass rating data if available
+            listing.avgListingAccuracy?.let {
+                putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_AVG_ACCURACY, it)
+            }
+            listing.avgOnTimePickup?.let {
+                putExtra(com.example.foodrescuehub.ui.detail.ProductDetailActivity.EXTRA_LISTING_AVG_ON_TIME, it)
+            }
         }
         startActivity(intent)
     }

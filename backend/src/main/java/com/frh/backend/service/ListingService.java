@@ -5,8 +5,10 @@ import com.frh.backend.dto.ListingDTO;
 import com.frh.backend.model.Listing;
 import com.frh.backend.model.ListingFoodCategory;
 import com.frh.backend.model.ListingPhoto;
+import com.frh.backend.model.ListingReview;
 import com.frh.backend.repository.FoodCategoryRepository;
 import com.frh.backend.repository.ListingRepository;
+import com.frh.backend.repository.ListingReviewRepository;
 import com.frh.backend.repository.StoreRepository;
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -26,6 +28,8 @@ public class ListingService {
   @Autowired private FoodCategoryRepository foodCategoryRepository;
 
   @Autowired private StoreRepository storeRepository;
+
+  @Autowired private ListingReviewRepository listingReviewRepository;
 
   /** Get all active listings with available inventory */
   @Transactional(readOnly = true)
@@ -69,6 +73,14 @@ public class ListingService {
             })
         .map(this::convertToDto)
         .collect(Collectors.toList());
+  }
+
+  /** Get a single listing by ID with calculated ratings */
+  @Transactional(readOnly = true)
+  public ListingDTO getListingById(Long listingId) {
+    Listing listing = listingRepository.findById(listingId)
+        .orElseThrow(() -> new IllegalArgumentException("Listing not found with id: " + listingId));
+    return convertToDto(listing);
   }
 
   /** Convert Listing entity to ListingDTO */
@@ -156,6 +168,27 @@ public class ListingService {
     dto.setTimeRemaining(calculateTimeRemaining(listing.getPickupEnd()));
     dto.setSavingsAmount(listing.getOriginalPrice().subtract(listing.getRescuePrice()));
     dto.setSavingsLabel("Worth $" + listing.getOriginalPrice().intValue() + "+");
+
+    // Calculate average ratings from reviews
+    List<ListingReview> reviews =
+        listingReviewRepository.findByListing_ListingIdOrderByCreatedAtDesc(
+            listing.getListingId());
+    if (!reviews.isEmpty()) {
+      double avgAccuracy =
+          reviews.stream()
+              .mapToInt(ListingReview::getListingAccuracy)
+              .average()
+              .orElse(0.0);
+      double avgOnTime =
+          reviews.stream().mapToInt(ListingReview::getOnTimePickup).average().orElse(0.0);
+      // Convert to percentage (rating is 1-5, so multiply by 20)
+      dto.setAvgListingAccuracy(avgAccuracy * 20.0);
+      dto.setAvgOnTimePickup(avgOnTime * 20.0);
+    } else {
+      // No reviews yet - set to null or 0
+      dto.setAvgListingAccuracy(null);
+      dto.setAvgOnTimePickup(null);
+    }
 
     return dto;
   }

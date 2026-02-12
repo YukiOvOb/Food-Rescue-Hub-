@@ -41,6 +41,12 @@ public class ListingReview {
   @Column(name = "rating", nullable = false)
   private Integer rating;
 
+  @Column(name = "listing_accuracy", nullable = false)
+  private Integer listingAccuracy;
+
+  @Column(name = "on_time_pickup", nullable = false)
+  private Integer onTimePickup;
+
   @Column(name = "comment", nullable = false, length = 300)
   private String comment;
 

@@ -39,5 +39,9 @@ data class Listing(
     // Calculated fields
     val timeRemaining: String,
     val savingsAmount: Double,
-    val savingsLabel: String
+    val savingsLabel: String,
+
+    // Review ratings (percentages)
+    val avgListingAccuracy: Double?,
+    val avgOnTimePickup: Double?
 )

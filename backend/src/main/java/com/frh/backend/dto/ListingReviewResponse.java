@@ -11,6 +11,8 @@ public class ListingReviewResponse {
   private Long listingId;
   private String listingTitle;
   private Integer rating;
+  private Integer listingAccuracy;
+  private Integer onTimePickup;
   private String comment;
   private LocalDateTime createdAt;
   private Long consumerId;
