@@ -3,6 +3,7 @@ package com.frh.backend.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.frh.backend.dto.Co2CategoryBreakdownDto;
 import com.frh.backend.dto.Co2SummaryDto;
 import com.frh.backend.repository.OrderRepository;
+import com.frh.backend.repository.SupplierRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class Co2AnalyticsServiceTest {
 
   @Mock private OrderRepository orderRepository;
+  @Mock private SupplierRepository supplierRepository;
 
   @InjectMocks private Co2AnalyticsService co2AnalyticsService;
 
@@ -34,8 +37,8 @@ class Co2AnalyticsServiceTest {
     Co2CategoryBreakdownDto veg =
         new Co2CategoryBreakdownDto(2L, "Vegetables", null, new BigDecimal("3.250"));
 
-    when(orderRepository.findCo2BreakdownBySupplierAndStatusSince(
-            eq(88L), eq("COMPLETED"), org.mockito.ArgumentMatchers.any(LocalDateTime.class)))
+    when(orderRepository.findCo2BreakdownBySupplierAndStatusesSince(
+            eq(88L), anyList(), org.mockito.ArgumentMatchers.any(LocalDateTime.class)))
         .thenReturn(List.of(meats, veg));
 
     Co2SummaryDto result = co2AnalyticsService.getCo2Summary(88L, 0);
@@ -48,8 +51,8 @@ class Co2AnalyticsServiceTest {
 
   @Test
   void getCo2Summary_usesProvidedPositiveDaysForQueryWindow() {
-    when(orderRepository.findCo2BreakdownBySupplierAndStatusSince(
-            eq(9L), eq("COMPLETED"), org.mockito.ArgumentMatchers.any(LocalDateTime.class)))
+    when(orderRepository.findCo2BreakdownBySupplierAndStatusesSince(
+            eq(9L), anyList(), org.mockito.ArgumentMatchers.any(LocalDateTime.class)))
         .thenReturn(List.of());
 
     Co2SummaryDto result = co2AnalyticsService.getCo2Summary(9L, 7);
@@ -57,7 +60,7 @@ class Co2AnalyticsServiceTest {
     assertEquals(7, result.getDays());
     ArgumentCaptor<LocalDateTime> sinceCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
     verify(orderRepository)
-        .findCo2BreakdownBySupplierAndStatusSince(eq(9L), eq("COMPLETED"), sinceCaptor.capture());
+        .findCo2BreakdownBySupplierAndStatusesSince(eq(9L), anyList(), sinceCaptor.capture());
     assertTrue(sinceCaptor.getValue().isBefore(result.getTo()));
     assertNotNull(result.getFrom());
     assertNotNull(result.getTo());
