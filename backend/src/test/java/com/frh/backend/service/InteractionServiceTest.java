@@ -187,6 +187,102 @@ class InteractionServiceTest {
   }
 
   @Test
+  void recordInteraction_nullRequest_throwsIllegalArgumentException() {
+    IllegalArgumentException ex =
+        assertThrows(IllegalArgumentException.class, () -> interactionService.recordInteraction(null));
+
+    assertEquals("consumerId, listingId, and interactionType are required", ex.getMessage());
+  }
+
+  @Test
+  void recordInteraction_missingRequiredFields_throwsIllegalArgumentException() {
+    UserInteractionRequest request = new UserInteractionRequest();
+    request.setConsumerId(1L);
+    request.setListingId(2L);
+    request.setInteractionType(null);
+
+    IllegalArgumentException ex =
+        assertThrows(
+            IllegalArgumentException.class, () -> interactionService.recordInteraction(request));
+
+    assertEquals("consumerId, listingId, and interactionType are required", ex.getMessage());
+  }
+
+  @Test
+  void recordInteraction_searchType_hitsDefaultBranchWithoutCounterIncrements() {
+    ConsumerProfile consumer = new ConsumerProfile();
+    consumer.setConsumerId(4L);
+    Listing listing = new Listing();
+    listing.setListingId(40L);
+
+    ListingStats listingStats = new ListingStats();
+    listingStats.setListing(listing);
+    listingStats.setViewCount(2);
+    listingStats.setClickCount(3);
+    listingStats.setAddToCartCount(4);
+
+    ConsumerStats consumerStats = new ConsumerStats();
+    consumerStats.setConsumer(consumer);
+    consumerStats.setTotalViews(6);
+    consumerStats.setTotalClicks(7);
+
+    when(consumerProfileRepository.findById(4L)).thenReturn(Optional.of(consumer));
+    when(listingRepository.findById(40L)).thenReturn(Optional.of(listing));
+    when(userInteractionRepository.save(any(UserInteraction.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+    when(listingStatsRepository.findByListingId(40L)).thenReturn(Optional.of(listingStats));
+    when(consumerStatsRepository.findByConsumerId(4L)).thenReturn(Optional.of(consumerStats));
+    when(listingStatsRepository.save(any(ListingStats.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+    when(consumerStatsRepository.save(any(ConsumerStats.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    interactionService.recordInteraction(
+        request(4L, 40L, UserInteraction.InteractionType.SEARCH, "Android"));
+
+    assertEquals(2, listingStats.getViewCount());
+    assertEquals(3, listingStats.getClickCount());
+    assertEquals(4, listingStats.getAddToCartCount());
+    assertEquals(6, consumerStats.getTotalViews());
+    assertEquals(7, consumerStats.getTotalClicks());
+  }
+
+  @Test
+  void recordInteraction_statisticsUpdateFailure_doesNotFailMainFlow() {
+    ConsumerProfile consumer = new ConsumerProfile();
+    consumer.setConsumerId(5L);
+    Listing listing = new Listing();
+    listing.setListingId(50L);
+
+    when(consumerProfileRepository.findById(5L)).thenReturn(Optional.of(consumer));
+    when(listingRepository.findById(50L)).thenReturn(Optional.of(listing));
+    when(userInteractionRepository.save(any(UserInteraction.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+    when(listingStatsRepository.findByListingId(50L)).thenThrow(new RuntimeException("db error"));
+
+    UserInteraction result =
+        interactionService.recordInteraction(
+            request(5L, 50L, UserInteraction.InteractionType.VIEW, "Android"));
+
+    assertEquals(UserInteraction.InteractionType.VIEW, result.getInteractionType());
+    verify(userInteractionRepository).save(any(UserInteraction.class));
+  }
+
+  @Test
+  void recordInteractionsBatch_nullOrEmpty_throwsIllegalArgumentException() {
+    IllegalArgumentException ex1 =
+        assertThrows(
+            IllegalArgumentException.class, () -> interactionService.recordInteractionsBatch(null));
+    IllegalArgumentException ex2 =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> interactionService.recordInteractionsBatch(List.of()));
+
+    assertEquals("At least one interaction is required", ex1.getMessage());
+    assertEquals("At least one interaction is required", ex2.getMessage());
+  }
+
+  @Test
   void recordInteractionsBatch_continuesAfterFailures() {
     UserInteractionRequest invalid =
         request(1L, 1L, UserInteraction.InteractionType.VIEW, "Android");

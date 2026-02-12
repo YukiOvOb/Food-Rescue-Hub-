@@ -71,6 +71,20 @@ class RecommendationControllerTest {
         .andExpect(jsonPath("$.message").value("推荐获取失败"));
   }
 
+  @Test
+  void getHomepageRecommendations_notFound_returns404() throws Exception {
+    Mockito.when(
+            recommendationService.recommendStoresForHomepage(
+                Mockito.anyLong(), Mockito.anyInt(), Mockito.any(), Mockito.any()))
+        .thenThrow(new RuntimeException("consumer not found"));
+
+    mockMvc
+        .perform(get("/api/recommendations/homepage").param("consumerId", "1"))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("推荐获取失败"));
+  }
+
   /* --------------------------------
   SEARCH WITH RECOMMENDATIONS – SUCCESS
   -------------------------------- */
@@ -118,6 +132,26 @@ class RecommendationControllerTest {
         .perform(
             get("/api/recommendations/search").param("consumerId", "1").param("query", "bread"))
         .andExpect(status().isInternalServerError())
+        .andExpect(jsonPath("$.success").value(false))
+        .andExpect(jsonPath("$.message").value("Failed to retrieve search recommendations"));
+  }
+
+  @Test
+  void searchWithRecommendations_notFound_returns404() throws Exception {
+
+    Mockito.when(
+            recommendationService.searchWithRecommendations(
+                Mockito.anyLong(),
+                Mockito.anyString(),
+                Mockito.any(),
+                Mockito.any(),
+                Mockito.any()))
+        .thenThrow(new RuntimeException("listing not found"));
+
+    mockMvc
+        .perform(
+            get("/api/recommendations/search").param("consumerId", "1").param("query", "bread"))
+        .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.success").value(false))
         .andExpect(jsonPath("$.message").value("Failed to retrieve search recommendations"));
   }
