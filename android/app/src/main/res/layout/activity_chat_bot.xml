@@ -80,6 +80,7 @@
 
     <!-- Message Input Bar, where we can enter the inputs of messages -->
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/inputBarContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardCornerRadius="0dp"

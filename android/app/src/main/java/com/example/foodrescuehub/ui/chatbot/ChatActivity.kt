@@ -2,6 +2,8 @@ package com.example.foodrescuehub.ui.chatbot
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.foodrescuehub.data.api.RetrofitClient
@@ -26,6 +28,24 @@ class ChatActivity : AppCompatActivity() {
         setupToolbar()
         setupRecyclerView()
         setupListeners()
+        setupWindowInsets()
+    }
+
+    private fun setupWindowInsets() {
+        val inputBar = binding.inputBarContainer
+        val initialBottomPadding = inputBar.paddingBottom
+
+        ViewCompat.setOnApplyWindowInsetsListener(inputBar) { view, insets ->
+            val navBarInset = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
+            view.setPadding(
+                view.paddingLeft,
+                view.paddingTop,
+                view.paddingRight,
+                initialBottomPadding + navBarInset
+            )
+            insets
+        }
+        ViewCompat.requestApplyInsets(inputBar)
     }
 
     private fun setupToolbar() {
