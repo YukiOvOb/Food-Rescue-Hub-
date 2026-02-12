@@ -77,6 +77,11 @@
             android:label="Review Listing"
             android:parentActivityName=".ui.orders.OrderDetailActivity" />
         <activity
+            android:name=".ui.review.MyReviewsActivity"
+            android:exported="false"
+            android:label="My Reviews"
+            android:parentActivityName=".ui.profile.ProfileActivity" />
+        <activity
             android:name=".ui.checkout.PaymentWebViewActivity"
             android:exported="false"
             android:label="Secure Payment" />

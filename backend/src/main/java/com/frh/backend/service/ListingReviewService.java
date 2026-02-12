@@ -96,6 +96,22 @@ public class ListingReviewService {
         .toList();
   }
 
+  @Transactional(readOnly = true)
+  public List<ListingReviewResponse> getReviewsByConsumer(Long consumerId) {
+    return listingReviewRepository.findByConsumer_ConsumerIdOrderByCreatedAtDesc(consumerId)
+        .stream()
+        .map(this::toResponse)
+        .toList();
+  }
+
+  @Transactional(readOnly = true)
+  public List<ListingReviewResponse> getReviewsByConsumerAndOrder(Long consumerId, Long orderId) {
+    return listingReviewRepository
+        .findByConsumer_ConsumerIdAndOrder_OrderIdOrderByCreatedAtDesc(consumerId, orderId).stream()
+        .map(this::toResponse)
+        .toList();
+  }
+
   @Transactional
   public void deleteReview(Long reviewId, Long consumerId) {
     ListingReview review =
@@ -117,6 +133,7 @@ public class ListingReviewService {
     response.setReviewId(review.getReviewId());
     response.setOrderId(review.getOrder().getOrderId());
     response.setListingId(review.getListing().getListingId());
+    response.setListingTitle(review.getListing().getTitle());
     response.setRating(review.getRating());
     response.setComment(review.getComment());
     response.setCreatedAt(review.getCreatedAt());

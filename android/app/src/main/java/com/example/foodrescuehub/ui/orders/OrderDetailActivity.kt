@@ -194,8 +194,15 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun openReviewFlow() {
         // Check if user wants to view existing reviews or write new ones
         if (reviewableListings.isEmpty() && reviewedListings.isNotEmpty()) {
-            // All listings reviewed - show existing reviews
-            showExistingReviews()
+            // All listings reviewed - navigate to My Reviews page for this order
+            val intent = Intent(this, ReviewActivity::class.java).apply {
+                putExtra(com.example.foodrescuehub.ui.review.MyReviewsActivity.EXTRA_ORDER_ID, orderId)
+            }
+            // Use MyReviewsActivity instead of showing dialog
+            val myReviewsIntent = Intent(this, com.example.foodrescuehub.ui.review.MyReviewsActivity::class.java).apply {
+                putExtra(com.example.foodrescuehub.ui.review.MyReviewsActivity.EXTRA_ORDER_ID, orderId)
+            }
+            startActivity(myReviewsIntent)
             return
         }
 
@@ -228,24 +235,11 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
             return
         }
 
-        // Create a dialog to show existing reviews
-        val items = reviewedListings.map { listing ->
-            "${listing.title}\n✓ Review submitted"
-        }.toTypedArray()
-
-        AlertDialog.Builder(this)
-            .setTitle("Reviews for Order #$orderId")
-            .setItems(items) { _, index ->
-                // Show detailed review info
-                val listing = reviewedListings[index]
-                Toast.makeText(
-                    this,
-                    "Review submitted for ${listing.title}\nThank you for your feedback!",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-            .setPositiveButton("OK", null)
-            .show()
+        // Navigate to My Reviews page for this order
+        val intent = Intent(this, com.example.foodrescuehub.ui.review.MyReviewsActivity::class.java).apply {
+            putExtra(com.example.foodrescuehub.ui.review.MyReviewsActivity.EXTRA_ORDER_ID, orderId)
+        }
+        startActivity(intent)
     }
 
     private fun launchReviewActivity(listing: OrderListingInfo) {

@@ -170,4 +170,10 @@ interface ApiService {
 
     @GET("api/reviews/listing/{listingId}")
     suspend fun getListingReviews(@Path("listingId") listingId: Long): Response<List<ListingReview>>
+
+    @GET("api/reviews/my-reviews")
+    suspend fun getMyReviews(): Response<List<ListingReviewResponse>>
+
+    @GET("api/reviews/my-reviews/order/{orderId}")
+    suspend fun getReviewsByOrder(@Path("orderId") orderId: Long): Response<List<ListingReviewResponse>>
 }

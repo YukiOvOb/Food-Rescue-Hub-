@@ -10,6 +10,11 @@ public interface ListingReviewRepository extends JpaRepository<ListingReview, Lo
 
   List<ListingReview> findByListing_ListingIdOrderByCreatedAtDesc(Long listingId);
 
+  List<ListingReview> findByConsumer_ConsumerIdOrderByCreatedAtDesc(Long consumerId);
+
+  List<ListingReview> findByConsumer_ConsumerIdAndOrder_OrderIdOrderByCreatedAtDesc(
+      Long consumerId, Long orderId);
+
   boolean existsByOrder_OrderIdAndListing_ListingIdAndConsumer_ConsumerId(
       Long orderId, Long listingId, Long consumerId);
 }

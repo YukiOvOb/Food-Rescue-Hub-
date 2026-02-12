@@ -9,6 +9,7 @@ public class ListingReviewResponse {
   private Long reviewId;
   private Long orderId;
   private Long listingId;
+  private String listingTitle;
   private Integer rating;
   private String comment;
   private LocalDateTime createdAt;

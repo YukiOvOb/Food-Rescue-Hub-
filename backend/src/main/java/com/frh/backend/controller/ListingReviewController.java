@@ -47,6 +47,44 @@ public class ListingReviewController {
     }
   }
 
+  @GetMapping("/my-reviews")
+  public ResponseEntity<?> getReviewsByConsumer(HttpSession session) {
+    try {
+      Long consumerId = getCurrentConsumerId(session);
+      List<ListingReviewResponse> reviews = listingReviewService.getReviewsByConsumer(consumerId);
+      return ResponseEntity.ok(reviews);
+    } catch (ResponseStatusException e) {
+      return ResponseEntity.status(e.getStatusCode())
+          .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
+    } catch (Exception e) {
+      log.error("Error retrieving consumer reviews", e);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(
+              new ErrorResponse(
+                  HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve reviews"));
+    }
+  }
+
+  @GetMapping("/my-reviews/order/{orderId}")
+  public ResponseEntity<?> getReviewsByConsumerAndOrder(
+      @PathVariable Long orderId, HttpSession session) {
+    try {
+      Long consumerId = getCurrentConsumerId(session);
+      List<ListingReviewResponse> reviews =
+          listingReviewService.getReviewsByConsumerAndOrder(consumerId, orderId);
+      return ResponseEntity.ok(reviews);
+    } catch (ResponseStatusException e) {
+      return ResponseEntity.status(e.getStatusCode())
+          .body(new ErrorResponse(e.getStatusCode().value(), e.getReason()));
+    } catch (Exception e) {
+      log.error("Error retrieving consumer order reviews", e);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(
+              new ErrorResponse(
+                  HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve reviews"));
+    }
+  }
+
   @PostMapping
   public ResponseEntity<?> createReview(
       @Valid @RequestBody CreateListingReviewRequest request, HttpSession session) {

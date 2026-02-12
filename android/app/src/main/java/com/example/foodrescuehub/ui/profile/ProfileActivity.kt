@@ -73,7 +73,8 @@ class ProfileActivity : AppCompatActivity() {
 
         // Menu items - show "Coming soon" toast
         binding.cvMyOrders.setOnClickListener {
-            Toast.makeText(this, R.string.feature_coming_soon, Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, com.example.foodrescuehub.ui.review.MyReviewsActivity::class.java)
+            startActivity(intent)
         }
 
         binding.cvSavedStores.setOnClickListener {

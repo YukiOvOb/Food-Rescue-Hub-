@@ -228,7 +228,7 @@
                         android:layout_marginStart="16dp"
                         android:layout_marginEnd="16dp" />
 
-                    <!-- Saved Stores -->
+                    <!-- My Coupon -->
                     <LinearLayout
                         android:id="@+id/cvSavedStores"
                         android:layout_width="match_parent"
@@ -252,7 +252,7 @@
                                 android:layout_height="20dp"
                                 android:layout_gravity="center"
                                 android:src="@android:drawable/star_on"
-                                android:contentDescription="@string/saved_stores"
+                                android:contentDescription="My Coupon"
                                 app:tint="#2d6a5a" />
                         </com.google.android.material.card.MaterialCardView>
 
@@ -261,7 +261,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:layout_marginStart="16dp"
-                            android:text="@string/saved_stores"
+                            android:text="My Coupon"
                             android:textSize="16sp"
                             android:textColor="#1A1A1A" />
 
@@ -270,7 +270,7 @@
                             android:layout_height="16dp"
                             android:src="@android:drawable/ic_menu_more"
                             android:rotation="270"
-                            android:contentDescription="@string/saved_stores"
+                            android:contentDescription="My Coupon"
                             app:tint="#999999" />
 
                     </LinearLayout>
