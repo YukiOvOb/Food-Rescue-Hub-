@@ -1708,6 +1708,7 @@ jobs:
     env:
       EC2_HOST: ${{ secrets.EC2_HOST }}
       EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       PROD_URL: ${{ secrets.PROD_URL }}     # optional for smoke test
     steps:
       - name: Skip if EC2 secrets missing
@@ -1779,9 +1780,14 @@ jobs:
           host: ${{ env.EC2_HOST }}
           username: ubuntu
           key: ${{ env.EC2_SSH_KEY }}
+          envs: OPENAI_API_KEY
           script: |
             set -euo pipefail
             cd ~/Food-Rescue-Hub-
+
+            if [ -z "${OPENAI_API_KEY:-}" ]; then
+              echo "OPENAI_API_KEY is missing; ai_service may fail to start"
+            fi
 
             retry_cmd() {
               max_attempts="$1"
