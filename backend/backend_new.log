@@ -1,0 +1,132 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------------< com.frh:backend >---------------------------
+[INFO] Building backend 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.4.5:run (default-cli) > test-compile @ backend >>>
+[INFO] 
+[INFO] --- enforcer:3.6.0:enforce (enforce-java) @ backend ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.13:prepare-agent (default) @ backend ---
+[INFO] argLine set to -javaagent:C:\\Users\\ROG\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.13\\org.jacoco.agent-0.8.13-runtime.jar=destfile=D:\\personalFile\\AD\\Food-Rescue-Hub-\\backend\\target\\jacoco.exec
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ backend ---
+[INFO] Copying 6 resources from src\main\resources to target\classes
+[INFO] Copying 4 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ backend ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ backend ---
+[INFO] Copying 1 resource from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ backend ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 43 source files with javac [debug release 17] to target\test-classes
+[INFO] /D:/personalFile/AD/Food-Rescue-Hub-/backend/src/test/java/com/frh/backend/exception/GlobalExceptionHandlerTest.java: D:\personalFile\AD\Food-Rescue-Hub-\backend\src\test\java\com\frh\backend\exception\GlobalExceptionHandlerTest.java使用或覆盖了已过时的 API。
+[INFO] /D:/personalFile/AD/Food-Rescue-Hub-/backend/src/test/java/com/frh/backend/exception/GlobalExceptionHandlerTest.java: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+[INFO] /D:/personalFile/AD/Food-Rescue-Hub-/backend/src/test/java/com/frh/backend/service/CartServiceTest.java: D:\personalFile\AD\Food-Rescue-Hub-\backend\src\test\java\com\frh\backend\service\CartServiceTest.java使用了未经检查或不安全的操作。
+[INFO] /D:/personalFile/AD/Food-Rescue-Hub-/backend/src/test/java/com/frh/backend/service/CartServiceTest.java: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
+[INFO] 
+[INFO] <<< spring-boot:3.4.5:run (default-cli) < test-compile @ backend <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.4.5:run (default-cli) @ backend ---
+[INFO] Attaching agents: []
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.5)
+
+2026-02-12T10:06:41.512+08:00  INFO 31712 --- [backend] [           main] com.frh.backend.BackendApplication       : Starting BackendApplication using Java 17.0.18 with PID 31712 (D:\personalFile\AD\Food-Rescue-Hub-\backend\target\classes started by ROG in D:\personalFile\AD\Food-Rescue-Hub-\backend)
+2026-02-12T10:06:41.515+08:00 DEBUG 31712 --- [backend] [           main] com.frh.backend.BackendApplication       : Running with Spring Boot v3.4.5, Spring v6.2.11
+2026-02-12T10:06:41.515+08:00  INFO 31712 --- [backend] [           main] com.frh.backend.BackendApplication       : The following 1 profile is active: "local"
+2026-02-12T10:06:42.097+08:00  INFO 31712 --- [backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-02-12T10:06:42.152+08:00  INFO 31712 --- [backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 50 ms. Found 23 JPA repository interfaces.
+2026-02-12T10:06:42.581+08:00  INFO 31712 --- [backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-02-12T10:06:42.588+08:00  INFO 31712 --- [backend] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-02-12T10:06:42.588+08:00  INFO 31712 --- [backend] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.47]
+2026-02-12T10:06:42.623+08:00  INFO 31712 --- [backend] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-02-12T10:06:42.623+08:00  INFO 31712 --- [backend] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1084 ms
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+2026-02-12T10:06:42.721+08:00 DEBUG 31712 --- [backend] [           main] o.s.w.f.ServerHttpObservationFilter      : Filter 'webMvcObservationFilter' configured for use
+2026-02-12T10:06:42.721+08:00 DEBUG 31712 --- [backend] [           main] o.s.w.s.r.ResourceUrlEncodingFilter      : Filter 'resourceUrlEncodingFilter' configured for use
+2026-02-12T10:06:42.762+08:00  INFO 31712 --- [backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-02-12T10:06:42.903+08:00  INFO 31712 --- [backend] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@5cf2f5d6
+2026-02-12T10:06:42.904+08:00  INFO 31712 --- [backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-02-12T10:06:43.075+08:00  INFO 31712 --- [backend] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-02-12T10:06:43.099+08:00  INFO 31712 --- [backend] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.13.Final
+2026-02-12T10:06:43.114+08:00  INFO 31712 --- [backend] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-02-12T10:06:43.236+08:00  INFO 31712 --- [backend] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-02-12T10:06:43.297+08:00  WARN 31712 --- [backend] [           main] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-02-12T10:06:43.305+08:00  INFO 31712 --- [backend] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 8.0.45
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-02-12T10:06:44.039+08:00  INFO 31712 --- [backend] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+Hibernate: alter table supplier_profiles modify column verification_status varchar(32) default 'PENDING' not null
+Hibernate: alter table user_interactions modify column interaction_type enum ('ADD_TO_CART','CLICK','SEARCH','VIEW') not null
+2026-02-12T10:06:45.045+08:00  INFO 31712 --- [backend] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-02-12T10:06:45.211+08:00  INFO 31712 --- [backend] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-02-12T10:06:46.324+08:00  WARN 31712 --- [backend] [           main] com.frh.backend.service.StripeService    : Stripe is not configured. Set STRIPE_SECRET_KEY (maps to stripe.secret.key).
+2026-02-12T10:06:46.495+08:00  WARN 31712 --- [backend] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-02-12T10:06:46.512+08:00  WARN 31712 --- [backend] [           main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 50068273-d713-4802-be5a-0f9535156cd0
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-02-12T10:06:46.516+08:00  INFO 31712 --- [backend] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-02-12T10:06:46.627+08:00 DEBUG 31712 --- [backend] [           main] s.w.s.m.m.a.RequestMappingHandlerMapping : 92 mappings in 'requestMappingHandlerMapping'
+2026-02-12T10:06:46.657+08:00 DEBUG 31712 --- [backend] [           main] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**, /qrcode/**, /uploads/**, /swagger-ui*/*swagger-initializer.js, /swagger-ui*/**] in 'resourceHandlerMapping'
+2026-02-12T10:06:46.719+08:00  INFO 31712 --- [backend] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2026-02-12T10:06:46.765+08:00 DEBUG 31712 --- [backend] [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with filters: DisableEncodeUrlFilter, WebAsyncManagerIntegrationFilter, SecurityContextHolderFilter, HeaderWriterFilter, CorsFilter, CsrfFilter, LogoutFilter, ConcurrentSessionFilter, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, SessionManagementFilter, ExceptionTranslationFilter, AuthorizationFilter
+2026-02-12T10:06:46.817+08:00 DEBUG 31712 --- [backend] [           main] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2026-02-12T10:06:46.860+08:00 DEBUG 31712 --- [backend] [           main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 3 @ExceptionHandler, 1 ResponseBodyAdvice
+2026-02-12T10:06:47.302+08:00  WARN 31712 --- [backend] [           main] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'
+2026-02-12T10:06:47.305+08:00  INFO 31712 --- [backend] [           main] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-02-12T10:06:47.306+08:00  INFO 31712 --- [backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-02-12T10:06:47.308+08:00  INFO 31712 --- [backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-02-12T10:06:47.322+08:00  INFO 31712 --- [backend] [           main] .s.b.a.l.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-02-12T10:06:47.330+08:00 ERROR 31712 --- [backend] [           main] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Web server failed to start. Port 8080 was already in use.
+
+Action:
+
+Identify and stop the process that's listening on port 8080 or configure this application to listen on another port.
+
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  13.208 s
+[INFO] Finished at: 2026-02-12T10:06:47+08:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.4.5:run (default-cli) on project backend: Process terminated with exit code: 1 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
