@@ -23,8 +23,20 @@
         <spring-security.version>6.4.10</spring-security.version>
         <logback.version>1.5.25</logback.version>
         <commons-lang3.version>3.18.0</commons-lang3.version>
+        <netty.version>4.1.124.Final</netty.version>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
