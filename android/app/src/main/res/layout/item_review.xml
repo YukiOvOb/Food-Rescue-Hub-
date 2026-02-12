@@ -1,137 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="2dp"
-    app:cardBackgroundColor="@android:color/white">
-
-    <LinearLayout
-        android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp">
+    <TextView
+        android:id="@+id/tvReviewUser"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
-
-        <!-- Listing Title -->
-        <TextView
-            android:id="@+id/tvListingTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Assorted Bread Bundle"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="#1A1A1A" />
-
-        <!-- Order ID -->
-        <TextView
-            android:id="@+id/tvOrderId"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Order #123"
-            android:textSize="12sp"
-            android:textColor="#999999" />
-
-        <!-- Rating -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Store"
-                    android:textSize="11sp"
-                    android:textColor="#999999" />
-
-                <TextView
-                    android:id="@+id/tvRating"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="★★★★★"
-                    android:textSize="16sp"
-                    android:textColor="#FFB300" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Accuracy"
-                    android:textSize="11sp"
-                    android:textColor="#999999" />
-
-                <TextView
-                    android:id="@+id/tvAccuracy"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="★★★★★"
-                    android:textSize="16sp"
-                    android:textColor="#66BB6A" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="On-Time"
-                    android:textSize="11sp"
-                    android:textColor="#999999" />
-
-                <TextView
-                    android:id="@+id/tvOnTime"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="★★★★★"
-                    android:textSize="16sp"
-                    android:textColor="#2196F3" />
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <!-- Comment -->
-        <TextView
-            android:id="@+id/tvComment"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Great quality food! Everything was fresh and delicious."
-            android:textSize="14sp"
-            android:textColor="#333333" />
-
-        <!-- Created Date -->
-        <TextView
-            android:id="@+id/tvCreatedAt"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Jan 15, 2024"
-            android:textSize="12sp"
-            android:textColor="#999999" />
-
-    </LinearLayout>
-
-</com.google.android.material.card.MaterialCardView>
+        android:textStyle="bold" />
+    <RatingBar
+        android:id="@+id/reviewRating"
+        style="?android:attr/ratingBarStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:isIndicator="true" />
+    <TextView
+        android:id="@+id/tvReviewComment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+</LinearLayout>
