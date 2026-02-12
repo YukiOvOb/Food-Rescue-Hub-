@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -22,10 +24,12 @@ import com.frh.backend.dto.ListingCategoryWeightDTO;
 import com.frh.backend.dto.ListingDTO;
 import com.frh.backend.repository.FoodCategoryRepository;
 import com.frh.backend.repository.ListingRepository;
+import com.frh.backend.repository.ListingReviewRepository;
 import com.frh.backend.repository.StoreRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -42,7 +46,15 @@ class ListingServiceTest {
 
   @Mock private StoreRepository storeRepository;
 
+  @Mock private ListingReviewRepository listingReviewRepository;
+
   @InjectMocks private ListingService listingService;
+
+  @BeforeEach
+  void setUp() {
+    lenient().when(listingReviewRepository.findByListing_ListingIdOrderByCreatedAtDesc(anyLong()))
+        .thenReturn(List.of());
+  }
 
   @Test
   void getAllActiveListings_mapsListingToDto() {

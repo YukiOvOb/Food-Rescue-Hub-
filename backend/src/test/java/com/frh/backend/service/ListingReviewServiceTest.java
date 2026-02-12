@@ -60,8 +60,6 @@ class ListingReviewServiceTest {
               return review;
             });
     when(listingReviewRepository.findAll()).thenReturn(List.of());
-    when(storeStatsRepository.findByStoreId(any())).thenReturn(Optional.empty());
-    when(storeStatsRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
     ListingReviewResponse created = listingReviewService.createReview(10L, request);
 
@@ -374,8 +372,8 @@ class ListingReviewServiceTest {
     request.setOrderId(orderId);
     request.setListingId(listingId);
     request.setStoreRating(rating);
-    request.setListingAccuracy(rating);  // Use same rating for simplicity in tests
-    request.setOnTimePickup(rating);     // Use same rating for simplicity in tests
+    request.setListingAccuracy(rating);
+    request.setOnTimePickup(rating);
     request.setComment(comment);
     return request;
   }
