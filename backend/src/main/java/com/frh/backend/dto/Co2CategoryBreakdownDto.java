@@ -11,4 +11,16 @@ public class Co2CategoryBreakdownDto {
   private String categoryName;
   private BigDecimal totalWeightKg;
   private BigDecimal totalCo2Kg;
+
+  public Co2CategoryBreakdownDto(
+      Number categoryId, String categoryName, Number totalWeightKg, Number totalCo2Kg) {
+    this.categoryId = categoryId == null ? null : categoryId.longValue();
+    this.categoryName = categoryName;
+    this.totalWeightKg = toBigDecimal(totalWeightKg);
+    this.totalCo2Kg = toBigDecimal(totalCo2Kg);
+  }
+
+  private static BigDecimal toBigDecimal(Number value) {
+    return value == null ? null : new BigDecimal(value.toString());
+  }
 }

@@ -49,24 +49,25 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
   @Query(
       "SELECT new com.frh.backend.dto.Co2CategoryBreakdownDto("
-          + "fc.id, fc.name, "
-          + "SUM(oi.quantity * lfc.weightKg), "
-          + "SUM(oi.quantity * lfc.weightKg * fc.kgCo2PerKg)) "
+          + "CASE WHEN fc.id IS NULL THEN -1L ELSE fc.id END, "
+          + "COALESCE(fc.name, 'Uncategorized'), "
+          + "SUM(oi.quantity * COALESCE(lfc.weightKg, l.estimatedWeightKg, 0)), "
+          + "SUM(oi.quantity * COALESCE(lfc.weightKg, l.estimatedWeightKg, 0)"
+          + " * COALESCE(fc.kgCo2PerKg, 0))) "
           + "FROM Order o "
           + "JOIN o.orderItems oi "
           + "JOIN oi.listing l "
-          + "JOIN l.listingFoodCategories lfc "
-          + "JOIN lfc.category fc "
+          + "LEFT JOIN l.listingFoodCategories lfc "
+          + "LEFT JOIN lfc.category fc "
           + "WHERE o.store.supplierProfile.supplierId = :supplierId "
-          + "AND o.status = :status "
+          + "AND o.status IN :statuses "
           + "AND o.createdAt >= :since "
-          + "AND lfc.weightKg IS NOT NULL "
-          + "AND fc.kgCo2PerKg IS NOT NULL "
-          + "GROUP BY fc.id, fc.name "
-          + "ORDER BY SUM(oi.quantity * lfc.weightKg * fc.kgCo2PerKg) DESC")
-  List<Co2CategoryBreakdownDto> findCo2BreakdownBySupplierAndStatusSince(
+          + "GROUP BY CASE WHEN fc.id IS NULL THEN -1L ELSE fc.id END, COALESCE(fc.name, 'Uncategorized') "
+          + "ORDER BY SUM(oi.quantity * COALESCE(lfc.weightKg, l.estimatedWeightKg, 0)"
+          + " * COALESCE(fc.kgCo2PerKg, 0)) DESC")
+  List<Co2CategoryBreakdownDto> findCo2BreakdownBySupplierAndStatusesSince(
       @Param("supplierId") Long supplierId,
-      @Param("status") String status,
+      @Param("statuses") List<String> statuses,
       @Param("since") LocalDateTime since);
 
   // Check if order exists by order ID
