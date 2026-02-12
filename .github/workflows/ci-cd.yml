@@ -1456,9 +1456,11 @@ jobs:
       - name: Build & push frontend image
         if: needs.detect.outputs.has_frontend == 'true' && env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
         shell: bash
+        env:
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
         run: |
           set -e
-          docker build -t "${DOCKER_USERNAME}/frh-frontend:latest" -f frontend/Dockerfile .
+          docker build --build-arg VITE_GOOGLE_MAPS_API_KEY="${VITE_GOOGLE_MAPS_API_KEY}" -t "${DOCKER_USERNAME}/frh-frontend:latest" -f frontend/Dockerfile .
           docker push "${DOCKER_USERNAME}/frh-frontend:latest"
 
 

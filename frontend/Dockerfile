@@ -9,6 +9,10 @@ COPY frontend/package.json frontend/package-lock.json* ./
 # Install dependencies
 RUN npm ci
 
+# Inject Vite env var at build time so it is bundled into frontend assets
+ARG VITE_GOOGLE_MAPS_API_KEY
+ENV VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
+
 # Copy source code
 COPY frontend/ ./
 
