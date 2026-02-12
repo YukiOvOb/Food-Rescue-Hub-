@@ -10,7 +10,8 @@ from mcp.client.stdio import stdio_client
 from openai import OpenAI
 from dotenv import load_dotenv
 
-load_dotenv()
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 # Debug helper for message flow
 def _print_messages(label: str, messages: list[dict]) -> None:
@@ -49,9 +50,11 @@ mcp_session = None
 async def lifespan(app: FastAPI):
     # Startup: Connect to server.py
     print("Starting MCP Server connection...")
+    if not os.getenv("OPENAI_API_KEY"):
+        raise RuntimeError("OPENAI_API_KEY is missing. Set it in ai_service/.env")
     server_params = StdioServerParameters(
         command="python",
-        args=["server.py"], # Must be in same folder
+        args=[os.path.join(BASE_DIR, "server.py")], # Must be in same folder
         env=os.environ.copy()
     )
     
@@ -110,18 +113,22 @@ async def chat_endpoint(request: ChatRequest):
     tools = await mcp_session.list_tools()
     
     # Call OpenAI
-    response = ai_client.chat.completions.create(
-        model="gpt-4o",
-        messages=messages,
-        tools=[{
-            "type": "function",
-            "function": {
-                "name": t.name,
-                "description": t.description,
-                "parameters": t.inputSchema
-            }
-        } for t in tools.tools]
-    )
+    try:
+        response = ai_client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            tools=[{
+                "type": "function",
+                "function": {
+                    "name": t.name,
+                    "description": t.description,
+                    "parameters": t.inputSchema
+                }
+            } for t in tools.tools]
+        )
+    except Exception as e:
+        print(f"OpenAI step1 error: {type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail=f"OpenAI step1 failed: {type(e).__name__}")
 
     assistant_msg = response.choices[0].message
     print(f"\n--- OpenAI assistant_msg ---\nrole={assistant_msg.role} tool_calls={bool(assistant_msg.tool_calls)}")
@@ -133,7 +140,11 @@ async def chat_endpoint(request: ChatRequest):
         tool_args = json.loads(tool_call.function.arguments)
 
         # Execute Tool
-        result = await mcp_session.call_tool(tool_name, tool_args)
+        try:
+            result = await mcp_session.call_tool(tool_name, tool_args)
+        except Exception as e:
+            print(f"Tool call error: {type(e).__name__}: {e}")
+            raise HTTPException(status_code=500, detail=f"Tool call failed: {type(e).__name__}")
 
         # Feed back to AI
         messages.append(assistant_msg)
@@ -144,10 +155,14 @@ async def chat_endpoint(request: ChatRequest):
         })
         _print_messages("After tool result", messages)
 
-        final_response = ai_client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages
-        )
+        try:
+            final_response = ai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=messages
+            )
+        except Exception as e:
+            print(f"OpenAI step2 error: {type(e).__name__}: {e}")
+            raise HTTPException(status_code=500, detail=f"OpenAI step2 failed: {type(e).__name__}")
         return {"reply": final_response.choices[0].message.content}
 
     return {"reply": assistant_msg.content}

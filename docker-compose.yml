@@ -52,6 +52,19 @@ services:
     networks:
       - app-network
 
+  ai_service:
+    build:
+      context: .
+      dockerfile: ai_service/Dockerfile
+    container_name: frh-ai-service
+    restart: unless-stopped
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    ports:
+      - "8000:8000"
+    networks:
+      - app-network
+
   nginx:
     image: nginx:1.27-alpine
     container_name: frh-nginx
@@ -63,6 +76,7 @@ services:
     depends_on:
       - backend
       - frontend
+      - ai_service
     networks:
       - app-network
 

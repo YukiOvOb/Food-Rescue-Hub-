@@ -5,7 +5,8 @@ from mcp.server.fastmcp import FastMCP
 from dotenv import load_dotenv
 
 # 1. Load Secrets
-load_dotenv()
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # 2. Setup the MCP Server
@@ -19,7 +20,7 @@ openai_ef = embedding_functions.OpenAIEmbeddingFunction(
     model_name="text-embedding-3-small"
 )
 # Connect to the existing ChromaDB collection
-client = chromadb.PersistentClient(path="./data/chroma_db")
+client = chromadb.PersistentClient(path=os.path.join(BASE_DIR, "data", "chroma_db"))
 collection = client.get_collection(
     name="faq_knowledge_base",
     embedding_function=openai_ef
