@@ -55,7 +55,9 @@ public class SecurityConfig {
             "http://172.26.235.205:5174",
             "http://localhost:5175",
             "http://172.26.235.205:5174",
-            "http://172.26.235.205:5175"));
+            "http://172.26.235.205:5175",
+            "https://www.midas.cyou",
+            "https://midas.cyou"));
 
     config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
