@@ -68,6 +68,33 @@ class CartControllerTest {
         .andExpect(status().isOk());
   }
 
+  @Test
+  void addItem_missingFields_returnsBadRequest() throws Exception {
+    Map<String, Object> request = new HashMap<>();
+    request.put("listingId", 10L);
+
+    mockMvc
+        .perform(
+            post("/api/cart/items")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void addItem_nonNumericFields_returnsBadRequest() throws Exception {
+    Map<String, Object> request = new HashMap<>();
+    request.put("listingId", "abc");
+    request.put("qty", "x");
+
+    mockMvc
+        .perform(
+            post("/api/cart/items")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isBadRequest());
+  }
+
   /* -------------------------------
   UPDATE QUANTITY
   ------------------------------- */
@@ -90,6 +117,31 @@ class CartControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk());
+  }
+
+  @Test
+  void updateQuantity_missingQty_returnsBadRequest() throws Exception {
+    Map<String, Object> request = new HashMap<>();
+
+    mockMvc
+        .perform(
+            patch("/api/cart/items/{listingId}", 20L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void updateQuantity_nonNumericQty_returnsBadRequest() throws Exception {
+    Map<String, Object> request = new HashMap<>();
+    request.put("qty", "bad");
+
+    mockMvc
+        .perform(
+            patch("/api/cart/items/{listingId}", 20L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isBadRequest());
   }
 
   /* -------------------------------

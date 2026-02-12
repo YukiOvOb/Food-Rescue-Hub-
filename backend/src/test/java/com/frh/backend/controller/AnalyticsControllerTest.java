@@ -72,6 +72,21 @@ class AnalyticsControllerTest {
   }
 
   @Test
+  void getTopSellingProducts_notFound_returnsNotFoundWithEmptyList() throws Exception {
+    Long supplierId = 1L;
+
+    Mockito.when(orderService.getTopSellingItems(supplierId, "COMPLETED", 3))
+        .thenThrow(new RuntimeException("Supplier not found"));
+
+    mockMvc
+        .perform(
+            get("/api/analytics/supplier/{supplierId}/top-products", supplierId)
+                .param("limit", "3"))
+        .andExpect(status().isNotFound())
+        .andExpect(content().json("[]"));
+  }
+
+  @Test
   void getCo2Summary_success() throws Exception {
     Long supplierId = 1L;
 
@@ -153,5 +168,26 @@ class AnalyticsControllerTest {
             get("/api/analytics/supplier/{supplierId}/co2/report", supplierId).param("days", "30"))
         .andExpect(status().isInternalServerError())
         .andExpect(content().string("Failed to generate CO2 report PDF"));
+  }
+
+  @Test
+  void getCo2ReportPdf_daysBelowOne_clampsFilenameToOneDay() throws Exception {
+    Long supplierId = 1L;
+
+    Co2SummaryDto summary = new Co2SummaryDto();
+    summary.setCategories(List.of());
+
+    Mockito.when(co2AnalyticsService.getCo2Summary(supplierId, 0)).thenReturn(summary);
+    Mockito.when(co2AnalyticsService.generateCo2ReportPdf(summary, supplierId))
+        .thenReturn(new byte[] {1});
+
+    mockMvc
+        .perform(get("/api/analytics/supplier/{supplierId}/co2/report", supplierId).param("days", "0"))
+        .andExpect(status().isOk())
+        .andExpect(
+            header()
+                .string(
+                    "Content-Disposition",
+                    org.hamcrest.Matchers.containsString("co2-report-supplier-1-last-1-days.pdf")));
   }
 }
