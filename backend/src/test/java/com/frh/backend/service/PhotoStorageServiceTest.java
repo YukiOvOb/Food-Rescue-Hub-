@@ -151,6 +151,30 @@ class PhotoStorageServiceTest {
   }
 
   @Test
+  void getExtension_returnsEmptyWhenExtensionContainsPathCharacters() {
+    assertEquals("", invokeGetExtension("photo.jpg/../../evil"));
+    assertEquals("", invokeGetExtension("photo.png\\..\\..\\evil"));
+  }
+
+  @Test
+  void store_withTraversalStyleOriginalName_doesNotWriteOutsideUploadsDirectory() throws IOException {
+    ReflectionTestUtils.setField(service, "r2Enabled", false);
+    MockMultipartFile file =
+        new MockMultipartFile(
+            "file", "photo.jpg/../../outside.txt", "image/jpeg", "image-bytes".getBytes());
+
+    String url = service.store(42L, file);
+    assertTrue(url.startsWith(LOCAL_PREFIX + "listing_42_"));
+
+    String filename = url.substring(LOCAL_PREFIX.length());
+    assertFalse(filename.contains("/"));
+    assertFalse(filename.contains("\\"));
+
+    createdFile = Paths.get("uploads", "listings", filename).toAbsolutePath();
+    assertTrue(Files.exists(createdFile));
+  }
+
+  @Test
   void isBlank_handlesNullWhitespaceAndText() {
     assertTrue(invokeIsBlank(null));
     assertTrue(invokeIsBlank("   "));

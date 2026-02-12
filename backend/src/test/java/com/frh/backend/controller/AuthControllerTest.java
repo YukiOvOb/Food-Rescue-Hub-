@@ -101,6 +101,7 @@ class AuthControllerTest {
     LoginRequest request = new LoginRequest();
     request.setEmail("user@test.com");
     request.setPassword("Password@123");
+    request.setRole("CONSUMER");
 
     AuthResponse response =
         new AuthResponse("token", 1L, "user@test.com", null, "CONSUMER", "Login successful");

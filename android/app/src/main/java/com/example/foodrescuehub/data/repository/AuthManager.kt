@@ -47,7 +47,13 @@ object AuthManager {
         }
 
         return try {
-            val response = RetrofitClient.apiService.login(LoginRequest(email, password))
+            val response = RetrofitClient.apiService.login(
+                LoginRequest(
+                    email = email,
+                    password = password,
+                    role = "CONSUMER"
+                )
+            )
             
             if (response.isSuccessful && response.body() != null) {
                 val user = response.body()!!

@@ -8,6 +8,8 @@ export default function ListingsPage() {
   const navigate = useNavigate();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [listings, setListings] = useState([]);
+  const [stores, setStores] = useState([]);
+  const [storesLoading, setStoresLoading] = useState(false);
   const [user, setUser] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [foodCategories, setFoodCategories] = useState([]);
@@ -97,7 +99,7 @@ export default function ListingsPage() {
 
   const resetForm = () => {
     setFormData({
-      storeId: '',
+      storeId: stores.length === 1 ? String(stores[0].storeId) : '',
       title: '',
       description: '',
       originalPrice: '',
@@ -146,6 +148,7 @@ export default function ListingsPage() {
   useEffect(() => {
     if (user?.userId || user?.supplierId) {
       fetchListings();
+      fetchStores();
     }
   }, [user?.userId, user?.supplierId]);
 
@@ -164,6 +167,32 @@ export default function ListingsPage() {
       .catch(() => {
         setListings([]);
       });
+  };
+
+  const fetchStores = () => {
+    const supplierId = user?.supplierId ?? user?.userId;
+    if (!supplierId) return;
+
+    setStoresLoading(true);
+    fetch(`${apiBase}/stores/supplier/${supplierId}`, { credentials: 'include' })
+      .then((r) => {
+        if (!r.ok) throw new Error('network');
+        return r.json();
+      })
+      .then((data) => {
+        const storeList = Array.isArray(data) ? data : [];
+        setStores(storeList);
+        if (storeList.length === 1) {
+          setFormData((prev) => {
+            if (prev.storeId) return prev;
+            return { ...prev, storeId: String(storeList[0].storeId) };
+          });
+        }
+      })
+      .catch(() => {
+        setStores([]);
+      })
+      .finally(() => setStoresLoading(false));
   };
 
   const uploadPhoto = async (listingId) => {
@@ -278,6 +307,12 @@ export default function ListingsPage() {
       ...prev,
       categoryWeightById: { ...prev.categoryWeightById, [categoryId]: value }
     }));
+    setErrors([]);
+    setSuccessMessage('');
+  };
+
+  const selectStore = (storeId) => {
+    setFormData((prev) => ({ ...prev, storeId: String(storeId) }));
     setErrors([]);
     setSuccessMessage('');
   };
@@ -498,15 +533,35 @@ export default function ListingsPage() {
             )}
 
             <div className="listings-form-field">
-              <label>Store ID *</label>
-              <input
-                type="number"
-                name="storeId"
-                value={formData.storeId}
-                onChange={handleChange}
-                required={!editingId}
-                disabled={!!editingId}
-              />
+              <label>Store *</label>
+              {editingId ? (
+                <div className="listings-selected-store">
+                  {stores.find((store) => String(store.storeId) === String(formData.storeId))?.storeName ||
+                    `Store #${formData.storeId}`}
+                </div>
+              ) : storesLoading ? (
+                <div className="listings-store-helper">Loading your stores...</div>
+              ) : stores.length === 0 ? (
+                <div className="listings-store-helper error">
+                  No stores found. Please create a store first before creating listings.
+                </div>
+              ) : (
+                <div className="listings-store-selector">
+                  {stores.map((store) => {
+                    const selected = String(formData.storeId) === String(store.storeId);
+                    return (
+                      <button
+                        type="button"
+                        key={store.storeId}
+                        className={`listings-store-chip ${selected ? 'active' : ''}`}
+                        onClick={() => selectStore(store.storeId)}
+                      >
+                        {store.storeName || `Store #${store.storeId}`}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="listings-form-field">

@@ -32,10 +32,27 @@ const SettingsPage = () => {
           navigate('/login');
           return;
         }
-        setUser(currentUser);
-        setDisplayName(currentUser.displayName || '');
-        setEmail(currentUser.email || '');
-        setPhoneNumber(currentUser.phoneNumber || '');
+        const supplierId = currentUser?.userId ?? currentUser?.supplierId;
+        if (supplierId) {
+          try {
+            const profileResponse = await axiosInstance.get(`/suppliers/${supplierId}`);
+            const profile = profileResponse?.data ?? {};
+            setUser({ ...currentUser, ...profile });
+            setDisplayName(profile.displayName ?? currentUser.displayName ?? '');
+            setEmail(profile.email ?? currentUser.email ?? '');
+            setPhoneNumber(profile.phoneNumber ?? currentUser.phoneNumber ?? '');
+          } catch {
+            setUser(currentUser);
+            setDisplayName(currentUser.displayName || '');
+            setEmail(currentUser.email || '');
+            setPhoneNumber(currentUser.phoneNumber || '');
+          }
+        } else {
+          setUser(currentUser);
+          setDisplayName(currentUser.displayName || '');
+          setEmail(currentUser.email || '');
+          setPhoneNumber(currentUser.phoneNumber || '');
+        }
       } catch (err) {
         setError('Failed to load user information');
         navigate('/login');
@@ -71,7 +88,7 @@ const SettingsPage = () => {
       // Update local user state (email remains unchanged)
       const updatedUser = { ...user, displayName, phoneNumber };
       setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      authService.persistUser(updatedUser);
 
       // Clear success message after 3 seconds
       setTimeout(() => setSuccessMessage(''), 3000);

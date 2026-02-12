@@ -180,6 +180,7 @@ class AuthServiceTest {
     LoginRequest request = new LoginRequest();
     request.setEmail("consumer@test.com");
     request.setPassword("Password@123");
+    request.setRole("CONSUMER");
     MockHttpSession session = new MockHttpSession();
 
     ConsumerProfile consumer = new ConsumerProfile();
@@ -205,6 +206,7 @@ class AuthServiceTest {
     LoginRequest request = new LoginRequest();
     request.setEmail("consumer@test.com");
     request.setPassword("plain-pass");
+    request.setRole("CONSUMER");
     HttpSession session = new MockHttpSession();
 
     ConsumerProfile consumer = new ConsumerProfile();
@@ -232,6 +234,7 @@ class AuthServiceTest {
     LoginRequest request = new LoginRequest();
     request.setEmail("supplier@test.com");
     request.setPassword("Password@123");
+    request.setRole("SUPPLIER");
     MockHttpSession session = new MockHttpSession();
 
     SupplierProfile supplier = new SupplierProfile();
@@ -240,7 +243,6 @@ class AuthServiceTest {
     supplier.setDisplayName("Supplier One");
     supplier.setPassword("$2b$bcryptHash");
 
-    when(consumerRepo.findByEmail("supplier@test.com")).thenReturn(Optional.empty());
     when(supplierRepo.findByEmail("supplier@test.com")).thenReturn(Optional.of(supplier));
     when(encoder.matches("Password@123", "$2b$bcryptHash")).thenReturn(true);
 
@@ -257,6 +259,7 @@ class AuthServiceTest {
     LoginRequest request = new LoginRequest();
     request.setEmail("supplier@test.com");
     request.setPassword("plain-pass");
+    request.setRole("SUPPLIER");
     MockHttpSession session = new MockHttpSession();
 
     SupplierProfile supplier = new SupplierProfile();
@@ -265,7 +268,6 @@ class AuthServiceTest {
     supplier.setDisplayName("Supplier Two");
     supplier.setPassword("plain-pass");
 
-    when(consumerRepo.findByEmail("supplier@test.com")).thenReturn(Optional.empty());
     when(supplierRepo.findByEmail("supplier@test.com")).thenReturn(Optional.of(supplier));
     when(encoder.matches("plain-pass", "plain-pass")).thenReturn(false);
     when(encoder.encode("plain-pass")).thenReturn("$2b$upgraded");
@@ -284,12 +286,12 @@ class AuthServiceTest {
     LoginRequest request = new LoginRequest();
     request.setEmail("supplier@test.com");
     request.setPassword("wrong");
+    request.setRole("SUPPLIER");
 
     SupplierProfile supplier = new SupplierProfile();
     supplier.setEmail("supplier@test.com");
     supplier.setPassword("stored");
 
-    when(consumerRepo.findByEmail("supplier@test.com")).thenReturn(Optional.empty());
     when(supplierRepo.findByEmail("supplier@test.com")).thenReturn(Optional.of(supplier));
     when(encoder.matches("wrong", "stored")).thenReturn(false);
 
@@ -305,6 +307,7 @@ class AuthServiceTest {
     LoginRequest request = new LoginRequest();
     request.setEmail("consumer2@test.com");
     request.setPassword("Password@123");
+    request.setRole("CONSUMER");
     MockHttpSession session = new MockHttpSession();
 
     ConsumerProfile consumer = new ConsumerProfile();
@@ -327,9 +330,9 @@ class AuthServiceTest {
     LoginRequest request = new LoginRequest();
     request.setEmail("missing@test.com");
     request.setPassword("wrong");
+    request.setRole("CONSUMER");
 
     when(consumerRepo.findByEmail("missing@test.com")).thenReturn(Optional.empty());
-    when(supplierRepo.findByEmail("missing@test.com")).thenReturn(Optional.empty());
 
     RuntimeException ex =
         assertThrows(
@@ -343,6 +346,7 @@ class AuthServiceTest {
     LoginRequest request = new LoginRequest();
     request.setEmail("consumer@test.com");
     request.setPassword("wrong");
+    request.setRole("CONSUMER");
 
     ConsumerProfile consumer = new ConsumerProfile();
     consumer.setEmail("consumer@test.com");
@@ -356,6 +360,20 @@ class AuthServiceTest {
             RuntimeException.class, () -> authService.login(request, new MockHttpSession()));
 
     assertEquals("Invalid email or password", ex.getMessage());
+  }
+
+  @Test
+  void login_withUnknownRole_throwsUnauthorizedRole() {
+    LoginRequest request = new LoginRequest();
+    request.setEmail("user@test.com");
+    request.setPassword("Password@123");
+    request.setRole("ADMIN");
+
+    RuntimeException ex =
+        assertThrows(
+            RuntimeException.class, () -> authService.login(request, new MockHttpSession()));
+
+    assertEquals("Unauthorized role for login", ex.getMessage());
   }
 
   @Test

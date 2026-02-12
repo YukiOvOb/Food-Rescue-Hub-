@@ -1,5 +1,28 @@
 import axios from './axiosConfig';
 
+const toStoredUser = (user) => {
+  if (!user) return null;
+  return {
+    userId: user.userId ?? user.supplierId ?? user.id ?? null,
+    supplierId: user.supplierId ?? user.userId ?? user.id ?? null,
+    email: user.email ?? null,
+    displayName: user.displayName ?? null,
+    role: user.role ?? null
+  };
+};
+
+const persistUser = (user) => {
+  const safeUser = toStoredUser(user);
+  if (!safeUser || !safeUser.userId) {
+    localStorage.removeItem('user');
+    localStorage.removeItem('isLoggedIn');
+    return null;
+  }
+  localStorage.setItem('user', JSON.stringify(safeUser));
+  localStorage.setItem('isLoggedIn', 'true');
+  return safeUser;
+};
+
 const normalizeUser = (user) => {
   if (!user) return user;
   const resolvedUserId = user.userId ?? user.supplierId ?? user.id ?? null;
@@ -13,12 +36,18 @@ const normalizeUser = (user) => {
 const authService = {
 
   login: async (data) => {
-    const res = await axios.post('/auth/login', data);
+    const payload = {
+      ...data,
+      role: 'SUPPLIER'
+    };
+    const res = await axios.post('/auth/login', payload);
     
     if (res.data) {
       const normalized = normalizeUser(res.data);
-      localStorage.setItem('user', JSON.stringify(normalized));
-      localStorage.setItem('isLoggedIn', 'true');
+      if ((normalized.role || '').toUpperCase() !== 'SUPPLIER') {
+        throw new Error('Please log in with a supplier account.');
+      }
+      persistUser(normalized);
       return normalized;
     }
     return res.data;
@@ -40,7 +69,14 @@ const authService = {
     const user = localStorage.getItem('user');
     if (user) {
       try {
-        return normalizeUser(JSON.parse(user));
+        const normalized = normalizeUser(JSON.parse(user));
+        if ((normalized.role || '').toUpperCase() !== 'SUPPLIER') {
+          localStorage.removeItem('user');
+          localStorage.removeItem('isLoggedIn');
+          throw new Error('Please log in with a supplier account.');
+        }
+        persistUser(normalized);
+        return normalized;
       } catch (e) {
         localStorage.removeItem('user');
         localStorage.removeItem('isLoggedIn');
@@ -51,8 +87,12 @@ const authService = {
     const res = await axios.get('/auth/me');
     if (res.data) {
       const normalized = normalizeUser(res.data);
-      localStorage.setItem('user', JSON.stringify(normalized));
-      localStorage.setItem('isLoggedIn', 'true');
+      if ((normalized.role || '').toUpperCase() !== 'SUPPLIER') {
+        localStorage.removeItem('user');
+        localStorage.removeItem('isLoggedIn');
+        throw new Error('Please log in with a supplier account.');
+      }
+      persistUser(normalized);
       return normalized;
     }
     return res.data;
@@ -67,7 +107,12 @@ const authService = {
     
     
     try {
-      await axios.get('/auth/me');
+      const response = await axios.get('/auth/me');
+      if ((response?.data?.role || '').toUpperCase() !== 'SUPPLIER') {
+        localStorage.removeItem('user');
+        localStorage.removeItem('isLoggedIn');
+        return false;
+      }
       return true;
     } catch {
       localStorage.removeItem('user');
@@ -78,8 +123,24 @@ const authService = {
 
   getStoredUser: () => {
     const user = localStorage.getItem('user');
-    return user ? normalizeUser(JSON.parse(user)) : null;
-  }
+    if (!user) return null;
+    try {
+      const normalized = normalizeUser(JSON.parse(user));
+      if ((normalized.role || '').toUpperCase() !== 'SUPPLIER') {
+        localStorage.removeItem('user');
+        localStorage.removeItem('isLoggedIn');
+        return null;
+      }
+      persistUser(normalized);
+      return normalized;
+    } catch {
+      localStorage.removeItem('user');
+      localStorage.removeItem('isLoggedIn');
+      return null;
+    }
+  },
+
+  persistUser
 };
 
 export default authService;

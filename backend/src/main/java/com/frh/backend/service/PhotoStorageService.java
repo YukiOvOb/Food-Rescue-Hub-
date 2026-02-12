@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +23,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
  */
 @Service
 public class PhotoStorageService {
+  private static final Pattern SAFE_EXTENSION = Pattern.compile("\\.[A-Za-z0-9]{1,10}");
 
   @Value("${storage.r2.enabled:false}")
   private boolean r2Enabled;
@@ -89,7 +91,10 @@ public class PhotoStorageService {
 
   private String saveToLocal(InputStream input, String filename) throws IOException {
     Files.createDirectories(LOCAL_DIR);
-    Path target = LOCAL_DIR.resolve(filename);
+    Path target = LOCAL_DIR.resolve(filename).normalize();
+    if (!target.startsWith(LOCAL_DIR)) {
+      throw new IOException("Invalid filename path");
+    }
     Files.copy(input, target, StandardCopyOption.REPLACE_EXISTING);
     return "/uploads/listings/" + filename;
   }
@@ -97,7 +102,9 @@ public class PhotoStorageService {
   private static String getExtension(String originalName) {
     if (originalName == null) return "";
     int dot = originalName.lastIndexOf('.');
-    return dot >= 0 ? originalName.substring(dot) : "";
+    if (dot < 0) return "";
+    String extension = originalName.substring(dot);
+    return SAFE_EXTENSION.matcher(extension).matches() ? extension.toLowerCase() : "";
   }
 
   private static boolean isBlank(String s) {

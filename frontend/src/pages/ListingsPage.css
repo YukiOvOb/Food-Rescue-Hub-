@@ -225,6 +225,57 @@
   resize: vertical;
 }
 
+.listings-store-selector {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.listings-store-chip {
+  padding: 10px 20px;
+  background: white;
+  color: #666;
+  border: 2px solid #e0e0e0;
+  border-radius: 24px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.listings-store-chip:hover {
+  border-color: #2d6a5a;
+  color: #2d6a5a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(45, 106, 90, 0.2);
+}
+
+.listings-store-chip.active {
+  background: linear-gradient(135deg, #2d6a5a 0%, #5a9e8a 100%);
+  color: white;
+  border-color: #2d6a5a;
+  box-shadow: 0 4px 12px rgba(45, 106, 90, 0.3);
+}
+
+.listings-store-helper {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.listings-store-helper.error {
+  color: #b91c1c;
+}
+
+.listings-selected-store {
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 6px;
+  padding: 10px 14px;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 /* Grid Layouts */
 .listings-grid-2 {
   display: grid;
@@ -703,6 +754,16 @@
 
   .listings-categories-grid {
     grid-template-columns: 1fr;
+  }
+
+  .listings-store-selector {
+    flex-direction: column;
+  }
+
+  .listings-store-chip {
+    width: 100%;
+    border-radius: 8px;
+    text-align: left;
   }
 
   .listings-weights-grid {

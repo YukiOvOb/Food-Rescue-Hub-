@@ -8,6 +8,7 @@ import com.frh.backend.model.SupplierProfile;
 import com.frh.backend.repository.ConsumerProfileRepository;
 import com.frh.backend.repository.SupplierProfileRepository;
 import jakarta.servlet.http.HttpSession;
+import java.util.Locale;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -85,11 +86,13 @@ public class AuthService {
   }
 
   public AuthResponse login(LoginRequest req, HttpSession session) {
+    String requestedRole = req.getRole() == null ? "" : req.getRole().trim().toUpperCase(Locale.ROOT);
 
-    // Try consumer login first
-    Optional<ConsumerProfile> consumerOpt = consumerRepo.findByEmail(req.getEmail());
-    if (consumerOpt.isPresent()) {
-      ConsumerProfile consumer = consumerOpt.get();
+    if ("CONSUMER".equals(requestedRole)) {
+      ConsumerProfile consumer =
+          consumerRepo
+              .findByEmail(req.getEmail())
+              .orElseThrow(() -> new RuntimeException("Invalid email or password"));
 
       // Check password with support for both BCrypt and plain-text passwords
       if (!verifyAndUpdatePassword(consumer.getPassword(), req.getPassword())) {
@@ -120,10 +123,11 @@ public class AuthService {
           "Login successful");
     }
 
-    // Try supplier login
-    Optional<SupplierProfile> supplierOpt = supplierRepo.findByEmail(req.getEmail());
-    if (supplierOpt.isPresent()) {
-      SupplierProfile supplier = supplierOpt.get();
+    if ("SUPPLIER".equals(requestedRole)) {
+      SupplierProfile supplier =
+          supplierRepo
+              .findByEmail(req.getEmail())
+              .orElseThrow(() -> new RuntimeException("Invalid email or password"));
 
       // Check password with support for both BCrypt and plain-text passwords
       if (!verifyAndUpdatePassword(supplier.getPassword(), req.getPassword())) {
@@ -154,7 +158,7 @@ public class AuthService {
           "Login successful");
     }
 
-    throw new RuntimeException("Invalid email or password");
+    throw new RuntimeException("Unauthorized role for login");
   }
 
   /**
