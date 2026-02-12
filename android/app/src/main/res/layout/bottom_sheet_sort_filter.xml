@@ -130,7 +130,7 @@
             app:strokeColor="#2d6a5a"
             android:textColor="#2d6a5a" />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnApply"
             android:layout_width="0dp"
             android:layout_height="56dp"
