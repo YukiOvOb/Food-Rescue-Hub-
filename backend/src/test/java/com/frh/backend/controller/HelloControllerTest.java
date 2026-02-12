@@ -8,6 +8,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.lang.reflect.Method;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -98,5 +99,12 @@ class HelloControllerTest {
 
       assertEquals("user not found", result);
     }
+  }
+
+  @Test
+  void checkPassword_executesPrivateMethod() throws Exception {
+    Method method = HelloController.class.getDeclaredMethod("checkPassword");
+    method.setAccessible(true);
+    method.invoke(helloController);
   }
 }

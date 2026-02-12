@@ -137,6 +137,45 @@ class AuthServiceTest {
   }
 
   @Test
+  void registerSupplier_duplicatePhone_throws() {
+    RegisterRequest request = new RegisterRequest();
+    request.setRole("SUPPLIER");
+    request.setEmail("supplier@test.com");
+    request.setPhone("80000001");
+
+    when(supplierRepo.existsByEmail("supplier@test.com")).thenReturn(false);
+    when(supplierRepo.existsByPhone("80000001")).thenReturn(true);
+
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> authService.register(request));
+    assertEquals("Phone already registered", ex.getMessage());
+  }
+
+  @Test
+  void registerSupplier_withNullPhone_skipsPhoneDuplicateCheck() {
+    RegisterRequest request = new RegisterRequest();
+    request.setRole("SUPPLIER");
+    request.setEmail("supplier2@test.com");
+    request.setPassword("Password@123");
+    request.setPhone(null);
+    request.setDisplayName("Supplier Two");
+
+    when(supplierRepo.existsByEmail("supplier2@test.com")).thenReturn(false);
+    when(encoder.encode("Password@123")).thenReturn("ENCODED");
+    when(supplierRepo.save(any(SupplierProfile.class)))
+        .thenAnswer(
+            invocation -> {
+              SupplierProfile s = invocation.getArgument(0);
+              s.setSupplierId(203L);
+              return s;
+            });
+
+    AuthResponse response = authService.register(request);
+
+    assertEquals(203L, response.getUserId());
+    verify(supplierRepo, never()).existsByPhone(any());
+  }
+
+  @Test
   void loginConsumer_withBcryptPassword_successWithoutUpgrade() {
     LoginRequest request = new LoginRequest();
     request.setEmail("consumer@test.com");
@@ -211,6 +250,76 @@ class AuthServiceTest {
     assertEquals("SUPPLIER", response.getRole());
     assertEquals(21L, session.getAttribute("USER_ID"));
     assertEquals("SUPPLIER", session.getAttribute("USER_ROLE"));
+  }
+
+  @Test
+  void loginSupplier_plainTextPassword_upgradesHash() {
+    LoginRequest request = new LoginRequest();
+    request.setEmail("supplier@test.com");
+    request.setPassword("plain-pass");
+    MockHttpSession session = new MockHttpSession();
+
+    SupplierProfile supplier = new SupplierProfile();
+    supplier.setSupplierId(22L);
+    supplier.setEmail("supplier@test.com");
+    supplier.setDisplayName("Supplier Two");
+    supplier.setPassword("plain-pass");
+
+    when(consumerRepo.findByEmail("supplier@test.com")).thenReturn(Optional.empty());
+    when(supplierRepo.findByEmail("supplier@test.com")).thenReturn(Optional.of(supplier));
+    when(encoder.matches("plain-pass", "plain-pass")).thenReturn(false);
+    when(encoder.encode("plain-pass")).thenReturn("$2b$upgraded");
+    when(supplierRepo.save(any(SupplierProfile.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    AuthResponse response = authService.login(request, session);
+
+    assertEquals("SUPPLIER", response.getRole());
+    assertEquals("$2b$upgraded", supplier.getPassword());
+    verify(supplierRepo).save(supplier);
+  }
+
+  @Test
+  void loginSupplier_wrongPassword_throws() {
+    LoginRequest request = new LoginRequest();
+    request.setEmail("supplier@test.com");
+    request.setPassword("wrong");
+
+    SupplierProfile supplier = new SupplierProfile();
+    supplier.setEmail("supplier@test.com");
+    supplier.setPassword("stored");
+
+    when(consumerRepo.findByEmail("supplier@test.com")).thenReturn(Optional.empty());
+    when(supplierRepo.findByEmail("supplier@test.com")).thenReturn(Optional.of(supplier));
+    when(encoder.matches("wrong", "stored")).thenReturn(false);
+
+    RuntimeException ex =
+        assertThrows(
+            RuntimeException.class, () -> authService.login(request, new MockHttpSession()));
+
+    assertEquals("Invalid email or password", ex.getMessage());
+  }
+
+  @Test
+  void loginConsumer_with2yBcryptPrefix_isRecognizedAsBcrypt() {
+    LoginRequest request = new LoginRequest();
+    request.setEmail("consumer2@test.com");
+    request.setPassword("Password@123");
+    MockHttpSession session = new MockHttpSession();
+
+    ConsumerProfile consumer = new ConsumerProfile();
+    consumer.setConsumerId(13L);
+    consumer.setEmail("consumer2@test.com");
+    consumer.setDisplayName("Consumer Three");
+    consumer.setPassword("$2y$bcryptHash");
+
+    when(consumerRepo.findByEmail("consumer2@test.com")).thenReturn(Optional.of(consumer));
+    when(encoder.matches("Password@123", "$2y$bcryptHash")).thenReturn(true);
+
+    AuthResponse response = authService.login(request, session);
+
+    assertEquals("CONSUMER", response.getRole());
+    verify(consumerRepo, never()).save(any(ConsumerProfile.class));
   }
 
   @Test
