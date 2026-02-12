@@ -5,7 +5,7 @@ data class ListingReviewResponse(
     val orderId: Long,
     val listingId: Long,
     val listingTitle: String?,
-    val rating: Int,
+    val storeRating: Int,
     val listingAccuracy: Int,
     val onTimePickup: Int,
     val comment: String,

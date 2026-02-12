@@ -109,7 +109,7 @@ class MyReviewsActivity : AppCompatActivity() {
 
         tvListingTitle.text = review.listingTitle ?: "Unknown Item"
         tvOrderId.text = "Order #${review.orderId}"
-        tvRating.text = "★".repeat(review.rating) + "☆".repeat(5 - review.rating)
+        tvRating.text = "★".repeat(review.storeRating) + "☆".repeat(5 - review.storeRating)
         tvAccuracy.text = "★".repeat(review.listingAccuracy) + "☆".repeat(5 - review.listingAccuracy)
         tvOnTime.text = "★".repeat(review.onTimePickup) + "☆".repeat(5 - review.onTimePickup)
         tvComment.text = review.comment

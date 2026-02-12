@@ -38,8 +38,8 @@ public class ListingReview {
   @JoinColumn(name = "consumer_id", nullable = false)
   private ConsumerProfile consumer;
 
-  @Column(name = "rating", nullable = false)
-  private Integer rating;
+  @Column(name = "store_rating", nullable = false)
+  private Integer storeRating;
 
   @Column(name = "listing_accuracy", nullable = false)
   private Integer listingAccuracy;

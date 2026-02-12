@@ -61,13 +61,13 @@ class ReviewActivity : AppCompatActivity() {
     }
 
     private fun submitReview() {
-        val rating = binding.ratingBar.rating.toInt()
+        val storeRating = binding.ratingBar.rating.toInt()
         val listingAccuracy = binding.ratingBarAccuracy.rating.toInt()
         val onTimePickup = binding.ratingBarOnTime.rating.toInt()
         val comment = binding.etComment.text?.toString()?.trim().orEmpty()
 
-        if (rating < 1) {
-            Toast.makeText(this, "Please provide an overall rating", Toast.LENGTH_SHORT).show()
+        if (storeRating < 1) {
+            Toast.makeText(this, "Please provide a store rating", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -92,7 +92,7 @@ class ReviewActivity : AppCompatActivity() {
         val request = ReviewRequest(
             orderId = orderId,
             listingId = listingId,
-            rating = rating,
+            storeRating = storeRating,
             listingAccuracy = listingAccuracy,
             onTimePickup = onTimePickup,
             comment = comment

@@ -5,8 +5,12 @@ import com.frh.backend.dto.ListingReviewResponse;
 import com.frh.backend.model.Listing;
 import com.frh.backend.model.ListingReview;
 import com.frh.backend.model.Order;
+import com.frh.backend.model.StoreStats;
 import com.frh.backend.repository.ListingReviewRepository;
 import com.frh.backend.repository.OrderRepository;
+import com.frh.backend.repository.StoreStatsRepository;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -24,6 +28,7 @@ public class ListingReviewService {
 
   private final ListingReviewRepository listingReviewRepository;
   private final OrderRepository orderRepository;
+  private final StoreStatsRepository storeStatsRepository;
 
   @Transactional
   public ListingReviewResponse createReview(Long consumerId, CreateListingReviewRequest request) {
@@ -68,9 +73,9 @@ public class ListingReviewService {
           HttpStatus.CONFLICT, "You have already reviewed this listing for the order");
     }
 
-    Integer rating = request.getRating();
-    if (rating == null || rating < 1 || rating > 5) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rating must be between 1 and 5");
+    Integer storeRating = request.getStoreRating();
+    if (storeRating == null || storeRating < 1 || storeRating > 5) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Store rating must be between 1 and 5");
     }
 
     Integer listingAccuracy = request.getListingAccuracy();
@@ -94,12 +99,16 @@ public class ListingReviewService {
     review.setOrder(order);
     review.setListing(listing);
     review.setConsumer(order.getConsumer());
-    review.setRating(rating);
+    review.setStoreRating(storeRating);
     review.setListingAccuracy(listingAccuracy);
     review.setOnTimePickup(onTimePickup);
     review.setComment(comment);
 
     ListingReview saved = listingReviewRepository.save(review);
+
+    // Update store stats with new rating
+    updateStoreStats(listing.getStore().getStoreId());
+
     return toResponse(saved);
   }
 
@@ -148,7 +157,7 @@ public class ListingReviewService {
     response.setOrderId(review.getOrder().getOrderId());
     response.setListingId(review.getListing().getListingId());
     response.setListingTitle(review.getListing().getTitle());
-    response.setRating(review.getRating());
+    response.setStoreRating(review.getStoreRating());
     response.setListingAccuracy(review.getListingAccuracy());
     response.setOnTimePickup(review.getOnTimePickup());
     response.setComment(review.getComment());
@@ -156,5 +165,40 @@ public class ListingReviewService {
     response.setConsumerId(review.getConsumer().getConsumerId());
     response.setConsumerDisplayName(review.getConsumer().getDisplayName());
     return response;
+  }
+
+  /**
+   * Update store statistics with new rating from review
+   */
+  private void updateStoreStats(Long storeId) {
+    // Calculate average store rating from all reviews for this store's listings
+    List<ListingReview> allReviews = listingReviewRepository.findAll().stream()
+        .filter(r -> r.getListing() != null && r.getListing().getStore() != null
+            && storeId.equals(r.getListing().getStore().getStoreId()))
+        .toList();
+
+    if (allReviews.isEmpty()) {
+      return;
+    }
+
+    double avgRating = allReviews.stream()
+        .mapToInt(ListingReview::getStoreRating)
+        .average()
+        .orElse(0.0);
+
+    BigDecimal avgRatingDecimal = BigDecimal.valueOf(avgRating)
+        .setScale(2, RoundingMode.HALF_UP);
+
+    // Update or create store stats
+    StoreStats stats = storeStatsRepository.findByStoreId(storeId)
+        .orElseGet(() -> {
+          StoreStats newStats = new StoreStats();
+          newStats.setStore(allReviews.get(0).getListing().getStore());
+          return newStats;
+        });
+
+    stats.setAvgRating(avgRatingDecimal);
+    stats.setTotalRatings(allReviews.size());
+    storeStatsRepository.save(stats);
   }
 }

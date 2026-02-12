@@ -100,7 +100,9 @@ class ListingReviewControllerTest {
     CreateListingReviewRequest request = new CreateListingReviewRequest();
     request.setOrderId(1L);
     request.setListingId(100L);
-    request.setRating(5);
+    request.setStoreRating(5);
+    request.setListingAccuracy(5);
+    request.setOnTimePickup(5);
     request.setComment("Excellent");
     return request;
   }
@@ -110,7 +112,9 @@ class ListingReviewControllerTest {
     response.setReviewId(9L);
     response.setOrderId(1L);
     response.setListingId(100L);
-    response.setRating(5);
+    response.setStoreRating(5);
+    response.setListingAccuracy(5);
+    response.setOnTimePickup(5);
     response.setComment("Excellent");
     response.setCreatedAt(LocalDateTime.now());
     response.setConsumerId(10L);

@@ -13,10 +13,12 @@ import com.frh.backend.model.Listing;
 import com.frh.backend.model.ListingReview;
 import com.frh.backend.model.Order;
 import com.frh.backend.model.OrderItem;
+import com.frh.backend.model.Store;
 import com.frh.backend.dto.CreateListingReviewRequest;
 import com.frh.backend.dto.ListingReviewResponse;
 import com.frh.backend.repository.ListingReviewRepository;
 import com.frh.backend.repository.OrderRepository;
+import com.frh.backend.repository.StoreStatsRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,6 +37,8 @@ class ListingReviewServiceTest {
   @Mock private ListingReviewRepository listingReviewRepository;
 
   @Mock private OrderRepository orderRepository;
+
+  @Mock private StoreStatsRepository storeStatsRepository;
 
   @InjectMocks private ListingReviewService listingReviewService;
 
@@ -55,13 +59,16 @@ class ListingReviewServiceTest {
               review.setCreatedAt(LocalDateTime.now());
               return review;
             });
+    when(listingReviewRepository.findAll()).thenReturn(List.of());
+    when(storeStatsRepository.findByStoreId(any())).thenReturn(Optional.empty());
+    when(storeStatsRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
     ListingReviewResponse created = listingReviewService.createReview(10L, request);
 
     assertEquals(88L, created.getReviewId());
     assertEquals(1L, created.getOrderId());
     assertEquals(100L, created.getListingId());
-    assertEquals(5, created.getRating());
+    assertEquals(5, created.getStoreRating());
     assertEquals("Excellent", created.getComment());
     assertEquals(10L, created.getConsumerId());
     assertNotNull(created.getCreatedAt());
@@ -366,7 +373,9 @@ class ListingReviewServiceTest {
     CreateListingReviewRequest request = new CreateListingReviewRequest();
     request.setOrderId(orderId);
     request.setListingId(listingId);
-    request.setRating(rating);
+    request.setStoreRating(rating);
+    request.setListingAccuracy(rating);  // Use same rating for simplicity in tests
+    request.setOnTimePickup(rating);     // Use same rating for simplicity in tests
     request.setComment(comment);
     return request;
   }
@@ -395,7 +404,9 @@ class ListingReviewServiceTest {
     review.setOrder(order);
     review.setConsumer(consumer);
     review.setListing(listing);
-    review.setRating(5);
+    review.setStoreRating(5);
+    review.setListingAccuracy(5);
+    review.setOnTimePickup(5);
     review.setComment("Good");
     review.setCreatedAt(LocalDateTime.now());
     return review;
@@ -412,6 +423,12 @@ class ListingReviewServiceTest {
     Listing listing = new Listing();
     listing.setListingId(id);
     listing.setTitle("Item " + id);
+
+    Store store = new Store();
+    store.setStoreId(1L);
+    store.setStoreName("Test Store");
+    listing.setStore(store);
+
     return listing;
   }
 }

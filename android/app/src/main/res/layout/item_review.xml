@@ -50,7 +50,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Overall"
+                    android:text="Store"
                     android:textSize="11sp"
                     android:textColor="#999999" />
 

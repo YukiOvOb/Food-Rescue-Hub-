@@ -16,10 +16,10 @@ public class CreateListingReviewRequest {
   @NotNull(message = "listingId is required")
   private Long listingId;
 
-  @NotNull(message = "rating is required")
-  @Min(value = 1, message = "rating must be at least 1")
-  @Max(value = 5, message = "rating must be at most 5")
-  private Integer rating;
+  @NotNull(message = "storeRating is required")
+  @Min(value = 1, message = "storeRating must be at least 1")
+  @Max(value = 5, message = "storeRating must be at most 5")
+  private Integer storeRating;
 
   @NotNull(message = "listingAccuracy is required")
   @Min(value = 1, message = "listingAccuracy must be at least 1")

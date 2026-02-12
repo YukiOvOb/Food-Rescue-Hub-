@@ -10,7 +10,7 @@ public class ListingReviewResponse {
   private Long orderId;
   private Long listingId;
   private String listingTitle;
-  private Integer rating;
+  private Integer storeRating;
   private Integer listingAccuracy;
   private Integer onTimePickup;
   private String comment;
