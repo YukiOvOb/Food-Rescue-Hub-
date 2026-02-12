@@ -55,6 +55,8 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     private var pickupSlotStart: String? = null
     private var pickupSlotEnd: String? = null
     private var reviewableListings: List<OrderListingInfo> = emptyList()
+    private var reviewedListings: List<OrderListingInfo> = emptyList()
+    private var allListings: List<OrderListingInfo> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -139,10 +141,16 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         updateOrderStatus(order.status)
         setupQRCodeButton(order.status)
         order.pickupSlotEnd?.let { calculateETA(it) }
-        reviewableListings = order.orderItems.orEmpty()
+
+        // Get all listings from this order
+        allListings = order.orderItems.orEmpty()
             .mapNotNull { it.listing }
-            .filter { !it.hasReviewed }  // Only include listings that haven't been reviewed
             .distinctBy { it.listingId }
+
+        // Separate reviewed and unreviewed listings
+        reviewableListings = allListings.filter { !it.hasReviewed }
+        reviewedListings = allListings.filter { it.hasReviewed }
+
         updateReviewButton(order.status)
 
         binding.llOrderItems.removeAllViews()
@@ -162,11 +170,35 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun updateReviewButton(status: String) {
         val isCompleted = status.equals("COMPLETED", ignoreCase = true) ||
             status.equals("COLLECTED", ignoreCase = true)
-        val canReview = isCompleted && reviewableListings.isNotEmpty()
-        binding.btnReviewListing.visibility = if (canReview) View.VISIBLE else View.GONE
+
+        if (!isCompleted) {
+            // Order not completed - hide review button
+            binding.btnReviewListing.visibility = View.GONE
+            return
+        }
+
+        if (reviewableListings.isNotEmpty()) {
+            // Has unreviewed listings - show "Write Review" button
+            binding.btnReviewListing.text = getString(R.string.review_listing_button)
+            binding.btnReviewListing.visibility = View.VISIBLE
+        } else if (reviewedListings.isNotEmpty()) {
+            // All listings reviewed - show "View Reviews" button
+            binding.btnReviewListing.text = "View Reviews"
+            binding.btnReviewListing.visibility = View.VISIBLE
+        } else {
+            // No listings - hide button
+            binding.btnReviewListing.visibility = View.GONE
+        }
     }
 
     private fun openReviewFlow() {
+        // Check if user wants to view existing reviews or write new ones
+        if (reviewableListings.isEmpty() && reviewedListings.isNotEmpty()) {
+            // All listings reviewed - show existing reviews
+            showExistingReviews()
+            return
+        }
+
         if (reviewableListings.isEmpty()) {
             Toast.makeText(this, getString(R.string.review_missing_listing), Toast.LENGTH_SHORT).show()
             return
@@ -187,6 +219,32 @@ class OrderDetailActivity : AppCompatActivity(), OnMapReadyCallback {
                 launchReviewActivity(reviewableListings[index])
             }
             .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showExistingReviews() {
+        if (reviewedListings.isEmpty()) {
+            Toast.makeText(this, "No reviews found", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Create a dialog to show existing reviews
+        val items = reviewedListings.map { listing ->
+            "${listing.title}\n✓ Review submitted"
+        }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("Reviews for Order #$orderId")
+            .setItems(items) { _, index ->
+                // Show detailed review info
+                val listing = reviewedListings[index]
+                Toast.makeText(
+                    this,
+                    "Review submitted for ${listing.title}\nThank you for your feedback!",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            .setPositiveButton("OK", null)
             .show()
     }
 
