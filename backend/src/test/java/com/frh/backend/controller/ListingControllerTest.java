@@ -240,7 +240,8 @@ class ListingControllerTest {
   @Test
   void getListingById_notFound() throws Exception {
 
-    Mockito.when(listingRepository.findById(99L)).thenReturn(Optional.empty());
+    Mockito.when(listingService.getListingById(99L))
+        .thenThrow(new IllegalArgumentException("Listing not found with id: 99"));
 
     mockMvc.perform(get("/api/supplier/listings/{id}", 99L)).andExpect(status().isNotFound());
   }
@@ -251,10 +252,10 @@ class ListingControllerTest {
   @Test
   void getListingById_found() throws Exception {
 
-    Listing listing = validListing();
+    ListingDTO listing = validListingDto();
     listing.setListingId(1L);
 
-    Mockito.when(listingRepository.findById(1L)).thenReturn(Optional.of(listing));
+    Mockito.when(listingService.getListingById(1L)).thenReturn(listing);
 
     mockMvc.perform(get("/api/supplier/listings/{id}", 1L)).andExpect(status().isOk());
   }
