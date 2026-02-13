@@ -4,21 +4,21 @@ Food Rescue Hub is a full-stack web app that connects suppliers, consumers, and 
 
 ## Local Startup Guide
 
-This README is for local startup only (no Docker app startup path).
+This README focuses on local startup (frontend + backend on your machine).
 
-### Prerequisites
+## Prerequisites
 
 - Java 17
 - Node.js 20+
 - npm
 - Git
-- Network access to `13.228.183.177:33306` for sql database
+- Docker Desktop (recommended for local MySQL)
 
-### Default Local Ports
+## Local Ports
 
 - Frontend (Vite): `5174`
 - Backend (Spring Boot): `8080`
-- AWS MySQL: `13.228.183.177:33306`
+- MySQL (if local container): `33306`
 
 ## 1. Clone the repository
 
@@ -27,9 +27,28 @@ git clone https://github.com/YukiOvOb/Food-Rescue-Hub-.git
 cd Food-Rescue-Hub-
 ```
 
-## 2. Use existing AWS MySQL (team default)
+## 2. Choose your database mode
 
-Use the existing shared database:
+### Option A (recommended): Local MySQL container
+
+Start only MySQL from `docker-compose.yml`:
+
+```bash
+docker compose up -d mysql
+```
+
+Use these backend DB values:
+
+- Host: `localhost`
+- Port: `33306`
+- Database: `frh`
+- Username: `frh_user`
+- Password: `123456`
+- Seed: automatic on first backend startup (when DB is empty)
+
+### Option B: Shared team MySQL (remote)
+
+Use the shared DB:
 
 - Host: `13.228.183.177`
 - Port: `33306`
@@ -37,13 +56,21 @@ Use the existing shared database:
 - Username: `frh_user`
 - Password: `123456`
 
-Before starting backend, make sure your network can reach `13.228.183.177:33306`.
+Make sure your network can reach `13.228.183.177:33306`.
 
 ## 3. Run backend locally
 
-Open Terminal 1, then run from `backend/`.
+Open Terminal 1 and run from `backend/`.
 
-PowerShell:
+PowerShell (Option A: local MySQL):
+
+```powershell
+cd backend
+$env:SPRING_PROFILES_ACTIVE="local"
+.\mvnw.cmd spring-boot:run
+```
+
+PowerShell (Option B: shared MySQL on AWS server):
 
 ```powershell
 cd backend
@@ -54,14 +81,29 @@ $env:LOCAL_DB_PASSWORD="123456"
 .\mvnw.cmd spring-boot:run
 ```
 
-Backend should be available at:
+Bash/Zsh:
+
+```bash
+cd backend
+export SPRING_PROFILES_ACTIVE=local
+./mvnw spring-boot:run
+```
+
+First backend startup with a fresh DB may take longer because it creates schema then seeds demo data from `backend/src/main/resources/data.sql`.
+
+Backend health check:
 
 - `http://localhost:8080`
 - `http://localhost:8080/api/hello`
 
+Seeded demo logins (password: `password123`):
+
+- Consumer: `alice.tan@email.com`
+- Supplier: `bakery@breadtalk.sg`
+
 ## 4. Run frontend locally
 
-Open Terminal 2, then run from `frontend/`:
+Open Terminal 2:
 
 ```bash
 cd frontend
@@ -69,18 +111,19 @@ npm install
 npm run dev
 ```
 
-Frontend should be available at:
+Frontend URL:
 
 - `http://localhost:5174`
 
-The frontend proxies `/api` calls to `http://localhost:8080`.
+Vite proxies `/api` and `/uploads` to `http://localhost:8080`.
 
-## 5. Stop the app
+## 5. Stop local services
 
 - Stop backend: `Ctrl + C` in Terminal 1
 - Stop frontend: `Ctrl + C` in Terminal 2
+- If using local MySQL container: `docker compose stop mysql`
 
-## Test and Coverage (Backend)
+## Backend Test and Coverage
 
 From `backend/`:
 
@@ -98,7 +141,7 @@ Bash:
 ./mvnw verify
 ```
 
-JaCoCo HTML report:
+JaCoCo report:
 
 - `backend/target/site/jacoco/index.html`
 
@@ -106,12 +149,23 @@ JaCoCo HTML report:
 
 1. Backend test fails with `Driver org.h2.Driver claims to not accept jdbcUrl`  
    Clear datasource overrides before running tests:
-   ```powershell
-   Remove-Item Env:SPRING_DATASOURCE_URL,Env:SPRING_DATASOURCE_USERNAME,Env:SPRING_DATASOURCE_PASSWORD -ErrorAction SilentlyContinue
-   ```
+
+```powershell
+Remove-Item Env:SPRING_DATASOURCE_URL,Env:SPRING_DATASOURCE_USERNAME,Env:SPRING_DATASOURCE_PASSWORD -ErrorAction SilentlyContinue
+Remove-Item Env:LOCAL_DB_URL,Env:LOCAL_DB_USERNAME,Env:LOCAL_DB_PASSWORD -ErrorAction SilentlyContinue
+```
 
 2. Backend cannot connect to MySQL  
-   Verify `LOCAL_DB_URL`, `LOCAL_DB_USERNAME`, `LOCAL_DB_PASSWORD` and confirm access to `13.228.183.177:33306` from your network.
+   Verify `LOCAL_DB_URL`, `LOCAL_DB_USERNAME`, `LOCAL_DB_PASSWORD`.  
+   For Option A, confirm container is running: `docker compose ps mysql`.
 
-3. Frontend cannot call backend  
-   Confirm backend is running on `http://localhost:8080` and frontend is running from `frontend/` via `npm run dev`.
+3. Need to reseed local DB from scratch  
+   Remove MySQL volume and restart:
+
+```bash
+docker compose down -v
+docker compose up -d mysql
+```
+
+4. Frontend cannot call backend  
+   Confirm backend is running on `http://localhost:8080` and frontend on `http://localhost:5174`.

@@ -28,7 +28,7 @@ productFlavors {
         create("dev") {
             dimension = "environment"
             buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/\"")
-            buildConfigField("String", "BOT_BASE_URL", "\"http://10.0.2.2:8000/\"")
+            buildConfigField("String", "BOT_BASE_URL", "\"http://13.228.183.177:8000/\"")
         }
         create("prod") {
             dimension = "environment"
